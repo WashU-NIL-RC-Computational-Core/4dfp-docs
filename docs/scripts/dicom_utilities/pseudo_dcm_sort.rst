@@ -1,14 +1,21 @@
 .. _pseudo_dcm_sort:
 
+=====================================
 Pseudo DICOM Sort (`pseudo_dcm_sort`)
 =====================================
 Sort DICOM files by study series (used for nested directory structures)
 
-**Usage**::
+Usage
+=====
+
+.. code:: bash
 
 	pseudo_dcm_sort.csh <DICOM directory>
 
-.. list-table:: Options
+Options
+-------
+
+.. list-table::
    :widths: 15 85
    :header-rows: 1
 
@@ -30,8 +37,11 @@ Sort DICOM files by study series (used for nested directory structures)
 .. important::	DICOM subdirectories must be numeric
 .. important::	default subdirectory of numeric subdirectory is 'DICOM'
 
-**Examples**::
+Examples
+========
 
+.. code:: bash
+  
 	pseudo_dcm_sort.csh RAW
 
 .. image:: ../../_static/DICOM_utilities/test.png

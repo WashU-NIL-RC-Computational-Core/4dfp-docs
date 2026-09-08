@@ -1,14 +1,21 @@
 .. _dcm_sort:
 
+=======================
 DICOM Sort (`dcm_sort`)
 =======================
 Sort DICOM files by study series (used for flat directory structures)
 
-**Usage**::
+Usage
+=====
+
+.. code:: bash
 
 	dcm_sort <DICOM_directory>
 
-.. list-table:: Options
+Options
+-------
+
+.. list-table::
    :widths: 15 85
    :header-rows: 1
 
@@ -33,8 +40,11 @@ Sort DICOM files by study series (used for flat directory structures)
 
 .. important::	dcm_sort puts unclassifiable DICOMs into subdirectory study0
 
-**Examples**::
+Examples
+========
 
+.. code:: bash
+  
 	dcm_sort /path/to/DICOM_dir
 	dcm_sort /path/to/DICOM_dir -p930589002 -c
 
