@@ -19,7 +19,7 @@ Contents
     :glob:
     :maxdepth: 3
 
-    scripts/[a-z]*
+    scripts/dicom_utilities/index
     scripts/_deprecated
 
 .. toctree::
