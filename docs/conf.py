@@ -163,3 +163,7 @@ texinfo_documents = [
      author, '4dfp', 'One line description of project.',
      'Miscellaneous'),
 ]
+
+extensions = [
+    "sphinx_copybutton",
+]
