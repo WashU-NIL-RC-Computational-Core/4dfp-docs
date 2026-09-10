@@ -16,7 +16,9 @@ Description
 Will search sub-directories of the <DICOM_directory> path provided and sort. The DICOMs will be symbollically linked and sorted in $CWD/study/[study #].
 Flat directory sorting is handled by :ref:`dcm_sort`.
 
-This script makes use of DICOM Dump File (:ref:`dcm_dump_file`) to get the header information.. add more information about what is used here.
+This script makes use of DICOM Dump File (:ref:`dcm_dump_file`) to read the following:
+  - ACQ Sequence Name
+  - ID Series Description
 
 .. important::	DICOM subdirectories must be numeric |br|
 .. important::	default subdirectory of numeric subdirectory is 'DICOM'

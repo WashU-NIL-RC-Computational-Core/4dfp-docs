@@ -15,7 +15,11 @@ Description
 Sort the DICOM files in the directory <DICOM_directory> path provided either by absolute or relative pathing. The DICOMs will be symbollically linked and sorted in $CWD/study/[study #]
 This script does not recursively sort sub-directories; for recursive subdirectory sorting reference :ref:`pseudo_dcm_sort`
 
-This script makes use of DICOM Dump File (:ref:`dcm_dump_file`) to get the header information.. add more information about what is used here.
+This script makes use of DICOM Dump File (:ref:`dcm_dump_file`) to read the following:
+  - ACQ Sequence Name
+  - ID Series Description
+  - PAT Patient Name (if -p option is used)
+  - REL Series Number
 
 .. important::	dcm_sort removes existing single study subdirectories
 
