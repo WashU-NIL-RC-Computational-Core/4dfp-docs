@@ -32,9 +32,9 @@ Contents
 .. toctree::
     :caption: Tools
     :glob:
-    :maxdepth: 2
+    :maxdepth: 3
 
-    tools/*
+    tools/dicom_utilities/index
 
 .. toctree::
     :caption: Appendix
