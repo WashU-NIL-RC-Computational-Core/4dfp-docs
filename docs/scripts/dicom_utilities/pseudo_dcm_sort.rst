@@ -1,3 +1,7 @@
+.. role:: major-change
+.. role:: minor-change
+.. role:: patch-change
+  
 .. _pseudo_dcm_sort:
 
 Pseudo DICOM Sort (`pseudo_dcm_sort`)
@@ -55,3 +59,13 @@ Examples
 	./pseudo_dcm_sort.csh  -d -s -t -i -edcm -rtest
 
 .. image:: /_static/DICOM_utilities/test.png
+
+Changelog
+---------
+
+.. admonition:: Revision History (Click to expand)
+   :collapsible: closed
+
+   * **August 12, 2027** — :major-change:`Major`
+   * **July 19, 2027** — :minor-change:`Minor`
+   * **June 05, 2027** — :patch-change:`Patch`

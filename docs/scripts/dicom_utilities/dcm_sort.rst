@@ -1,3 +1,7 @@
+.. role:: major-change
+.. role:: minor-change
+.. role:: patch-change
+
 .. _dcm_sort:
 
 DICOM Sort (`dcm_sort`)
@@ -59,3 +63,13 @@ Examples
 	dcm_sort /path/to/DICOM_dir -d -c -t -i -edcm -rtest -pDOE^JOHN
 
 .. image:: /_static/DICOM_utilities/test.png
+
+Changelog
+---------
+
+.. admonition:: Revision History (Click to expand)
+   :collapsible: closed
+
+   * **August 12, 2027** — :major-change:`Major`
+   * **July 19, 2027** — :minor-change:`Minor`
+   * **June 05, 2027** — :patch-change:`Patch`

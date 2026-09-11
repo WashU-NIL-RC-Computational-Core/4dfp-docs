@@ -1,6 +1,7 @@
 .wy-nav-content {
     max-width: 1000px;
 }
+
 .wy-table-responsive td:last-child {
     white-space: normal !important;
 }
@@ -14,7 +15,7 @@
 }
 
 .required {
-    color:red;
+    color: red;
 }
 
 .toggle .header {
@@ -29,4 +30,19 @@
 
 .toggle .header.open:after {
     content: " ▲";
+}
+
+.major-change {
+    color: #d9534f !important;
+    font-weight: bold;
+}
+
+.minor-change {
+    color: #0275d8 !important;
+    font-weight: bold;
+}
+
+.patch-change {
+    color: #28a745 !important;
+    font-weight: bold;
 }
