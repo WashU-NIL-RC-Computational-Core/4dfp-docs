@@ -91,7 +91,6 @@ samp,
     font-size: 1.75rem !important;
     font-weight: 800 !important;
     letter-spacing: 0.08em;
-    text-transform: uppercase;
     color: #ffffff !important;
     line-height: 1.2;
     padding: 10px 0 12px 0;
@@ -264,4 +263,93 @@ samp,
 .nav-card .sd-card-header {
     font-weight: 700 !important;
     color: #BA0C2F !important;
+}
+
+.rst-content table.docutils {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #e1e4e5 !important;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.rst-content table.docutils th {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 12px 16px !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 2px solid #BA0C2F !important;
+    text-align: left;
+}
+
+.rst-content table.docutils td {
+    padding: 12px 16px !important;
+    vertical-align: top;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e9ecef !important;
+}
+
+.rst-content table.docutils tr:last-child td {
+    border-bottom: none !important;
+}
+
+.rst-content table.docutils tr:nth-child(even) td {
+    background-color: #fafafa;
+}
+
+.rst-content table.docutils tr:hover td {
+    background-color: #f1f3f5;
+}
+
+.rst-content table.docutils td:first-child code.literal {
+    white-space: nowrap;
+    font-weight: 600;
+    color: #BA0C2F !important;
+    background-color: #fbebee !important;
+    border-color: rgba(186, 12, 47, 0.2) !important;
+}
+
+.rst-content h1 {
+    font-size: 2.1rem !important;
+    font-weight: 700 !important;
+    color: #1a1a1a !important;
+    padding-bottom: 12px !important;
+    margin-top: 0.25rem !important;
+    margin-bottom: 1.75rem !important;
+    border-bottom: 2px solid #e1e4e5 !important;
+    position: relative;
+}
+
+.rst-content h1::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 64px;
+    height: 2px;
+    background-color: #BA0C2F;
+}
+
+.rst-content h2 {
+    font-size: 1.45rem !important;
+    font-weight: 600 !important;
+    color: #212529 !important;
+    margin-top: 2.25rem !important;
+    margin-bottom: 1rem !important;
+    padding-bottom: 6px !important;
+    border-bottom: 1px solid #e1e4e5 !important;
+    letter-spacing: -0.01em;
 }

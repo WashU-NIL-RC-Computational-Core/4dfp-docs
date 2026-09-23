@@ -47,18 +47,18 @@ All 4dfp based image analysis programs used at the Washington University School 
       :link-type: doc
       :class-card: nav-card
 
-      Specifications, data representation, and formatting standards for neuroimaging image files.
+      Voxel layout, short-to-float conversion, memory indexing, and orientation flip rules for Siemens-derived 4dfp volumes.
 
    .. grid-item-card:: 📄 Interfile Header
       :link: interfile-header
       :link-type: doc
       :class-card: nav-card
 
-      Structure, key metadata fields, and parameters for Interfile header files.
+      Annotated .ifh file listing, parameter field definitions, and the minimal set of metadata required to interpret voxel data.
 
    .. grid-item-card:: 📝 REC File
       :link: rec-file
       :link-type: doc
       :class-card: nav-card
 
-      Header layout, metadata tags, and file specifications for PAR/REC format data.
+      ASCII creation history structure, nested antecedent tracking (rec/endrec), UNIX command logging, and brec output formatting.
