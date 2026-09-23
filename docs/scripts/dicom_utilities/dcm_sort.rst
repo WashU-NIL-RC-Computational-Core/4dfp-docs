@@ -1,12 +1,11 @@
-.. role:: major-change
-.. role:: minor-change
-.. role:: patch-change
+.. include:: ../../global.rst
 
 .. _dcm_sort:
 
-DICOM Sort (`dcm_sort`)
-=======================
-Sort flat directory of DICOM files by study series.
+DICOM Sort
+==========
+
+.. rubric:: Script: ``dcm_sort``
 
 Synopsis
 --------
@@ -19,7 +18,7 @@ Description
 Sort the DICOM files in the directory <DICOM_directory> path provided either by absolute or relative pathing. The DICOMs will be symbollically linked and sorted in $CWD/study/[study #]
 This script does not recursively sort sub-directories; for recursive subdirectory sorting reference :ref:`pseudo_dcm_sort`
 
-This script makes use of DICOM Dump File (:ref:`dcm_dump_file`) to read the following:
+This script makes use of :ref:`dcm_dump_file` to read the following:
   - ACQ Sequence Name
   - ID Series Description
   - PAT Patient Name (if -p option is used)
@@ -32,7 +31,7 @@ This script makes use of DICOM Dump File (:ref:`dcm_dump_file`) to read the foll
 Usage
 -----
 
-.. list-table:: Options
+.. list-table::
    :widths: 15 85
    :header-rows: 1
 
@@ -58,18 +57,11 @@ Usage
 Examples
 --------
 
-.. code-block:: bash
+.. dropdown:: 💡 Click to show/hide usage examples
+   :animate: fade-in
 
-	dcm_sort /path/to/DICOM_dir -d -c -t -i -edcm -rtest -pDOE^JOHN
+   .. code-block:: bash
 
-.. image:: /_static/DICOM_utilities/test.png
+      dcm_sort /path/to/DICOM_dir -d -c -t -i -edcm -rtest -pDOE^JOHN
 
-Changelog
----------
-
-.. admonition:: Revision History (Click to expand)
-   :collapsible: closed
-
-   * **August 12, 2027** — :major-change:`Major`
-   * **July 19, 2027** — :minor-change:`Minor`
-   * **June 05, 2027** — :patch-change:`Patch`
+   .. image:: /_static/DICOM_utilities/test.png

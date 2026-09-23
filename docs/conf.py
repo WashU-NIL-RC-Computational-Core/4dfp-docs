@@ -30,7 +30,8 @@
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.mathjax']
+extensions = ["sphinx.ext.mathjax", "sphinx_copybutton", "sphinx_design", "myst_parser"]
+myst_enable_extensions = ["colon_fence"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -46,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'4dfp'
-copyright = u'2017, Avi Snyder, Jon Koller, Haley Acevedo'
+copyright = u'2026, Avi Snyder, Jon Koller, Haley Acevedo'
 author = u'Avi Snyder, Jon Koller, Haley Acevedo'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -68,7 +69,33 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+
+# IMPORTANT Remove scripts/tools from list when updated
+exclude_patterns = [
+    '_build', 
+    'Thumbs.db', 
+    '.DS_Store', 
+    'scripts/_deprecated/index.rst',
+    'scripts/dti/index.rst',
+    'scripts/fcmri/index.rst',
+    'scripts/fmri/index.rst',
+    'scripts/misc/index.rst',
+    'scripts/registration/index.rst',
+    'tools/dti/index.rst',
+    'tools/evaluate_and_roi/index.rst',
+    'tools/filter_in_space/index.rst',
+    'tools/filter_in_time/index.rst',
+    'tools/fmri/index.rst',
+    'tools/format_string/index.rst',
+    'tools/glm/index.rst',
+    'tools/image_algebra/index.rst',
+    'tools/img_segmentation_and_gfc/index.rst',
+    'tools/interconvert_formats/index.rst',
+    'tools/rearrange_voxels/index.rst',
+    'tools/register_in_space/index.rst',
+    'tools/spm_stats/index.rst',
+    'tools/threshold_and_mask/index.rst',
+]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -83,17 +110,22 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+html_show_sourcelink = False
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#
-# html_theme_options = {}
+
+html_theme_options = {'prev_next_buttons_location': None,  }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+html_logo = "_static/WashU-Reverse_web.png"
+
+html_favicon = '_static/WashU-SHIELD-Red_RGB.png' 
 
 def setup(app):
     app.add_css_file('custom.css')
@@ -165,8 +197,4 @@ texinfo_documents = [
     (master_doc, '4dfp', u'4dfp Documentation',
      author, '4dfp', 'One line description of project.',
      'Miscellaneous'),
-]
-
-extensions = [
-    "sphinx_copybutton",
 ]

@@ -1,13 +1,10 @@
-.. role:: major-change
-.. role:: minor-change
-.. role:: patch-change
-  
+.. include:: ../../global.rst
+
 .. _pseudo_dcm_sort:
 
-Pseudo DICOM Sort (`pseudo_dcm_sort`)
-=====================================
-Sort DICOM files by study series (used for nested directory structures)
-
+Pseudo DICOM Sort
+=================
+.. rubric:: Script: ``pseudo_dcm_sort.csh``
 
 Synopsis
 --------
@@ -20,7 +17,7 @@ Description
 Will search sub-directories of the <DICOM_directory> path provided and sort. The DICOMs will be symbollically linked and sorted in $CWD/study/[study #].
 Flat directory sorting is handled by :ref:`dcm_sort`.
 
-This script makes use of DICOM Dump File (:ref:`dcm_dump_file`) to read the following:
+This script makes use of :ref:`dcm_dump_file` to read the following:
   - ACQ Sequence Name
   - ID Series Description
 
@@ -30,7 +27,7 @@ This script makes use of DICOM Dump File (:ref:`dcm_dump_file`) to read the foll
 Usage
 -----
 
-.. list-table:: Options
+.. list-table::
    :widths: 15 85
    :header-rows: 1
 
@@ -54,18 +51,11 @@ Usage
 Examples
 --------
 
-.. code-block:: bash
+.. dropdown:: 💡 Click to show/hide usage examples
+   :animate: fade-in
 
-	./pseudo_dcm_sort.csh  -d -s -t -i -edcm -rtest
+   .. code-block:: bash
 
-.. image:: /_static/DICOM_utilities/test.png
+      dcm_sort /path/to/DICOM_dir -d -c -t -i -edcm -rtest -pDOE^JOHN
 
-Changelog
----------
-
-.. admonition:: Revision History (Click to expand)
-   :collapsible: closed
-
-   * **August 12, 2027** — :major-change:`Major`
-   * **July 19, 2027** — :minor-change:`Minor`
-   * **June 05, 2027** — :patch-change:`Patch`
+   .. image:: /_static/DICOM_utilities/test.png

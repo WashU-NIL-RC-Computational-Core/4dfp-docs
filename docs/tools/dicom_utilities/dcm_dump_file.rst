@@ -1,12 +1,8 @@
-.. role:: major-change
-.. role:: minor-change
-.. role:: patch-change
-
 .. _dcm_dump_file:
 
-DICOM Data Dump File (`dcm_dump_file`)
-======================================
-Dump DICOM header and metadata info to stdout.
+DICOM Dump File
+====================
+.. rubric:: Tool: ``dcm_dump_file``
 
 Synopsis
 --------
@@ -27,7 +23,7 @@ Raw binary image pixel data is summarized by tag structure and byte length rathe
 Usage
 -----
 
-.. list-table:: Options
+.. list-table::
    :widths: 15 85
    :header-rows: 1
 
@@ -63,18 +59,11 @@ Usage
 Examples
 --------
 
-.. code-block:: bash
+.. dropdown:: 💡 Click to show/hide usage examples
+   :animate: fade-in
 
-	dcm_dump_file [[-b] [-e] [-E] [-f] [-g] [-l] [-L] [-m <mult>] [-t] [-v] [-w <flag>] [-z]] <file_or_directory> [<file_or_directory> ...]
+   .. code-block:: bash
 
-.. image:: /_static/DICOM_utilities/test.png
+      dcm_sort /path/to/DICOM_dir -d -c -t -i -edcm -rtest -pDOE^JOHN
 
-Changelog
----------
-
-.. admonition:: Revision History (Click to expand)
-   :collapsible: closed
-
-   * **August 12, 2027** — :major-change:`Major`
-   * **July 19, 2027** — :minor-change:`Minor`
-   * **June 05, 2027** — :patch-change:`Patch`
+   .. image:: /_static/DICOM_utilities/test.png
