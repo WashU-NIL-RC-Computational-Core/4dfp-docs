@@ -45,17 +45,20 @@ All 4dfp based image analysis programs used at the Washington University School 
    .. grid-item-card:: 🖼️ Image Data
       :link: image
       :link-type: doc
+      :class-card: nav-card
 
       Specifications, data representation, and formatting standards for neuroimaging image files.
 
    .. grid-item-card:: 📄 Interfile Header
       :link: interfile-header
       :link-type: doc
+      :class-card: nav-card
 
       Structure, key metadata fields, and parameters for Interfile header files.
 
    .. grid-item-card:: 📝 REC File
       :link: rec-file
       :link-type: doc
+      :class-card: nav-card
 
       Header layout, metadata tags, and file specifications for PAR/REC format data.

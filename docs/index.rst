@@ -73,29 +73,34 @@ Contents
    .. grid-item-card:: 📄 General
       :link: format/index
       :link-type: doc
+      :class-card: nav-card
 
       Overview of data formatting specifications and general conventions.
 
    .. grid-item-card:: 📜 Scripts
       :link: scripts/dicom_utilities/index
       :link-type: doc
+      :class-card: nav-card
 
       Automation scripts for DICOM processing, DTI, fMRI, and registration.
 
    .. grid-item-card:: 🛠️ Tools
       :link: tools/dicom_utilities/index
       :link-type: doc
+      :class-card: nav-card
 
       Command-line utilities for GLM analysis, spatial/temporal filtering, and image algebra.
 
    .. grid-item-card:: 🧪 Worked Examples
       :link: examples/index
       :link-type: doc
+      :class-card: nav-card
 
       Step-by-step tutorials, practical pipeline walkthroughs, and sample datasets.
 
    .. grid-item-card:: 📚 Appendix
       :link: params_inst
       :link-type: doc
+      :class-card: nav-card
 
       Parameter instructions, installation flags, and reference tables.

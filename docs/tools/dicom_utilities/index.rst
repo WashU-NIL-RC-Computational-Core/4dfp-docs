@@ -15,5 +15,6 @@ DICOM Utilities
    .. grid-item-card:: 📋 DICOM Data Dump File
       :link: dcm_dump_file
       :link-type: doc
+      :class-card: nav-card
 
       Inspect, parse, and extract detailed metadata headers and DICOM tag attributes.
