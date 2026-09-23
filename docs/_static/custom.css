@@ -243,7 +243,6 @@ samp,
 .rst-content h4:hover,
 .rst-content h5:hover,
 .rst-content h6:hover {
-    color: inherit !important;
     background: transparent !important;
     text-decoration: none !important;
 }
