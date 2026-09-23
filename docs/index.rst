@@ -75,32 +75,32 @@ Contents
       :link-type: doc
       :class-card: nav-card
 
-      Overview of data formatting specifications and general conventions.
+      4dfp file formats, orientation rules, coordinate conventions, and target space definitions.
 
    .. grid-item-card:: 📜 Scripts
       :link: scripts/dicom_utilities/index
       :link-type: doc
       :class-card: nav-card
 
-      Automation scripts for DICOM processing, DTI, fMRI, and registration.
+      Automation wrappers for DICOM sorting, fMRI preprocessing, registration, and DTI pipelines.
 
    .. grid-item-card:: 🛠️ Tools
       :link: tools/dicom_utilities/index
       :link-type: doc
       :class-card: nav-card
 
-      Command-line utilities for GLM analysis, spatial/temporal filtering, and image algebra.
+      Low-level C utilities for spatial/temporal filtering, image algebra, t4 transforms, and format conversion.
 
    .. grid-item-card:: 🧪 Worked Examples
       :link: examples/index
       :link-type: doc
       :class-card: nav-card
 
-      Step-by-step tutorials, practical pipeline walkthroughs, and sample datasets.
+      Hands-on pipeline walkthroughs, command sequences, and execution guides for sample datasets.
 
    .. grid-item-card:: 📚 Appendix
       :link: params_inst
       :link-type: doc
       :class-card: nav-card
 
-      Parameter instructions, installation flags, and reference tables.
+      Environment setup, build/install flags, .params file specifications, and reference tables.
