@@ -41,6 +41,24 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    const navTop = document.querySelector(".wy-nav-top");
+    if (navTop) {
+        navTop.addEventListener("click", function (event) {
+            const hamburger = navTop.querySelector("i, svg, [data-toggle='wy-nav-top']");
+            const isHamburger = hamburger && hamburger.contains(event.target);
+
+            console.log(isHamburger);
+
+            if (!isHamburger) {
+                event.preventDefault();
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+            }
+        });
+    }
+
     const contentWrap = document.querySelector(".wy-nav-content-wrap");
     const navSide = document.querySelector(".wy-nav-side");
 

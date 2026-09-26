@@ -368,6 +368,7 @@ samp,
         height: 54px !important;
         line-height: 54px !important;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        cursor: pointer !important;
     }
 
     .wy-nav-top i {
@@ -399,7 +400,7 @@ samp,
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         pointer-events: none !important;
-        cursor: default !important;
+        cursor: pointer !important;
     }
 
     .wy-nav-top a .wy-nav-top-page-title {
