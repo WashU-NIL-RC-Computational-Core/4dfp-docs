@@ -1,60 +1,77 @@
 .. _dcm_dump_file:
 
 DICOM Dump File
-====================
+===============
 .. rubric:: Tool: ``dcm_dump_file``
 
 Synopsis
 --------
 
-dcm_dump_file [[-b] [-e] [-E] [-f] [-g] [-l] [-L] [-m <mult>] [-t] [-v] [-w <flag>] [-z]] <file_or_directory> [<file_or_directory> ...]
+dcm_dump_file [-b] [-e] [-E] [-f] [-g] [-l] [-L] [-m <mult>] [-t] [-v] [-w <flag>] [-z] <file_or_directory> [<file_or_directory> ...]
 
 Description
 -----------
 
 Inspect and display the internal header metadata of DICOM files provided via absolute or relative paths. The tool accepts individual DICOM files, multiple files, or directory locations as input. When a directory path is provided, 
-dcm_dump_file recursively scans all sub-directories to process every file found.
+``dcm_dump_file`` recursively scans all sub-directories to process every file found.
 
-This tool prints human-readable DICOM attributes—such as patient demographic data, scanner acquisition settings, and study/series identification tags—directly to the terminal screen (stdout). 
-Raw binary image pixel data is summarized by tag structure and byte length rather than printed in raw form.
+This tool prints human-readable DICOM attributes—such as patient demographic data, scanner acquisition settings, and study/series identification tags—directly to stdout. Raw binary image pixel data is summarized by tag structure and byte length rather than printed in raw form.
 
-.. important::	Options used must be placed before any file, files, or directory provided. Options placed after will be ignored and treated as invalid file names.
+.. important:: 
+   Options used must be placed **before** any file or directory arguments. Options placed after will be ignored and treated as invalid file names.
 
 Usage
 -----
 
 .. list-table::
-   :widths: 15 85
+   :widths: 15 25 60
    :header-rows: 1
 
    * - Flag
+     - Category
      - Description
    * - ``-b``
-     - Read data using Big-Endian byte order (common in older Unix or Mac systems).
+     - :bdg-secondary:`Byte Order`
+     - Read data using :term:`Big-Endian` byte order (common in legacy systems).
    * - ``-e``
-     - Exit the program immediately if a file fails to open, skipping any remaining files.
+     - :bdg-danger:`Execution`
+     - Exit immediately on file open failure, skipping remaining files.
    * - ``-E``
-     - Process files using DICOM Part 10 format with eFilm workstation compatibility.
+     - :bdg-info:`Format`
+     - Process files using :term:`DICOM Part 10` format with eFilm workstation compatibility.
    * - ``-f``
-     - Format the output into clean, aligned text columns for easier reading.
+     - :bdg-secondary:`Formatting`
+     - Format stdout into clean, aligned text columns for easier reading.
    * - ``-g``
-     - Ignore group length attributes (useful when processing files with corrupted size markers).
+     - :bdg-warning:`Parsing`
+     - Ignore group length attributes (useful for files with corrupted size markers).
    * - ``-l``
-     - Use the retired length-to-end attribute to calculate overall object size.
+     - :bdg-warning:`Parsing`
+     - Use retired length-to-end attributes to calculate overall object size.
    * - ``-L``
-     - Read data using Explicit Little-Endian byte order (standard PC format with labeled data types).
+     - :bdg-secondary:`Byte Order`
+     - Read data using :term:`Explicit Little-Endian` byte order (standard PC format).
    * - ``-m <mult>``
-     - Limit the number of displayed items for repeated data fields (for example, ``-m 5`` shows only the first 5 entries).
+     - :bdg-info:`Value Required`
+     - Limit displayed items for repeated data fields (e.g., ``-m 5`` displays first 5 entries).
    * - ``-t``
-     - Parse files using DICOM Part 10 standards while ignoring minor data type mismatches.
+     - :bdg-warning:`Parsing`
+     - Parse files using :term:`DICOM Part 10` standards while ignoring minor type mismatches.
    * - ``-v``
+     - :bdg-light:`Logging`
      - Enable verbose logging to display detailed technical updates during processing.
    * - ``-w <flag>``
-     - Enable advanced file opening options (for example, ``-w REPEAT`` allows files containing duplicate tags).
+     - :bdg-info:`Value Required`
+     - Enable advanced file opening options (e.g., ``-w REPEAT`` permits duplicate tags).
    * - ``-z``
+     - :bdg-secondary:`Verification`
      - Perform automated format conversion and data verification on header attributes.
 
-.. note::	Options that require values MUST have a space between the option and it's value.
+.. note:: 
+   Options that require values **MUST** have a space between the option and its value (e.g., ``-m 5``).
+
+.. note:: 
+   If a file fails to open initially, ``dcm_dump_file`` automatically retries parsing with the ``-t`` flag enabled.
 
 Examples
 --------
@@ -62,8 +79,79 @@ Examples
 .. dropdown:: 💡 Click to show/hide usage examples
    :animate: fade-in
 
-   .. code-block:: bash
+   .. tab-set::
 
-      dcm_sort /path/to/DICOM_dir -d -c -t -i -edcm -rtest -pDOE^JOHN
+      .. tab-item:: 📁 Case 1: Dump Header Info
 
-   .. image:: /_static/DICOM_utilities/test.png
+         .. card:: 📥 Input Data
+            :class-card: sd-bg-light sd-border-1 mb-3
+
+            .. div:: card-help-top-right
+
+              :card-help:`Hover over image or click to inspect DICOM source directory structure`
+
+            DICOM files usually have a file extension of ``.dcm`` (or :term:`Siemens .IMA` when using Siemens scanners).
+
+            .. image:: /_static/tools/dicom_utilities/dcm_dump_file/case1/ddf_c1_source_data.png
+               :alt: Source directory with nested sub-folders
+               :align: center
+               :width: 80%
+
+         .. tab-set::
+
+            .. tab-item:: ⚡ Command 1: Standard Display
+
+               **1. Execute Command:**
+
+               .. code-block:: bash
+
+                  dcm_dump_file <file_or_directory>
+
+               **2. Terminal Output:**
+
+               .. image:: /_static/tools/dicom_utilities/dcm_dump_file/case1/cmd1/normal_dump_file.png
+                  :alt: Standard dcm_dump_file output
+                  :align: center
+                  :width: 70%
+
+            .. tab-item:: ⚡ Command 2: Formatted Display
+
+               **1. Execute Command:**
+
+               .. code-block:: bash
+
+                  dcm_dump_file -f <file_or_directory>
+
+               **2. Terminal Output:**
+
+               .. image:: /_static/tools/dicom_utilities/dcm_dump_file/case1/cmd2/f_option.png
+                  :alt: Formatted dcm_dump_file output
+                  :align: center
+                  :width: 70%
+
+      .. tab-item:: ⚠️ Common Errors
+         :class-label: tab-error
+
+         .. tab-set::
+
+            .. tab-item:: ❌ Error Scenario 1: Not a DICOM File
+               :class-label: tab-error
+
+               **Cause:** Executing ``dcm_dump_file`` against a non-DICOM file:
+
+               .. code-block:: bash
+
+                  dcm_dump_file not_a_DICOM.txt
+
+               **Error Output:**
+
+               .. index:: 80092, 20092, readPreamble, Illegal Stream Length, DCM_OpenFile
+
+               .. code-block:: text
+
+                  80092 DCM Illegal Stream Length (x) (Not enough data to define a full element) in readPreamble
+                  20092 DCM failed to open file: [file].[ext] in DCM_OpenFile
+
+               .. image:: /_static/tools/dicom_utilities/dcm_dump_file/errors/not_a_dicom.png
+                  :alt: Error output when trying to parse non-DICOM file
+                  :align: center

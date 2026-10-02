@@ -65,6 +65,7 @@ Contents
    :hidden:
 
    params_inst
+   glossary
 
 
 .. grid:: 1 2 3 3
@@ -78,14 +79,14 @@ Contents
       4dfp file formats, orientation rules, coordinate conventions, and target space definitions.
 
    .. grid-item-card:: 📜 Scripts
-      :link: scripts/dicom_utilities/index
+      :link: scripts/index
       :link-type: doc
       :class-card: nav-card
 
       Automation wrappers for DICOM sorting, fMRI preprocessing, registration, and DTI pipelines.
 
    .. grid-item-card:: 🛠️ Tools
-      :link: tools/dicom_utilities/index
+      :link: tools/index
       :link-type: doc
       :class-card: nav-card
 
@@ -104,3 +105,10 @@ Contents
       :class-card: nav-card
 
       Environment setup, build/install flags, .params file specifications, and reference tables.
+
+   .. grid-item-card:: 📖 Glossary
+      :link: glossary
+      :link-type: doc
+      :class-card: nav-card
+
+      Definitions for DICOM transfer syntaxes, byte orders, 4dfp session structures, and key terms.

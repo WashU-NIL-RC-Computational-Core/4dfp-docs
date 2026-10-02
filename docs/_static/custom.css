@@ -88,17 +88,18 @@ samp,
     justify-content: center !important;
     text-align: center;
     text-decoration: none !important;
-    font-size: 1.75rem !important;
+    font-size: 1.5rem !important;
     font-weight: 800 !important;
     letter-spacing: 0.08em;
     color: #ffffff !important;
     line-height: 1.2;
-    padding: 10px 0 12px 0;
+    padding: 16px 10px 12px 10px !important;
 }
 
 .wy-side-nav-search img.logo {
-    max-height: 54px;
-    width: auto;
+    order: -1 !important;
+    max-height: 64px !important;
+    width: auto !important;
     margin-bottom: 10px !important;
     background: transparent !important;
     padding: 0 !important;
@@ -353,6 +354,225 @@ samp,
     letter-spacing: -0.01em;
 }
 
+.sd-tab-set:not(.sd-tab-content .sd-tab-set)>.sd-tab-label {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    background-color: #e9ecef !important;
+    color: #495057 !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 6px 6px 0 0 !important;
+    padding: 8px 16px !important;
+    margin-right: 4px !important;
+    margin-bottom: 0 !important;
+    align-self: flex-end !important;
+    height: auto !important;
+}
+
+.sd-tab-set:not(.sd-tab-content .sd-tab-set)>input:not(:checked)+.sd-tab-label:hover {
+    background-color: #dee2e6 !important;
+    color: #212529 !important;
+}
+
+.sd-tab-set:not(.sd-tab-content .sd-tab-set)>input:checked+.sd-tab-label:not(.tab-error),
+.sd-tab-set:not(.sd-tab-content .sd-tab-set)>.sd-tab-label.sd-active:not(.tab-error) {
+    background-color: #007D8A !important;
+    color: #ffffff !important;
+    border-color: #007D8A !important;
+}
+
+.sd-tab-set:not(.sd-tab-content .sd-tab-set)>input:checked+.sd-tab-label.tab-error,
+.sd-tab-set:not(.sd-tab-content .sd-tab-set)>.sd-tab-label.tab-error.sd-active {
+    background-color: #BA0C2F !important;
+    color: #ffffff !important;
+    border-color: #BA0C2F !important;
+}
+
+.sd-tab-set:not(.sd-tab-content .sd-tab-set)>input:not(:checked)+.sd-tab-label.tab-error:hover {
+    background-color: #f8d7da !important;
+    color: #BA0C2F !important;
+    border-color: #f5c2c7 !important;
+}
+
+.sd-tab-content .sd-tab-set>.sd-tab-label {
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    background-color: transparent !important;
+    color: #6c757d !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    padding: 6px 12px !important;
+    margin-top: 4px !important;
+    align-self: flex-start !important;
+    height: auto !important;
+}
+
+.sd-tab-content .sd-tab-set>input:checked+.sd-tab-label:not(.tab-error),
+.sd-tab-content .sd-tab-set>.sd-tab-label.sd-active:not(.tab-error) {
+    color: #007D8A !important;
+    border-bottom-color: #007D8A !important;
+    box-shadow: inset 0 -2px 0 #007D8A !important;
+}
+
+.sd-tab-content .sd-tab-set>input:not(:checked)+.sd-tab-label:not(.tab-error):hover {
+    color: #007D8A !important;
+}
+
+.sd-tab-content .sd-tab-set>input:checked+.sd-tab-label.tab-error,
+.sd-tab-content .sd-tab-set>.sd-tab-label.tab-error.sd-active {
+    color: #BA0C2F !important;
+    border-bottom-color: #BA0C2F !important;
+    box-shadow: inset 0 -2px 0 #BA0C2F !important;
+}
+
+.sd-tab-content .sd-tab-set>input:not(:checked)+.sd-tab-label.tab-error:hover {
+    color: #BA0C2F !important;
+}
+
+.sd-tab-content .sd-tab-set {
+    background-color: #fafafa;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.sd-tab-content img,
+.sd-card img {
+    margin-bottom: 1.25rem !important;
+}
+
+.lb-nav {
+    display: none !important;
+}
+
+/* ========================================================
+   Card Help Tooltips: Default Inline + Top-Right Override
+   ======================================================== */
+
+.sd-card {
+    position: relative !important;
+    overflow: visible !important;
+}
+
+/* 1. DEFAULT: Inline Placement (sits right next to text/labels) */
+.card-help {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    margin-left: 0.35em !important;
+    margin-right: 0.15em !important;
+    cursor: pointer !important;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Inline Tooltip Box (pops UP above the inline icon) */
+.card-help::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 135%;
+    left: 50%;
+    width: max-content;
+    max-width: 280px;
+    padding: 8px 12px;
+    background-color: #1e293b;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: 1.4;
+    text-align: left;
+    white-space: normal;
+    border-radius: 6px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25);
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%) translateY(4px);
+    transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out, visibility 0.15s;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Inline Caret (points DOWN to icon) */
+.card-help::before {
+    content: "";
+    position: absolute;
+    bottom: 105%;
+    left: 50%;
+    border-width: 6px;
+    border-style: solid;
+    border-color: #1e293b transparent transparent transparent;
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%) translateY(4px);
+    transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out, visibility 0.15s;
+    pointer-events: none;
+    z-index: 1001;
+}
+
+/* Hover/Focus triggers */
+.card-help:hover::after,
+.card-help:hover::before,
+.card-help:focus::after,
+.card-help:focus::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.card-help:hover svg,
+.card-help:focus svg {
+    transform: scale(1.12);
+    transition: transform 0.15s ease-in-out;
+}
+
+
+/* 2. OVERRIDE: Top-Right Corner Placement */
+.card-help-top-right .card-help {
+    position: absolute !important;
+    top: 12px !important;
+    right: 14px !important;
+    margin: 0 !important;
+    z-index: 10 !important;
+}
+
+/* Top-Right Tooltip Box (pops DOWN below top-right icon) */
+.card-help-top-right .card-help::after {
+    bottom: auto;
+    top: 120%;
+    left: auto;
+    right: 0;
+    transform: translateY(-4px);
+}
+
+/* Top-Right Caret (points UP) */
+.card-help-top-right .card-help::before {
+    bottom: auto;
+    top: 95%;
+    left: auto;
+    right: 6px;
+    border-color: transparent transparent #1e293b transparent;
+    transform: translateY(-4px);
+}
+
+.card-help-top-right .card-help:hover::after,
+.card-help-top-right .card-help:hover::before,
+.card-help-top-right .card-help:focus::after,
+.card-help-top-right .card-help:focus::before {
+    transform: translateY(0);
+}
+
+
+/* Mobile Screen Bounds Protection */
+@media (max-width: 640px) {
+    .card-help::after {
+        max-width: min(240px, 70vw);
+        font-size: 0.78rem;
+    }
+}
+
 @media screen and (max-width: 768px) {
 
     .wy-nav-top {
@@ -488,5 +708,27 @@ samp,
 
     .wy-menu-vertical .toctree-expand {
         display: none !important;
+    }
+
+    .sd-tab-set:not(.sd-tab-content .sd-tab-set)>.sd-tab-label {
+        font-size: 0.82rem !important;
+        padding: 6px 10px !important;
+        margin-bottom: 4px !important;
+        border-radius: 4px !important;
+    }
+
+    .sd-tab-content .sd-tab-set>.sd-tab-label {
+        font-size: 0.78rem !important;
+        padding: 4px 8px !important;
+        margin-top: 2px !important;
+    }
+
+    .sd-tab-content .sd-tab-set {
+        padding: 8px 6px !important;
+    }
+
+    .card-help::after {
+        max-width: min(240px, 70vw);
+        font-size: 0.78rem;
     }
 }

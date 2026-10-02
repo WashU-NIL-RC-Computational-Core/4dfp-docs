@@ -100,6 +100,8 @@ Options
 
 N.B.:	to convert SPM2 use options -x and -s
 
+.. _ifh2hdr:
+
 ifh2hdr
 -------
 create analyze 7.5 header
@@ -115,6 +117,8 @@ Options
 ================	=========
 -r<flt>[to<flt>]	set range
 ================	=========
+
+.. _hdr2txt:
 
 hdr2txt
 -------

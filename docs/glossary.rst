@@ -1,0 +1,25 @@
+.. _glossary:
+
+Glossary
+========
+
+.. glossary::
+   :sorted:
+
+   Big-Endian
+      A byte-ordering convention where the most significant byte is stored at the lowest memory address. Historically common in legacy Unix architectures (such as SPARC or SGI) and older medical imaging systems.
+
+   Explicit Little-Endian
+      The standard DICOM transfer syntax on modern PC architectures (x86/x64). Bytes are ordered least-significant first, and each data element explicitly includes a two-character Value Representation (VR) tag describing its data type.
+
+   DICOM Part 10
+      Section 10 of the NEMA DICOM standard (PS 3.10), which specifies the media storage format for DICOM files. A compliant file consists of a 128-byte preamble, followed by the 4-character prefix ``DICM`` and standardized attribute tags.
+
+   Siemens .IMA
+      A proprietary file extension used by Siemens MRI scanners to export standard DICOM datasets or raw header files.
+
+   REL Field
+      The Relative Path / Session tag used by 4dfp DICOM sorting scripts (e.g., ``dcm_sort``, ``pseudo_dcm_sort.csh``) to map, filter, and organize raw study output folders.
+
+   Subject Prefix
+      The patient or subject identifier string specified via the ``-p`` CLI parameter (e.g., ``-pDOE^JOHN``) used to match and extract raw DICOM header records.

@@ -2,3 +2,5 @@ myst_parser
 sphinx-rtd-theme
 sphinx-copybutton
 sphinx-design
+sphinxcontrib-lightbox2
+sphinx-sitemap

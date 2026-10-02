@@ -37,9 +37,10 @@ All 4dfp based image analysis programs used at the Washington University School 
    Image data <image>
    Interfile header <interfile-header>
    rec file <rec-file>
+   Header <header>
 
 
-.. grid:: 1 2 3 3
+.. grid:: 1 2 2 2
    :gutter: 3
 
    .. grid-item-card:: 🖼️ Image Data
@@ -55,6 +56,13 @@ All 4dfp based image analysis programs used at the Washington University School 
       :class-card: nav-card
 
       Annotated .ifh file listing, parameter field definitions, and the minimal set of metadata required to interpret voxel data.
+
+   .. grid-item-card:: 📝 Header
+      :link: header
+      :link-type: doc
+      :class-card: nav-card
+
+      348-byte Mayo Clinic ANALYZE 7.5 binary structure, header field layout, byte-order handling, and compatibility with third-party neuroimaging software.
 
    .. grid-item-card:: 📝 REC File
       :link: rec-file

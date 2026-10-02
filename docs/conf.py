@@ -1,3 +1,6 @@
+import os
+import sys
+
 # -*- coding: utf-8 -*-
 #
 # 4dfp documentation build configuration file, created by
@@ -30,7 +33,9 @@
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.mathjax", "sphinx_copybutton", "sphinx_design", "myst_parser"]
+sys.path.insert(0, os.path.abspath('_ext'))
+
+extensions = ["sphinx.ext.mathjax", "sphinx_copybutton", "sphinx_sitemap", "sphinxcontrib.lightbox2", "sphinx_design", "myst_parser", "card_help",]
 myst_enable_extensions = ["colon_fence"]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -47,8 +52,13 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'4dfp'
-copyright = u'2026, Avi Snyder, Jon Koller, Haley Acevedo'
+copyright = u'2017, Avi Snyder, Jon Koller, Haley Acevedo'
 author = u'Avi Snyder, Jon Koller, Haley Acevedo'
+
+html_baseurl = "https://4dfp.readthedocs.io/en/latest/"
+
+sitemap_url_scheme = "{lang}{version}{link}"
+sitemap_locales = [None]
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
