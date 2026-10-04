@@ -245,19 +245,28 @@ document.addEventListener("DOMContentLoaded", function () {
             modalResults.innerHTML = '<div class="custom-modal-state">Searching...</div>';
 
             try {
-                let apiUrl = `/_/api/v2/search/?q=${encodeURIComponent(query)}`;
+                let project = "";
+                let version = "";
 
-                // Read the Docs requires project and version parameters
                 if (window.READTHEDOCS_DATA) {
-                    if (window.READTHEDOCS_DATA.project) {
-                        apiUrl += `&project=${encodeURIComponent(window.READTHEDOCS_DATA.project)}`;
-                    }
-                    if (window.READTHEDOCS_DATA.version) {
-                        apiUrl += `&version=${encodeURIComponent(window.READTHEDOCS_DATA.version)}`;
-                    }
+                    project = window.READTHEDOCS_DATA.project || "";
+                    version = window.READTHEDOCS_DATA.version || "";
                 }
 
-                const response = await fetch(apiUrl);
+                // Construct API v3 search URL
+                let apiUrl = `/_/api/v3/search/?q=${encodeURIComponent(query)}`;
+                if (project) apiUrl += `&project=${encodeURIComponent(project)}`;
+                if (version) apiUrl += `&version=${encodeURIComponent(version)}`;
+
+                let response = await fetch(apiUrl);
+
+                // Fallback to app.readthedocs.org CORS API if internal proxy is bypassed
+                if (!response.ok && response.status === 404) {
+                    let corsUrl = `https://app.readthedocs.org/api/v3/search/?q=${encodeURIComponent(query)}`;
+                    if (project) corsUrl += `&project=${encodeURIComponent(project)}`;
+                    if (version) corsUrl += `&version=${encodeURIComponent(version)}`;
+                    response = await fetch(corsUrl);
+                }
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -268,7 +277,6 @@ document.addEventListener("DOMContentLoaded", function () {
             } catch (err) {
                 console.error("Custom Search Error:", err);
 
-                // Handle local environment vs live Read the Docs
                 const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.protocol === "file:";
 
                 if (isLocal) {
@@ -281,7 +289,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         </div>
                     `;
                 } else {
-                    modalResults.innerHTML = '<div class="custom-modal-state">Error fetching search results. Press F12 to inspect the browser console.</div>';
+                    modalResults.innerHTML = `<div class="custom-modal-state">Error fetching search results (${err.message}).</div>`;
                 }
             }
         }
@@ -295,21 +303,39 @@ document.addEventListener("DOMContentLoaded", function () {
             let html = '<ul class="custom-search-list">';
             results.slice(0, 10).forEach(res => {
                 const pageTitle = res.title || "Untitled";
-                let pageUrl = res.path || (res.domain + res.path);
+                let pageUrl = res.path || (res.domain ? `https://${res.domain}${res.path}` : "");
 
-                if (!pageUrl.includes("highlight=")) {
+                // Append highlight parameter for Sphinx target highlighting
+                if (pageUrl && !pageUrl.includes("highlight=")) {
                     const parts = pageUrl.split("#");
                     const separator = parts[0].includes("?") ? "&" : "?";
                     pageUrl = `${parts[0]}${separator}highlight=${encodeURIComponent(query)}${parts[1] ? "#" + parts[1] : ""}`;
                 }
 
                 let snippet = "";
+
+                // Extract highlights from API v3 block or page structures
                 if (res.blocks && res.blocks.length > 0) {
-                    const block = res.blocks[0];
-                    if (block.highlights && block.highlights.content && block.highlights.content.length > 0) {
-                        snippet = block.highlights.content[0];
-                    } else if (block.title) {
-                        snippet = block.title;
+                    for (const block of res.blocks) {
+                        if (block.highlights) {
+                            if (block.highlights.content && block.highlights.content.length > 0) {
+                                snippet = block.highlights.content.join(" ... ");
+                                break;
+                            } else if (block.highlights.title && block.highlights.title.length > 0) {
+                                snippet = block.highlights.title.join(" ... ");
+                                break;
+                            }
+                        }
+                        if (block.content) {
+                            snippet = block.content.substring(0, 150) + "...";
+                            break;
+                        }
+                    }
+                } else if (res.highlights) {
+                    if (res.highlights.content && res.highlights.content.length > 0) {
+                        snippet = res.highlights.content.join(" ... ");
+                    } else if (res.highlights.title && res.highlights.title.length > 0) {
+                        snippet = res.highlights.title.join(" ... ");
                     }
                 }
 
@@ -325,7 +351,7 @@ document.addEventListener("DOMContentLoaded", function () {
             html += '</ul>';
             modalResults.innerHTML = html;
 
-            // In-page navigation handler
+            // Handle same-page fragment clicks and parent unfolding
             modalResults.querySelectorAll("a").forEach(link => {
                 link.addEventListener("click", function () {
                     const targetUrl = new URL(link.href, window.location.origin);
