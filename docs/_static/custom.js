@@ -1,4 +1,7 @@
 function initCustomDocScripts() {
+    // -------------------------------------------------------------
+    // 1. Prevent default hover behaviors on cards
+    // -------------------------------------------------------------
     const cardLinks = document.querySelectorAll('.nav-card a, .sd-card a, a.sd-card-link');
     cardLinks.forEach(link => {
         ['mouseenter', 'mouseover', 'pointerenter'].forEach(eventType => {
@@ -8,6 +11,9 @@ function initCustomDocScripts() {
         });
     });
 
+    // -------------------------------------------------------------
+    // 2. Track search query in sessionStorage
+    // -------------------------------------------------------------
     document.addEventListener("input", function (e) {
         if (e.target && (e.target.matches("readthedocs-search input") || e.target.closest("readthedocs-search"))) {
             const query = e.target.value.trim();
@@ -18,7 +24,7 @@ function initCustomDocScripts() {
     }, true);
 
     document.addEventListener("click", function (e) {
-        const link = e.target.closest("readthedocs-search a, [data-search-result] a");
+        const link = e.target.closest("readthedocs-search a, [data-search-result] a, .rst-content a");
         if (link) {
             const searchInput = document.querySelector("readthedocs-search input");
             if (searchInput && searchInput.value) {
@@ -27,6 +33,9 @@ function initCustomDocScripts() {
         }
     }, true);
 
+    // -------------------------------------------------------------
+    // 3. Breadcrumb / Page Title Navigation Bar Enhancement
+    // -------------------------------------------------------------
     const navTopLink = document.querySelector(".wy-nav-top a");
     const breadcrumbList = document.querySelector("ul.wy-breadcrumbs");
 
@@ -82,127 +91,113 @@ function initCustomDocScripts() {
         });
     }
 
-    function expandParents(element) {
-        if (!element) return;
+    // -------------------------------------------------------------
+    // 4. Search Highlight & Expand Target Components
+    // -------------------------------------------------------------
+    handleSearchTargetHighlighting();
+}
 
-        let ancestors = [];
-        let current = element.parentElement;
+/**
+ * Searches for the user query or URL anchor in the main content,
+ * expands parent details/dropdowns and tab sets, scrolls into view, and highlights.
+ */
+function handleSearchTargetHighlighting() {
+    // Check sessionStorage or URL parameters (?highlight= or ?q=)
+    const urlParams = new URLSearchParams(window.location.search);
+    const query = sessionStorage.getItem("rtd_search_query") || urlParams.get("highlight") || urlParams.get("q");
 
-        while (current && current !== document.body) {
-            if (current.tagName.toLowerCase() === "details" || current.classList.contains("sd-dropdown")) {
-                const detailsEl = current.tagName.toLowerCase() === "details" ? current : current.closest("details");
-                if (detailsEl) ancestors.push({ type: "details", el: detailsEl });
-            } else if (current.classList.contains("sd-tab-content")) {
-                ancestors.push({ type: "tab", el: current });
-            }
-            current = current.parentElement;
-        }
+    // Consume stored search query after retrieval
+    sessionStorage.removeItem("rtd_search_query");
 
-        ancestors.reverse();
+    if (!query || query.trim().length < 2) return;
 
-        const processed = new Set();
+    const queryLower = query.trim().toLowerCase();
+    const contentArea = document.querySelector(".rst-content, main, [role='main']");
+    if (!contentArea) return;
 
-        ancestors.forEach(item => {
-            if (processed.has(item.el)) return;
-            processed.add(item.el);
+    // Find target element by URL anchor hash or matching text node content
+    let targetElement = null;
 
-            if (item.type === "details") {
-                item.el.open = true;
-                item.el.setAttribute("open", "");
-                item.el.dispatchEvent(new Event("toggle", { bubbles: true }));
-            } else if (item.type === "tab") {
-                const tabContent = item.el;
-                const tabSet = tabContent.closest(".sd-tab-set");
-                if (tabSet) {
-                    // Find index of this tab content within its tab set
-                    const allContents = Array.from(tabSet.querySelectorAll(":scope > .sd-tab-content"));
-                    let targetIndex = allContents.indexOf(tabContent);
-
-                    if (targetIndex === -1) {
-                        const fallbackContents = Array.from(tabSet.children).filter(c => c.classList.contains("sd-tab-content"));
-                        targetIndex = fallbackContents.indexOf(tabContent);
-                    }
-
-                    if (targetIndex !== -1) {
-                        const labels = Array.from(tabSet.querySelectorAll(":scope > label.sd-tab-label, :scope > label"));
-                        const inputs = Array.from(tabSet.querySelectorAll(":scope > input"));
-
-                        const label = labels[targetIndex] || tabSet.querySelectorAll("label")[targetIndex];
-                        const input = inputs[targetIndex] || tabSet.querySelectorAll("input")[targetIndex];
-
-                        if (input) {
-                            input.checked = true;
-                            input.dispatchEvent(new Event("change", { bubbles: true }));
-                        }
-                        if (label) {
-                            label.click();
-                        } else if (input) {
-                            input.click();
-                        }
-                    }
-                }
-            }
-        });
+    if (window.location.hash) {
+        targetElement = document.querySelector(window.location.hash);
     }
 
-    function checkForTargetAndExpand() {
-        const urlParams = new URLSearchParams(window.location.search);
-        let highlightTerm = urlParams.get("highlight");
-
-        if (!highlightTerm) {
-            highlightTerm = sessionStorage.getItem("rtd_search_query");
-        }
-
-        const hasHash = window.location.hash.length > 1;
-
-        if (!highlightTerm && !hasHash) return;
-
-        let attempts = 0;
-        const maxAttempts = 30;
-
-        const pollInterval = setInterval(() => {
-            attempts++;
-            let targetElement = null;
-
-            targetElement = document.querySelector("span.highlighted, mark.highlighted, mark");
-
-            if (!targetElement && highlightTerm) {
-                const cleanTerm = highlightTerm.trim();
-                const contentArea = document.querySelector(".rst-content") || document.querySelector("main") || document.body;
-                const candidateNodes = contentArea.querySelectorAll("pre, code, span, p, td, div.highlight");
-
-                for (let el of candidateNodes) {
-                    if (el.closest(".wy-nav-side") || el.closest("footer")) continue;
-
-                    if (el.textContent.includes(cleanTerm)) {
-                        targetElement = el;
-                        break;
-                    }
+    if (!targetElement) {
+        const walker = document.createTreeWalker(
+            contentArea,
+            NodeFilter.SHOW_TEXT,
+            {
+                acceptNode: function (node) {
+                    const parent = node.parentElement;
+                    if (!parent) return NodeFilter.FILTER_REJECT;
+                    const tag = parent.tagName.toLowerCase();
+                    if (['script', 'style', 'noscript', 'textarea'].includes(tag)) return NodeFilter.FILTER_REJECT;
+                    return node.textContent.toLowerCase().includes(queryLower)
+                        ? NodeFilter.FILTER_ACCEPT
+                        : NodeFilter.FILTER_SKIP;
                 }
             }
+        );
 
-            if (!targetElement && hasHash) {
-                const hashId = decodeURIComponent(window.location.hash.substring(1));
-                targetElement = document.getElementById(hashId) || document.getElementsByName(hashId)[0];
-            }
-
-            if (targetElement) {
-                clearInterval(pollInterval);
-                expandParents(targetElement);
-
-                sessionStorage.removeItem("rtd_search_query");
-
-                setTimeout(() => {
-                    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-                }, 250);
-            } else if (attempts >= maxAttempts) {
-                sessionStorage.removeItem("rtd_search_query");
-                clearInterval(pollInterval);
-            }
-        }, 100);
+        const matchNode = walker.nextNode();
+        if (matchNode) {
+            targetElement = matchNode.parentElement;
+        }
     }
 
-    checkForTargetAndExpand();
+    if (!targetElement) return;
+
+    // Step A: Expand all parent dropdowns (<details>) and tabs (.sd-tab-set)
+    expandParents(targetElement);
+
+    // Step B: Scroll target into view and apply highlight effect
+    setTimeout(() => {
+        targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        // Highlight code block parent or inline container if applicable
+        const highlightContainer = targetElement.closest(".highlight, .sd-card, code, p, tr") || targetElement;
+        highlightContainer.classList.add("rtd-search-target-highlight");
+
+        setTimeout(() => {
+            highlightContainer.classList.remove("rtd-search-target-highlight");
+        }, 3500);
+    }, 200);
+}
+
+/**
+ * Recursively opens parent dropdowns (<details>) and activates parent tabs (.sd-tab-content)
+ * from top (outermost) to bottom (innermost).
+ */
+function expandParents(el) {
+    const tabLabelsToClick = [];
+    let current = el;
+
+    while (current && current !== document.body) {
+        // Handle Sphinx-Design Dropdowns (.. dropdown::)
+        if (current.tagName === 'DETAILS') {
+            current.open = true;
+        }
+
+        // Handle Sphinx-Design Tabs (.. tab-set:: / .. tab-item::)
+        if (current.classList && current.classList.contains('sd-tab-content')) {
+            const tabSet = current.closest('.sd-tab-set');
+            if (tabSet) {
+                const contents = Array.from(tabSet.querySelectorAll(':scope > .sd-tab-content'));
+                const index = contents.indexOf(current);
+                const labels = tabSet.querySelectorAll(':scope > .sd-tab-label');
+
+                if (labels[index]) {
+                    // Store outermost tabs first
+                    tabLabelsToClick.unshift(labels[index]);
+                }
+            }
+        }
+
+        current = current.parentElement;
+    }
+
+    // Trigger tab label clicks sequentially from top-level to nested tabs
+    tabLabelsToClick.forEach(label => label.click());
 }
 
 if (document.readyState === "loading") {
