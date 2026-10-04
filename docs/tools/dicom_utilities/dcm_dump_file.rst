@@ -24,47 +24,34 @@ Usage
 -----
 
 .. list-table::
-   :widths: 15 25 60
+   :widths: 15 60
    :header-rows: 1
 
    * - Flag
-     - Category
      - Description
    * - ``-b``
-     - :bdg-secondary:`Byte Order`
      - Read data using :term:`Big-Endian` byte order (common in legacy systems).
    * - ``-e``
-     - :bdg-danger:`Execution`
      - Exit immediately on file open failure, skipping remaining files.
    * - ``-E``
-     - :bdg-info:`Format`
      - Process files using :term:`DICOM Part 10` format with eFilm workstation compatibility.
    * - ``-f``
-     - :bdg-secondary:`Formatting`
      - Format stdout into clean, aligned text columns for easier reading.
    * - ``-g``
-     - :bdg-warning:`Parsing`
      - Ignore group length attributes (useful for files with corrupted size markers).
    * - ``-l``
-     - :bdg-warning:`Parsing`
      - Use retired length-to-end attributes to calculate overall object size.
    * - ``-L``
-     - :bdg-secondary:`Byte Order`
      - Read data using :term:`Explicit Little-Endian` byte order (standard PC format).
    * - ``-m <mult>``
-     - :bdg-info:`Value Required`
      - Limit displayed items for repeated data fields (e.g., ``-m 5`` displays first 5 entries).
    * - ``-t``
-     - :bdg-warning:`Parsing`
      - Parse files using :term:`DICOM Part 10` standards while ignoring minor type mismatches.
    * - ``-v``
-     - :bdg-light:`Logging`
      - Enable verbose logging to display detailed technical updates during processing.
    * - ``-w <flag>``
-     - :bdg-info:`Value Required`
      - Enable advanced file opening options (e.g., ``-w REPEAT`` permits duplicate tags).
    * - ``-z``
-     - :bdg-secondary:`Verification`
      - Perform automated format conversion and data verification on header attributes.
 
 .. note:: 

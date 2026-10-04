@@ -12,7 +12,7 @@
       :link-type: doc
       :class-card: nav-card
 
-      Sort flat directories of DICOM files by study series into organized target subdirectories.
+      Sort directories of DICOM files by study series into organized target subdirectories.
 
    .. grid-item-card:: 🌐 DTI
       :link: dti/dti

@@ -63,6 +63,10 @@ Examples
          .. card:: 📥 Input Data Structure
             :class-card: sd-bg-light sd-border-1 mb-3
 
+            .. div:: card-help-top-right
+
+               :card-help:`Hover over image or click to inspect DICOM source directory structure`
+
             Ensure your source files are located directly in the working folder:
 
             .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case1/pds_c1_source_data.png
@@ -78,13 +82,34 @@ Examples
 
                .. code-block:: bash
 
-                  dcm_sort /path/to/DICOM_dir -d -c -t -i -rtest -pDOE^JOHN
+                  pseudo_dcm_sort.csh DICOM
 
                **2. Expected Output:**
 
-               .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/studies_output.png
+               .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case1/cmd1/pds_c1_cmd1_output.png
                   :alt: Expected terminal output for standard sort
                   :align: center
+
+               **3. Resulting Output Files:**
+
+              .. grid:: 1 2 2 2
+                  :gutter: 2
+
+                  .. grid-item-card:: 📂 Updated Directory
+
+                    .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case1/cmd1/pds_c1_cmd1_sorted_folders.png
+                        :alt: Updated folder tree
+                        :align: center
+
+                  .. grid-item-card:: 📄 `DICOM.studies.txt` Breakdown
+
+                     .. div:: card-help-top-right
+
+                        :card-help:`term:DICOM.studies.txt`
+
+                    .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case1/cmd1/pds_c1_cmd1_studies_txt.png
+                        :alt: Contents of DICOM.studies.txt
+                        :align: center
 
             .. tab-item:: ⚡Command 2: Tag Dump (`-e` Flag)
 
@@ -92,13 +117,34 @@ Examples
 
                .. code-block:: bash
 
-                  dcm_sort /path/to/DICOM_dir -d -c -t -i -edcm -rtest -pDOE^JOHN
+                  pseudo_dcm_sort.csh -eIMA DICOM
 
                **2. Expected Output:**
 
-               .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/use_e_flag.png
+               .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case1/cmd2/pds_c1_cmd2_output.png
                   :alt: Output showing formatted element fields
                   :align: center
+
+               **3. Resulting Output Files:**
+
+              .. grid:: 1 2 2 2
+                  :gutter: 2
+
+                  .. grid-item-card:: 📂 Updated Directory
+
+                    .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case1/cmd2/pds_c1_cmd2_sorted_folders.png
+                        :alt: Updated folder tree
+                        :align: center
+
+                  .. grid-item-card:: 📄 `DICOM.studies.txt` Breakdown
+
+                     .. div:: card-help-top-right
+
+                        :card-help:`term:DICOM.studies.txt`
+
+                    .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case1/cmd2/pds_c1_cmd2_studies_txt.png
+                        :alt: Contents of DICOM.studies.txt
+                        :align: center
 
       .. tab-item:: 📁 Case 2: DICOMs in Sub-directories
 
@@ -124,7 +170,7 @@ Examples
 
               **2. Terminal Output:**
 
-              .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case2/run_command.png
+              .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case2/cmd1/pds_c2_cmd1_output.png
                   :alt: Terminal stdout log
                   :align: center
                   :width: 70%
@@ -140,13 +186,17 @@ Examples
 
                   .. grid-item-card:: 📂 Updated Directory
 
-                    .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case2/sorted_output.png
+                    .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case2/cmd1/pds_c2_cmd1_sorted_folders.png
                         :alt: Updated folder tree
                         :align: center
 
                   .. grid-item-card:: 📄 `DICOM.studies.txt` Breakdown
 
-                    .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case2/DICOM_studies_txt.png
+                     .. div:: card-help-top-right
+
+                        :card-help:`term:DICOM.studies.txt`
+
+                    .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case2/cmd1/pds_c2_cmd1_studies_txt.png
                         :alt: Contents of DICOM.studies.txt
                         :align: center
 
@@ -166,7 +216,7 @@ Examples
 
                   **Error Output:**
 
-                  .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case2/did_not_use_s_option.png
+                  .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/errors/did_not_use_s_option.png
                      :alt: Missing -s flag
                      :align: center
 
@@ -178,7 +228,7 @@ Examples
             .. tab-item:: ❌ Multiple Sub-directories Neither Named "DICOM"
                :class-label: tab-error
 
-               **Cause:** Executing the sort command without the mandatory ``-p`` flag causes the script to abort:
+               **Cause:** When there are multiple directories in the study # directory, neither being named "DICOM".
 
                .. code-block:: bash
 
@@ -186,13 +236,13 @@ Examples
 
                **Error Input:**
 
-               .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case2/multiple_dir_in_subdir.png
+               .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/errors/multiple_dir_in_subdir.png
                   :alt: Multiple directories in sub-directory
                   :align: center
 
                **Error Output:**
 
-               .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case2/multiple_sub_dir_under_numeric.png
+               .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/errors/multiple_sub_dir_under_numeric.png
                   :alt: Multiple directories in sub-directory Output
                   :align: center
 

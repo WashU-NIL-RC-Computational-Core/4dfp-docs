@@ -67,12 +67,16 @@ Examples
       .. card:: 📥 Input Data Structure
         :class-card: sd-bg-light sd-border-1 mb-3
 
-          Ensure your source files are located directly in the working folder:
+        .. div:: card-help-top-right
 
-          .. image:: /_static/scripts/dicom_utilities/dcm_sort/case1/ds_c1_source_data.png
-              :alt: Source directory containing DICOM files directly
-              :align: center
-              :width: 80%
+          :card-help:`Hover over image or click to inspect DICOM source directory structure`
+
+        Ensure your source files are located directly in the working folder:
+
+        .. image:: /_static/scripts/dicom_utilities/dcm_sort/case1/ds_c1_source_data.png
+            :alt: Source directory containing DICOM files directly
+            :align: center
+            :width: 80%
 
       .. tab-set::
 
@@ -103,13 +107,17 @@ Examples
 
               .. grid-item-card:: 📄 `DICOM.studies.txt` Breakdown
 
+                .. div:: card-help-top-right
+
+                  :card-help:`term:DICOM.studies.txt`
+
                 .. image:: /_static/scripts/dicom_utilities/dcm_sort/case1/cmd1/dicom_studies_text.png
                     :alt: Contents of DICOM.studies.txt
                     :align: center
 
           .. note::
 
-            ``dcm_sort`` did not sort the ``.IMA`` file by default.
+            ``dcm_sort`` did not sort the :term:`Siemens .IMA` file by default.
 
         .. tab-item:: ⚡Command 2: Sort By Extension (`-e` Flag)
 
@@ -135,6 +143,10 @@ Examples
                     :align: center
 
               .. grid-item-card:: 📄 `DICOM.studies.txt` Breakdown
+
+                .. div:: card-help-top-right
+
+                  :card-help:`term:DICOM.studies.txt`
 
                 .. image:: /_static/scripts/dicom_utilities/dcm_sort/case1/cmd2/dicom_studies_txt.png
                     :alt: Contents of DICOM.studies.txt
@@ -164,6 +176,10 @@ Examples
                     :align: center
 
               .. grid-item-card:: 📄 `DICOM.studies.txt` Breakdown
+
+                .. div:: card-help-top-right
+
+                  :card-help:`term:DICOM.studies.txt`
 
                 .. image:: /_static/scripts/dicom_utilities/dcm_sort/case1/cmd3/dicom_studies_txt.png
                     :alt: Contents of DICOM.studies.txt
