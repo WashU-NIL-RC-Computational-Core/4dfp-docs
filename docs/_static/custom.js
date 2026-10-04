@@ -253,26 +253,40 @@ document.addEventListener("DOMContentLoaded", function () {
                     version = window.READTHEDOCS_DATA.version || "";
                 }
 
-                // Construct API v3 search URL
-                let apiUrl = `/_/api/v3/search/?q=${encodeURIComponent(query)}`;
-                if (project) apiUrl += `&project=${encodeURIComponent(project)}`;
-                if (version) apiUrl += `&version=${encodeURIComponent(version)}`;
-
-                let response = await fetch(apiUrl);
-
-                // Fallback to app.readthedocs.org CORS API if internal proxy is bypassed
-                if (!response.ok && response.status === 404) {
-                    let corsUrl = `https://app.readthedocs.org/api/v3/search/?q=${encodeURIComponent(query)}`;
-                    if (project) corsUrl += `&project=${encodeURIComponent(project)}`;
-                    if (version) corsUrl += `&version=${encodeURIComponent(version)}`;
-                    response = await fetch(corsUrl);
+                // Format query using API v3 search syntax: "project:slug/version search_terms"
+                let searchQ = query;
+                if (project && version) {
+                    searchQ = `project:${project}/${version} ${query}`;
+                } else if (project) {
+                    searchQ = `project:${project} ${query}`;
                 }
+
+                let apiUrl = `/_/api/v3/search/?q=${encodeURIComponent(searchQ)}`;
+                let response = await fetch(apiUrl);
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                const data = await response.json();
+                let data = await response.json();
+
+                // Fallback 1: Try without specific version slug if 0 results returned
+                if ((!data.results || data.results.length === 0) && project && version) {
+                    const fallbackQ = `project:${project} ${query}`;
+                    const fallbackResp = await fetch(`/_/api/v3/search/?q=${encodeURIComponent(fallbackQ)}`);
+                    if (fallbackResp.ok) {
+                        data = await fallbackResp.json();
+                    }
+                }
+
+                // Fallback 2: Try un-scoped raw query if project index is still empty
+                if ((!data.results || data.results.length === 0) && project) {
+                    const rawResp = await fetch(`/_/api/v3/search/?q=${encodeURIComponent(query)}`);
+                    if (rawResp.ok) {
+                        data = await rawResp.json();
+                    }
+                }
+
                 renderResults(data.results || [], query);
             } catch (err) {
                 console.error("Custom Search Error:", err);
@@ -303,7 +317,11 @@ document.addEventListener("DOMContentLoaded", function () {
             let html = '<ul class="custom-search-list">';
             results.slice(0, 10).forEach(res => {
                 const pageTitle = res.title || "Untitled";
-                let pageUrl = res.path || (res.domain ? `https://${res.domain}${res.path}` : "");
+                let pageUrl = res.path || "";
+
+                if (res.domain && res.path) {
+                    pageUrl = `https://${res.domain}${res.path}`;
+                }
 
                 // Append highlight parameter for Sphinx target highlighting
                 if (pageUrl && !pageUrl.includes("highlight=")) {
@@ -314,24 +332,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 let snippet = "";
 
-                // Extract highlights from API v3 block or page structures
+                // Extract snippet from blocks or top-level highlights in API v3 structure
                 if (res.blocks && res.blocks.length > 0) {
                     for (const block of res.blocks) {
-                        if (block.highlights) {
-                            if (block.highlights.content && block.highlights.content.length > 0) {
-                                snippet = block.highlights.content.join(" ... ");
-                                break;
-                            } else if (block.highlights.title && block.highlights.title.length > 0) {
-                                snippet = block.highlights.title.join(" ... ");
-                                break;
-                            }
-                        }
-                        if (block.content) {
+                        if (block.highlights && block.highlights.content && block.highlights.content.length > 0) {
+                            snippet = block.highlights.content.join(" ... ");
+                            break;
+                        } else if (block.highlights && block.highlights.title && block.highlights.title.length > 0) {
+                            snippet = block.highlights.title.join(" ... ");
+                            break;
+                        } else if (block.content) {
                             snippet = block.content.substring(0, 150) + "...";
                             break;
                         }
                     }
-                } else if (res.highlights) {
+                }
+
+                if (!snippet && res.highlights) {
                     if (res.highlights.content && res.highlights.content.length > 0) {
                         snippet = res.highlights.content.join(" ... ");
                     } else if (res.highlights.title && res.highlights.title.length > 0) {
