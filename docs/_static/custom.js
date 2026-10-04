@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
+function initCustomDocScripts() {
     const navTopLink = document.querySelector(".wy-nav-top a");
     const breadcrumbList = document.querySelector("ul.wy-breadcrumbs");
 
@@ -109,25 +109,43 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    setTimeout(function () {
-        let targetElement = null;
+    function checkForTargetAndExpand() {
+        const hasHighlightQuery = window.location.search.includes("highlight=");
+        const hasHash = window.location.hash.length > 1;
 
-        const highlightedSpans = document.querySelectorAll("span.highlighted");
-        if (highlightedSpans.length > 0) {
-            targetElement = highlightedSpans[0];
-        }
+        if (!hasHighlightQuery && !hasHash) return;
 
-        if (!targetElement && window.location.hash) {
-            const hashId = window.location.hash.substring(1);
-            targetElement = document.getElementById(hashId) || document.getElementsByName(hashId)[0];
-        }
+        let attempts = 0;
+        const maxAttempts = 30;
 
-        if (targetElement) {
-            expandParents(targetElement);
+        const pollInterval = setInterval(() => {
+            attempts++;
 
-            setTimeout(() => {
-                targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-            }, 150);
-        }
-    }, 300);
-});
+            let targetElement = document.querySelector("span.highlighted, mark.highlighted, mark");
+
+            if (!targetElement && hasHash) {
+                const hashId = decodeURIComponent(window.location.hash.substring(1));
+                targetElement = document.getElementById(hashId) || document.getElementsByName(hashId)[0];
+            }
+
+            if (targetElement) {
+                clearInterval(pollInterval);
+                expandParents(targetElement);
+
+                setTimeout(() => {
+                    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+                }, 150);
+            } else if (attempts >= maxAttempts) {
+                clearInterval(pollInterval);
+            }
+        }, 100);
+    }
+
+    checkForTargetAndExpand();
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCustomDocScripts);
+} else {
+    initCustomDocScripts();
+}

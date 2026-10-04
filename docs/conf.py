@@ -107,6 +107,12 @@ exclude_patterns = [
     'tools/threshold_and_mask/index.rst',
 ]
 
+hoverxref_roles = [
+    "ref",
+    "term",
+    "option",
+]
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
@@ -139,7 +145,7 @@ html_favicon = '_static/WashU-SHIELD-Red_RGB.png'
 
 def setup(app):
     app.add_css_file('custom.css')
-    app.add_js_file('custom.js')
+    app.add_js_file('custom.js', loading_method='defer')
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
