@@ -306,11 +306,17 @@ document.addEventListener("DOMContentLoaded", function () {
             try {
                 const { project, version } = getRTDMetadata();
 
-                const params = new URLSearchParams();
-                params.append("q", query);
-                if (project) params.append("project", project);
-                if (version) params.append("version", version);
+                // RTD API v3 syntax: project:<project_slug>/<version_slug> <query>
+                let scopedQuery = query;
+                if (project) {
+                    if (version) {
+                        scopedQuery = `project:${project}/${version} ${query}`;
+                    } else {
+                        scopedQuery = `project:${project} ${query}`;
+                    }
+                }
 
+                const params = new URLSearchParams({ q: scopedQuery });
                 let apiUrl = `/_/api/v3/search/?${params.toString()}`;
                 let response = await fetch(apiUrl);
 
@@ -320,9 +326,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 let data = await response.json();
 
-                // Fallback 1: Try without version filter if 0 results returned
+                // Fallback: If 0 results on branch version, try project-wide search
                 if ((!data.results || data.results.length === 0) && project && version) {
-                    const fallbackParams = new URLSearchParams({ q: query, project: project });
+                    const fallbackParams = new URLSearchParams({ q: `project:${project} ${query}` });
                     const fallbackResp = await fetch(`/_/api/v3/search/?${fallbackParams.toString()}`);
                     if (fallbackResp.ok) {
                         data = await fallbackResp.json();
