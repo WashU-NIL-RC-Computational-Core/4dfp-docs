@@ -564,31 +564,6 @@ samp,
     transform: translateY(0);
 }
 
-.rtd-search-target-highlight {
-    animation: searchTargetPulse 3.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-    border-radius: 4px;
-}
-
-@keyframes searchTargetPulse {
-    0% {
-        background-color: rgba(255, 230, 0, 0.85) !important;
-        outline: 3px solid #ffc107 !important;
-        box-shadow: 0 0 16px rgba(255, 193, 7, 0.8) !important;
-    }
-
-    60% {
-        background-color: rgba(255, 230, 0, 0.4) !important;
-        outline: 2px solid rgba(255, 193, 7, 0.5) !important;
-        box-shadow: 0 0 8px rgba(255, 193, 7, 0.4) !important;
-    }
-
-    100% {
-        background-color: transparent;
-        outline: none;
-        box-shadow: none;
-    }
-}
-
 @media screen and (max-width: 768px) {
 
     .wy-nav-top {

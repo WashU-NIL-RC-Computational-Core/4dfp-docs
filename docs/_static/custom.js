@@ -12,23 +12,34 @@ function initCustomDocScripts() {
     });
 
     // -------------------------------------------------------------
-    // 2. Track search query in sessionStorage
+    // 2. Track search query (Shadow-DOM aware for RTD Web Components)
     // -------------------------------------------------------------
     document.addEventListener("input", function (e) {
-        if (e.target && (e.target.matches("readthedocs-search input") || e.target.closest("readthedocs-search"))) {
-            const query = e.target.value.trim();
-            if (query.length > 1) {
-                sessionStorage.setItem("rtd_search_query", query);
+        const path = e.composedPath ? e.composedPath() : [e.target];
+        for (let el of path) {
+            if (el.tagName === 'INPUT' && (el.type === 'search' || el.type === 'text' || el.placeholder?.toLowerCase().includes('search'))) {
+                const query = el.value.trim();
+                if (query.length > 1) {
+                    sessionStorage.setItem("rtd_search_query", query);
+                }
             }
         }
     }, true);
 
     document.addEventListener("click", function (e) {
-        const link = e.target.closest("readthedocs-search a, [data-search-result] a, .rst-content a");
-        if (link) {
-            const searchInput = document.querySelector("readthedocs-search input");
-            if (searchInput && searchInput.value) {
-                sessionStorage.setItem("rtd_search_query", searchInput.value.trim());
+        const path = e.composedPath ? e.composedPath() : [e.target];
+        for (let el of path) {
+            if (el.tagName === 'A' && el.href) {
+                const searchInput = findSearchInputInDOM();
+                if (searchInput && searchInput.value) {
+                    sessionStorage.setItem("rtd_search_query", searchInput.value.trim());
+                } else {
+                    try {
+                        const url = new URL(el.href);
+                        const q = url.searchParams.get("highlight") || url.searchParams.get("q");
+                        if (q) sessionStorage.setItem("rtd_search_query", q);
+                    } catch (err) { }
+                }
             }
         }
     }, true);
@@ -92,37 +103,43 @@ function initCustomDocScripts() {
     }
 
     // -------------------------------------------------------------
-    // 4. Search Highlight & Expand Target Components
+    // 4. Run Search Target Unfold & Highlight Logic
     // -------------------------------------------------------------
     handleSearchTargetHighlighting();
 }
 
 /**
- * Searches for the user query or URL anchor in the main content,
- * expands parent details/dropdowns and tab sets, scrolls into view, and highlights.
+ * Searches Shadow DOMs for RTD Search Inputs
+ */
+function findSearchInputInDOM() {
+    let input = document.querySelector("readthedocs-search input, input[type='search']");
+    if (input) return input;
+
+    const rtdSearch = document.querySelector("readthedocs-search");
+    if (rtdSearch && rtdSearch.shadowRoot) {
+        return rtdSearch.shadowRoot.querySelector("input");
+    }
+    return null;
+}
+
+/**
+ * Locates text query, expands nested components, and scrolls target into view (no highlight animation)
  */
 function handleSearchTargetHighlighting() {
-    // Check sessionStorage or URL parameters (?highlight= or ?q=)
     const urlParams = new URLSearchParams(window.location.search);
-    const query = sessionStorage.getItem("rtd_search_query") || urlParams.get("highlight") || urlParams.get("q");
+    let query = sessionStorage.getItem("rtd_search_query") || urlParams.get("highlight") || urlParams.get("q") || urlParams.get("query");
 
-    // Consume stored search query after retrieval
+    // Consume query so normal refreshes don't re-trigger
     sessionStorage.removeItem("rtd_search_query");
 
-    if (!query || query.trim().length < 2) return;
-
-    const queryLower = query.trim().toLowerCase();
     const contentArea = document.querySelector(".rst-content, main, [role='main']");
     if (!contentArea) return;
 
-    // Find target element by URL anchor hash or matching text node content
     let targetElement = null;
 
-    if (window.location.hash) {
-        targetElement = document.querySelector(window.location.hash);
-    }
-
-    if (!targetElement) {
+    // STEP A: PRIORITIZE TEXT CONTENT MATCH OVER URL HASH
+    if (query && query.trim().length > 1) {
+        const queryLower = query.trim().toLowerCase();
         const walker = document.createTreeWalker(
             contentArea,
             NodeFilter.SHOW_TEXT,
@@ -145,59 +162,70 @@ function handleSearchTargetHighlighting() {
         }
     }
 
+    // STEP B: FALLBACK TO LOCATION HASH ONLY IF NO TEXT MATCH WAS FOUND
+    if (!targetElement && window.location.hash) {
+        try {
+            targetElement = document.querySelector(window.location.hash);
+        } catch (e) { }
+    }
+
     if (!targetElement) return;
 
-    // Step A: Expand all parent dropdowns (<details>) and tabs (.sd-tab-set)
+    // STEP C: EXPAND ALL PARENT DROPDOWNS & NESTED TABS
     expandParents(targetElement);
 
-    // Step B: Scroll target into view and apply highlight effect
     setTimeout(() => {
         targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-
-        // Highlight code block parent or inline container if applicable
-        const highlightContainer = targetElement.closest(".highlight, .sd-card, code, p, tr") || targetElement;
-        highlightContainer.classList.add("rtd-search-target-highlight");
-
-        setTimeout(() => {
-            highlightContainer.classList.remove("rtd-search-target-highlight");
-        }, 3500);
-    }, 200);
+    }, 350);
 }
 
-/**
- * Recursively opens parent dropdowns (<details>) and activates parent tabs (.sd-tab-content)
- * from top (outermost) to bottom (innermost).
- */
 function expandParents(el) {
-    const tabLabelsToClick = [];
+    const tabsToActivate = [];
     let current = el;
 
     while (current && current !== document.body) {
-        // Handle Sphinx-Design Dropdowns (.. dropdown::)
         if (current.tagName === 'DETAILS') {
             current.open = true;
+            current.setAttribute('open', '');
+            current.dispatchEvent(new Event('toggle', { bubbles: true }));
         }
 
-        // Handle Sphinx-Design Tabs (.. tab-set:: / .. tab-item::)
         if (current.classList && current.classList.contains('sd-tab-content')) {
-            const tabSet = current.closest('.sd-tab-set');
-            if (tabSet) {
-                const contents = Array.from(tabSet.querySelectorAll(':scope > .sd-tab-content'));
-                const index = contents.indexOf(current);
-                const labels = tabSet.querySelectorAll(':scope > .sd-tab-label');
-
-                if (labels[index]) {
-                    // Store outermost tabs first
-                    tabLabelsToClick.unshift(labels[index]);
-                }
-            }
+            tabsToActivate.unshift(current);
         }
 
         current = current.parentElement;
     }
 
-    // Trigger tab label clicks sequentially from top-level to nested tabs
-    tabLabelsToClick.forEach(label => label.click());
+    // Activate collected tabs sequentially from top-level to nested
+    tabsToActivate.forEach(activateSdTab);
+}
+
+/**
+ * Activates a specific Sphinx-Design tab content element
+ */
+function activateSdTab(tabContent) {
+    const tabSet = tabContent.closest('.sd-tab-set');
+    if (!tabSet) return;
+
+    const contents = Array.from(tabSet.children).filter(c => c.classList.contains('sd-tab-content'));
+    const index = contents.indexOf(tabContent);
+
+    if (index !== -1) {
+        const inputs = Array.from(tabSet.children).filter(c => c.tagName === 'INPUT' && c.type === 'radio');
+        const labels = Array.from(tabSet.children).filter(c => c.classList.contains('sd-tab-label'));
+
+        const targetInput = inputs[index];
+        const targetLabel = labels[index];
+
+        if (targetInput) {
+            targetInput.checked = true;
+            targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        if (targetLabel) {
+            targetLabel.click();
+        }
+    }
 }
 
 if (document.readyState === "loading") {
