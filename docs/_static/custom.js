@@ -89,7 +89,6 @@ document.addEventListener("DOMContentLoaded", function () {
         let current = element.parentElement;
 
         while (current && current !== document.body) {
-            // Unfold standard HTML <details> and Sphinx-Design dropdowns
             if (current.tagName && current.tagName.toLowerCase() === "details") {
                 current.open = true;
             } else if (current.classList && current.classList.contains("sd-dropdown")) {
@@ -97,7 +96,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (details) details.open = true;
             }
 
-            // Select Sphinx-Design active tabs
             if (current.classList && current.classList.contains("sd-tab-content")) {
                 const tabSet = current.closest(".sd-tab-set");
                 if (tabSet) {
@@ -117,7 +115,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
 
-            // Sphinx togglebutton / collapsible admonitions
             if (current.classList && (current.classList.contains("togglebutton") || current.classList.contains("toggle-details"))) {
                 if (current.tagName.toLowerCase() === "details") {
                     current.open = true;
@@ -131,6 +128,49 @@ document.addEventListener("DOMContentLoaded", function () {
 
             current = current.parentElement;
         }
+    }
+
+    // Dynamic metadata extraction with host and meta-tag fallbacks
+    function getRTDMetadata() {
+        let project = "";
+        let version = "";
+
+        if (window.READTHEDOCS_DATA) {
+            project = window.READTHEDOCS_DATA.project || "";
+            version = window.READTHEDOCS_DATA.version || "";
+        }
+
+        if (!project) {
+            const projMeta = document.querySelector('meta[name="readthedocs-project-slug"], meta[name="project"]');
+            if (projMeta) project = projMeta.content;
+        }
+
+        if (!version) {
+            const verMeta = document.querySelector('meta[name="readthedocs-version-slug"], meta[name="version"]');
+            if (verMeta) version = verMeta.content;
+        }
+
+        // Hostname fallback (e.g. "4dfp.readthedocs.io" -> "4dfp")
+        if (!project) {
+            const hostParts = window.location.hostname.split('.');
+            if (hostParts.length >= 3 && hostParts[1] === "readthedocs") {
+                project = hostParts[0];
+            }
+        }
+
+        // URL path fallback (e.g. "/en/latest/index.html" -> "latest")
+        if (!version) {
+            const pathSegments = window.location.pathname.split('/').filter(Boolean);
+            if (pathSegments.length > 0) {
+                if (pathSegments[0].length === 2 && pathSegments[1]) {
+                    version = pathSegments[1];
+                } else if (!['docs', 'index.html'].includes(pathSegments[0])) {
+                    version = pathSegments[0];
+                }
+            }
+        }
+
+        return { project, version };
     }
 
     // -------------------------------------------------------------
@@ -264,32 +304,15 @@ document.addEventListener("DOMContentLoaded", function () {
             modalResults.innerHTML = '<div class="custom-modal-state">Searching...</div>';
 
             try {
-                let project = "";
-                let version = "";
-                let apiHost = "";
+                const { project, version } = getRTDMetadata();
 
-                if (window.READTHEDOCS_DATA) {
-                    project = window.READTHEDOCS_DATA.project || "";
-                    version = window.READTHEDOCS_DATA.version || "";
-                    apiHost = window.READTHEDOCS_DATA.api_host || "";
-                }
-
-                // RTD API v3 expects query parameters separately: ?q=...&project=...&version=...
                 const params = new URLSearchParams();
                 params.append("q", query);
                 if (project) params.append("project", project);
                 if (version) params.append("version", version);
 
-                let baseUrl = "/_/api/v3/search/";
-                let apiUrl = `${baseUrl}?${params.toString()}`;
-
+                let apiUrl = `/_/api/v3/search/?${params.toString()}`;
                 let response = await fetch(apiUrl);
-
-                // Fallback to absolute API host if relative proxy fails
-                if (!response.ok && apiHost) {
-                    const fallbackUrl = `${apiHost.replace(/\/$/, "")}/api/v3/search/?${params.toString()}`;
-                    response = await fetch(fallbackUrl);
-                }
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -297,20 +320,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 let data = await response.json();
 
-                // Fallback 1: Query without version scoping if 0 results
+                // Fallback 1: Try without version filter if 0 results returned
                 if ((!data.results || data.results.length === 0) && project && version) {
                     const fallbackParams = new URLSearchParams({ q: query, project: project });
-                    const fallbackResp = await fetch(`${baseUrl}?${fallbackParams.toString()}`);
+                    const fallbackResp = await fetch(`/_/api/v3/search/?${fallbackParams.toString()}`);
                     if (fallbackResp.ok) {
                         data = await fallbackResp.json();
-                    }
-                }
-
-                // Fallback 2: Query raw terms if project scoping yielded 0 results
-                if ((!data.results || data.results.length === 0) && project) {
-                    const rawResp = await fetch(`${baseUrl}?q=${encodeURIComponent(query)}`);
-                    if (rawResp.ok) {
-                        data = await rawResp.json();
                     }
                 }
 
@@ -346,7 +361,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 const pageTitle = res.title || "Untitled";
                 let basePath = res.path || "";
 
-                // Parse section-level blocks from API v3 for targeted anchoring
                 if (res.blocks && res.blocks.length > 0) {
                     res.blocks.forEach(block => {
                         let blockTitle = block.title || pageTitle;
@@ -407,7 +421,6 @@ document.addEventListener("DOMContentLoaded", function () {
             html += '</ul>';
             modalResults.innerHTML = html;
 
-            // Same-page smooth navigation and unfolding
             modalResults.querySelectorAll("a").forEach(link => {
                 link.addEventListener("click", function () {
                     const targetUrl = new URL(link.href, window.location.origin);
@@ -431,7 +444,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     initCustomSearchModal();
 
-    // Auto-expand hidden parents and scroll into view when navigating to highlighted terms
     function handleHighlightAndScroll() {
         function processTarget() {
             let targetElement = document.querySelector("span.highlighted");
@@ -451,7 +463,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return false;
         }
 
-        // Retry polling to wait for Sphinx doctools.js to apply span.highlighted
         if (!processTarget()) {
             let attempts = 0;
             const interval = setInterval(() => {
