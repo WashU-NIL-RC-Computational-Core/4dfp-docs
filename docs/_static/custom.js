@@ -1,4 +1,32 @@
 function initCustomDocScripts() {
+    const cardLinks = document.querySelectorAll('.nav-card a, .sd-card a, a.sd-card-link');
+    cardLinks.forEach(link => {
+        ['mouseenter', 'mouseover', 'pointerenter'].forEach(eventType => {
+            link.addEventListener(eventType, function (e) {
+                e.stopPropagation();
+            }, true);
+        });
+    });
+
+    document.addEventListener("input", function (e) {
+        if (e.target && (e.target.matches("readthedocs-search input") || e.target.closest("readthedocs-search"))) {
+            const query = e.target.value.trim();
+            if (query.length > 1) {
+                sessionStorage.setItem("rtd_search_query", query);
+            }
+        }
+    }, true);
+
+    document.addEventListener("click", function (e) {
+        const link = e.target.closest("readthedocs-search a, [data-search-result] a");
+        if (link) {
+            const searchInput = document.querySelector("readthedocs-search input");
+            if (searchInput && searchInput.value) {
+                sessionStorage.setItem("rtd_search_query", searchInput.value.trim());
+            }
+        }
+    }, true);
+
     const navTopLink = document.querySelector(".wy-nav-top a");
     const breadcrumbList = document.querySelector("ul.wy-breadcrumbs");
 
@@ -49,28 +77,7 @@ function initCustomDocScripts() {
 
             if (!isHamburger) {
                 event.preventDefault();
-                window.scrollTo({
-                    top: 0,
-                    behavior: "smooth"
-                });
-            }
-        });
-    }
-
-    const contentWrap = document.querySelector(".wy-nav-content-wrap");
-    const navSide = document.querySelector(".wy-nav-side");
-
-    if (contentWrap && navSide) {
-        contentWrap.addEventListener("click", function (event) {
-            const isMenuOpen = navSide.classList.contains("shift") || contentWrap.classList.contains("shift");
-
-            if (isMenuOpen) {
-                const hamburger = document.querySelector(".wy-nav-top i") || document.querySelector('[data-toggle="wy-nav-shift"]');
-                if (hamburger) {
-                    hamburger.click();
-                } else {
-                    document.querySelectorAll(".shift").forEach(el => el.classList.remove("shift"));
-                }
+                window.scrollTo({ top: 0, behavior: "smooth" });
             }
         });
     }
@@ -110,18 +117,36 @@ function initCustomDocScripts() {
     }
 
     function checkForTargetAndExpand() {
-        const hasHighlightQuery = window.location.search.includes("highlight=");
+        const urlParams = new URLSearchParams(window.location.search);
+        let highlightTerm = urlParams.get("highlight");
+
+        if (!highlightTerm) {
+            highlightTerm = sessionStorage.getItem("rtd_search_query");
+        }
+
         const hasHash = window.location.hash.length > 1;
 
-        if (!hasHighlightQuery && !hasHash) return;
+        if (!highlightTerm && !hasHash) return;
 
         let attempts = 0;
         const maxAttempts = 30;
 
         const pollInterval = setInterval(() => {
             attempts++;
+            let targetElement = null;
 
-            let targetElement = document.querySelector("span.highlighted, mark.highlighted, mark");
+            targetElement = document.querySelector("span.highlighted, mark.highlighted, mark");
+
+            if (!targetElement && highlightTerm) {
+                const cleanTerm = highlightTerm.trim();
+                const candidateNodes = document.querySelectorAll(".rst-content pre, .rst-content code, .rst-content p, .rst-content td");
+                for (let el of candidateNodes) {
+                    if (el.textContent.includes(cleanTerm)) {
+                        targetElement = el;
+                        break;
+                    }
+                }
+            }
 
             if (!targetElement && hasHash) {
                 const hashId = decodeURIComponent(window.location.hash.substring(1));
@@ -132,10 +157,13 @@ function initCustomDocScripts() {
                 clearInterval(pollInterval);
                 expandParents(targetElement);
 
+                sessionStorage.removeItem("rtd_search_query");
+
                 setTimeout(() => {
                     targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-                }, 150);
+                }, 200);
             } else if (attempts >= maxAttempts) {
+                sessionStorage.removeItem("rtd_search_query");
                 clearInterval(pollInterval);
             }
         }, 100);

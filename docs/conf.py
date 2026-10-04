@@ -107,12 +107,6 @@ exclude_patterns = [
     'tools/threshold_and_mask/index.rst',
 ]
 
-hoverxref_roles = [
-    "ref",
-    "term",
-    "option",
-]
-
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
