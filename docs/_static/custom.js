@@ -1,4 +1,26 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // Inject custom CSS for text highlight pulse
+    const highlightStyle = document.createElement('style');
+    highlightStyle.textContent = `
+        mark.custom-highlight, span.highlighted {
+            background-color: #fef08a !important;
+            color: #000000 !important;
+            padding: 2px 4px !important;
+            border-radius: 3px !important;
+            box-shadow: 0 0 0 2px #eab308 !important;
+            transition: all 0.3s ease;
+        }
+        @keyframes highlightPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 2px #eab308; }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 6px #eab308; }
+            100% { transform: scale(1); box-shadow: 0 0 0 2px #eab308; }
+        }
+        .custom-highlight-pulse {
+            animation: highlightPulse 0.8s ease-in-out 2;
+        }
+    `;
+    document.head.appendChild(highlightStyle);
+
     const cardLinks = document.querySelectorAll('.nav-card a, .sd-card a, a.sd-card-link');
     cardLinks.forEach(link => {
         ['mouseenter', 'mouseover', 'pointerenter'].forEach(eventType => {
@@ -84,18 +106,25 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Unfolds all hidden parent containers (<details>, Sphinx-Design tabs, collapsibles)
     function expandParents(element) {
         if (!element) return;
         let current = element.parentElement;
 
         while (current && current !== document.body) {
+            // 1. Open <details> and Sphinx-Design dropdowns
             if (current.tagName && current.tagName.toLowerCase() === "details") {
                 current.open = true;
+                current.setAttribute("open", "");
             } else if (current.classList && current.classList.contains("sd-dropdown")) {
-                const details = current.tagName.toLowerCase() === "details" ? current : current.closest("details");
-                if (details) details.open = true;
+                const details = current.tagName && current.tagName.toLowerCase() === "details" ? current : current.closest("details");
+                if (details) {
+                    details.open = true;
+                    details.setAttribute("open", "");
+                }
             }
 
+            // 2. Open Sphinx-Design Tab Sets (.sd-tab-content)
             if (current.classList && current.classList.contains("sd-tab-content")) {
                 const tabSet = current.closest(".sd-tab-set");
                 if (tabSet) {
@@ -105,22 +134,29 @@ document.addEventListener("DOMContentLoaded", function () {
                     const targetIndex = contents.indexOf(current);
 
                     const inputs = Array.from(tabSet.children).filter(c =>
-                        c.tagName.toLowerCase() === "input"
+                        c.tagName && c.tagName.toLowerCase() === "input"
+                    );
+                    const labels = Array.from(tabSet.children).filter(c =>
+                        c.classList.contains("sd-tab-label")
                     );
 
                     if (inputs[targetIndex]) {
                         inputs[targetIndex].checked = true;
                         inputs[targetIndex].dispatchEvent(new Event("change", { bubbles: true }));
                     }
+                    if (labels[targetIndex]) {
+                        labels[targetIndex].click();
+                    }
                 }
             }
 
-            if (current.classList && (current.classList.contains("togglebutton") || current.classList.contains("toggle-details"))) {
-                if (current.tagName.toLowerCase() === "details") {
+            // 3. Open Collapsible Admonitions & Togglebuttons
+            if (current.classList && (current.classList.contains("togglebutton") || current.classList.contains("toggle-details") || current.classList.contains("admonition-toggle"))) {
+                if (current.tagName && current.tagName.toLowerCase() === "details") {
                     current.open = true;
                 } else {
-                    const toggleBtn = current.querySelector(".toggle-button");
-                    if (toggleBtn && current.classList.contains("admonition-hidden")) {
+                    const toggleBtn = current.querySelector(".toggle-button, .toggle-details-toggle");
+                    if (toggleBtn && (current.classList.contains("admonition-hidden") || current.classList.contains("toggle-hidden"))) {
                         toggleBtn.click();
                     }
                 }
@@ -130,7 +166,75 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Dynamic metadata extraction with host and meta-tag fallbacks
+    // Helper: Escapes special regex characters
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Direct DOM text search to locate and highlight hidden search queries
+    function findAndHighlightText(searchTerm, scopeElement = document.body) {
+        if (!searchTerm || searchTerm.length < 2) return null;
+
+        // Clean previous custom highlights
+        document.querySelectorAll("mark.custom-highlight").forEach(mark => {
+            const parent = mark.parentNode;
+            if (parent) {
+                parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                parent.normalize();
+            }
+        });
+
+        const searchRegex = new RegExp(`(${escapeRegExp(searchTerm)})`, "gi");
+        const mainContent = scopeElement.querySelector(".rst-content, main, [role='main']") || scopeElement;
+
+        const walker = document.createTreeWalker(
+            mainContent,
+            NodeFilter.SHOW_TEXT,
+            {
+                acceptNode: function (node) {
+                    if (!node.parentElement) return NodeFilter.FILTER_REJECT;
+                    const tag = node.parentElement.tagName.toLowerCase();
+                    if (["script", "style", "noscript", "input", "textarea", "select"].includes(tag)) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    if (node.parentElement.closest("#custom-search-modal")) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    if (searchRegex.test(node.nodeValue)) {
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                    return NodeFilter.FILTER_SKIP;
+                }
+            }
+        );
+
+        const matchingNodes = [];
+        while (walker.nextNode()) {
+            matchingNodes.push(walker.currentNode);
+        }
+
+        if (matchingNodes.length === 0) return null;
+
+        const firstNode = matchingNodes[0];
+        const match = searchRegex.exec(firstNode.nodeValue);
+
+        if (match) {
+            const mark = document.createElement("mark");
+            mark.className = "custom-highlight span.highlighted";
+
+            const highlightedText = firstNode.splitText(match.index);
+            highlightedText.splitText(match[0].length);
+
+            mark.textContent = highlightedText.nodeValue;
+            highlightedText.parentNode.replaceChild(mark, highlightedText);
+
+            return mark;
+        }
+
+        return null;
+    }
+
+    // Metadata extractor for Read the Docs project/version
     function getRTDMetadata() {
         let project = "";
         let version = "";
@@ -150,7 +254,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if (verMeta) version = verMeta.content;
         }
 
-        // Hostname fallback (e.g. "4dfp.readthedocs.io" -> "4dfp")
         if (!project) {
             const hostParts = window.location.hostname.split('.');
             if (hostParts.length >= 3 && hostParts[1] === "readthedocs") {
@@ -158,7 +261,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
-        // URL path fallback (e.g. "/en/latest/index.html" -> "latest")
         if (!version) {
             const pathSegments = window.location.pathname.split('/').filter(Boolean);
             if (pathSegments.length > 0) {
@@ -171,6 +273,60 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         return { project, version };
+    }
+
+    // Formats query terms into wildcard search terms for predictive substring matching
+    function formatWildcardQuery(query) {
+        if (!query) return "";
+        return query.trim().split(/\s+/).map(word => {
+            if (word.includes("*") || word.includes("?") || word.startsWith('"') || word.length < 2) {
+                return word;
+            }
+            return `${word}*`;
+        }).join(" ");
+    }
+
+    // Core expansion, highlight, and focus handler
+    function highlightAndExpand(query, hashId) {
+        let targetElement = null;
+
+        // 1. Try finding native Sphinx highlighted span
+        const existingHighlights = document.querySelectorAll("span.highlighted, mark.custom-highlight");
+        if (existingHighlights.length > 0) {
+            targetElement = existingHighlights[0];
+        }
+
+        // 2. Perform custom DOM text search if no highlight element exists
+        if (!targetElement && query && query.trim().length > 0) {
+            targetElement = findAndHighlightText(query.trim());
+        }
+
+        // 3. Fallback to anchor ID element
+        if (!targetElement && hashId) {
+            targetElement = document.getElementById(hashId) || document.getElementsByName(hashId)[0];
+        }
+
+        // 4. If anchor ID points to a section, search inside that section for deeper text matches
+        if (targetElement && hashId && query && targetElement.id === hashId) {
+            const deeperMatch = findAndHighlightText(query.trim(), targetElement);
+            if (deeperMatch) {
+                targetElement = deeperMatch;
+            }
+        }
+
+        if (targetElement) {
+            expandParents(targetElement);
+
+            setTimeout(() => {
+                targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+                targetElement.classList.add("custom-highlight-pulse");
+                setTimeout(() => targetElement.classList.remove("custom-highlight-pulse"), 2500);
+            }, 150);
+
+            return true;
+        }
+
+        return false;
     }
 
     // -------------------------------------------------------------
@@ -305,37 +461,42 @@ document.addEventListener("DOMContentLoaded", function () {
 
             try {
                 const { project, version } = getRTDMetadata();
+                const wildcardQ = formatWildcardQuery(query);
 
-                // RTD API v3 syntax: project:<project_slug>/<version_slug> <query>
-                let scopedQuery = query;
-                if (project) {
-                    if (version) {
-                        scopedQuery = `project:${project}/${version} ${query}`;
-                    } else {
-                        scopedQuery = `project:${project} ${query}`;
+                // Build primary query using Elasticsearch wildcard syntax (e.g. "project:slug/ver 8009*")
+                let scopedQuery = project
+                    ? (version ? `project:${project}/${version} ${wildcardQ}` : `project:${project} ${wildcardQ}`)
+                    : wildcardQ;
+
+                let apiUrl = `/_/api/v3/search/?q=${encodeURIComponent(scopedQuery)}`;
+                let response = await fetch(apiUrl);
+                let data = null;
+
+                if (response.ok) {
+                    data = await response.json();
+                }
+
+                // Fallback 1: Try exact query if wildcard search yielded 0 results
+                if (!data || !data.results || data.results.length === 0) {
+                    const exactQ = project
+                        ? (version ? `project:${project}/${version} ${query}` : `project:${project} ${query}`)
+                        : query;
+                    const exactResp = await fetch(`/_/api/v3/search/?q=${encodeURIComponent(exactQ)}`);
+                    if (exactResp.ok) {
+                        data = await exactResp.json();
                     }
                 }
 
-                const params = new URLSearchParams({ q: scopedQuery });
-                let apiUrl = `/_/api/v3/search/?${params.toString()}`;
-                let response = await fetch(apiUrl);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                let data = await response.json();
-
-                // Fallback: If 0 results on branch version, try project-wide search
-                if ((!data.results || data.results.length === 0) && project && version) {
-                    const fallbackParams = new URLSearchParams({ q: `project:${project} ${query}` });
+                // Fallback 2: Try project-wide wildcard query if version branch returned 0 results
+                if ((!data || !data.results || data.results.length === 0) && project && version) {
+                    const fallbackParams = new URLSearchParams({ q: `project:${project} ${wildcardQ}` });
                     const fallbackResp = await fetch(`/_/api/v3/search/?${fallbackParams.toString()}`);
                     if (fallbackResp.ok) {
                         data = await fallbackResp.json();
                     }
                 }
 
-                renderResults(data.results || [], query);
+                renderResults(data && data.results ? data.results : [], query);
             } catch (err) {
                 console.error("Custom Search Error:", err);
                 const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.protocol === "file:";
@@ -427,21 +588,20 @@ document.addEventListener("DOMContentLoaded", function () {
             html += '</ul>';
             modalResults.innerHTML = html;
 
+            // Handle same-page modal navigation without reloading
             modalResults.querySelectorAll("a").forEach(link => {
-                link.addEventListener("click", function () {
+                link.addEventListener("click", function (e) {
                     const targetUrl = new URL(link.href, window.location.origin);
                     if (targetUrl.pathname === window.location.pathname) {
+                        e.preventDefault();
                         closeModal();
-                        if (targetUrl.hash) {
-                            const hashId = targetUrl.hash.substring(1);
-                            const targetElement = document.getElementById(hashId) || document.getElementsByName(hashId)[0];
-                            if (targetElement) {
-                                expandParents(targetElement);
-                                setTimeout(() => {
-                                    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-                                }, 100);
-                            }
-                        }
+                        window.history.pushState(null, "", link.href);
+
+                        const searchParams = new URLSearchParams(targetUrl.search);
+                        const queryParam = searchParams.get("highlight") || query;
+                        const hashId = targetUrl.hash ? decodeURIComponent(targetUrl.hash.substring(1)) : "";
+
+                        highlightAndExpand(queryParam, hashId);
                     }
                 });
             });
@@ -450,35 +610,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     initCustomSearchModal();
 
-    function handleHighlightAndScroll() {
-        function processTarget() {
-            let targetElement = document.querySelector("span.highlighted");
+    // Trigger expansion and text highlighting on page load
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryParam = urlParams.get("highlight");
+    const hashId = window.location.hash ? decodeURIComponent(window.location.hash.substring(1)) : "";
 
-            if (!targetElement && window.location.hash) {
-                const hashId = decodeURIComponent(window.location.hash.substring(1));
-                targetElement = document.getElementById(hashId) || document.getElementsByName(hashId)[0];
+    if (queryParam || hashId) {
+        let attempts = 0;
+        const interval = setInterval(() => {
+            attempts++;
+            const found = highlightAndExpand(queryParam, hashId);
+            if (found || attempts >= 10) {
+                clearInterval(interval);
             }
-
-            if (targetElement) {
-                expandParents(targetElement);
-                setTimeout(() => {
-                    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-                }, 100);
-                return true;
-            }
-            return false;
-        }
-
-        if (!processTarget()) {
-            let attempts = 0;
-            const interval = setInterval(() => {
-                attempts++;
-                if (processTarget() || attempts > 10) {
-                    clearInterval(interval);
-                }
-            }, 150);
-        }
+        }, 150);
     }
-
-    handleHighlightAndScroll();
 });
