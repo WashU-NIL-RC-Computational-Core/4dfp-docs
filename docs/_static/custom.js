@@ -1,22 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Inject custom CSS for text highlight pulse
     const highlightStyle = document.createElement('style');
     highlightStyle.textContent = `
         mark.custom-highlight, span.highlighted {
-            background-color: #fef08a !important;
+            background-color: #F1B434 !important;
             color: #000000 !important;
             padding: 2px 4px !important;
             border-radius: 3px !important;
-            box-shadow: 0 0 0 2px #eab308 !important;
             transition: all 0.3s ease;
-        }
-        @keyframes highlightPulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 2px #eab308; }
-            50% { transform: scale(1.05); box-shadow: 0 0 0 6px #eab308; }
-            100% { transform: scale(1); box-shadow: 0 0 0 2px #eab308; }
-        }
-        .custom-highlight-pulse {
-            animation: highlightPulse 0.8s ease-in-out 2;
         }
     `;
     document.head.appendChild(highlightStyle);
@@ -106,13 +96,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Unfolds all hidden parent containers (<details>, Sphinx-Design tabs, collapsibles)
     function expandParents(element) {
         if (!element) return;
         let current = element.parentElement;
 
         while (current && current !== document.body) {
-            // 1. Open <details> and Sphinx-Design dropdowns
             if (current.tagName && current.tagName.toLowerCase() === "details") {
                 current.open = true;
                 current.setAttribute("open", "");
@@ -124,7 +112,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
 
-            // 2. Open Sphinx-Design Tab Sets (.sd-tab-content)
             if (current.classList && current.classList.contains("sd-tab-content")) {
                 const tabSet = current.closest(".sd-tab-set");
                 if (tabSet) {
@@ -150,7 +137,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
 
-            // 3. Open Collapsible Admonitions & Togglebuttons
             if (current.classList && (current.classList.contains("togglebutton") || current.classList.contains("toggle-details") || current.classList.contains("admonition-toggle"))) {
                 if (current.tagName && current.tagName.toLowerCase() === "details") {
                     current.open = true;
@@ -166,16 +152,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Helper: Escapes special regex characters
     function escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    // Direct DOM text search to locate and highlight hidden search queries
     function findAndHighlightText(searchTerm, scopeElement = document.body) {
         if (!searchTerm || searchTerm.length < 2) return null;
 
-        // Clean previous custom highlights
         document.querySelectorAll("mark.custom-highlight").forEach(mark => {
             const parent = mark.parentNode;
             if (parent) {
@@ -234,7 +217,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return null;
     }
 
-    // Metadata extractor for Read the Docs project/version
     function getRTDMetadata() {
         let project = "";
         let version = "";
@@ -275,7 +257,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return { project, version };
     }
 
-    // Formats query terms into wildcard search terms for predictive substring matching
     function formatWildcardQuery(query) {
         if (!query) return "";
         return query.trim().split(/\s+/).map(word => {
@@ -286,27 +267,22 @@ document.addEventListener("DOMContentLoaded", function () {
         }).join(" ");
     }
 
-    // Core expansion, highlight, and focus handler
     function highlightAndExpand(query, hashId) {
         let targetElement = null;
 
-        // 1. Try finding native Sphinx highlighted span
         const existingHighlights = document.querySelectorAll("span.highlighted, mark.custom-highlight");
         if (existingHighlights.length > 0) {
             targetElement = existingHighlights[0];
         }
 
-        // 2. Perform custom DOM text search if no highlight element exists
         if (!targetElement && query && query.trim().length > 0) {
             targetElement = findAndHighlightText(query.trim());
         }
 
-        // 3. Fallback to anchor ID element
         if (!targetElement && hashId) {
             targetElement = document.getElementById(hashId) || document.getElementsByName(hashId)[0];
         }
 
-        // 4. If anchor ID points to a section, search inside that section for deeper text matches
         if (targetElement && hashId && query && targetElement.id === hashId) {
             const deeperMatch = findAndHighlightText(query.trim(), targetElement);
             if (deeperMatch) {
@@ -319,8 +295,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             setTimeout(() => {
                 targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-                targetElement.classList.add("custom-highlight-pulse");
-                setTimeout(() => targetElement.classList.remove("custom-highlight-pulse"), 2500);
             }, 150);
 
             return true;
@@ -329,9 +303,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return false;
     }
 
-    // -------------------------------------------------------------
-    // Custom Search Modal Implementation
-    // -------------------------------------------------------------
     function initCustomSearchModal() {
         const modalHtml = `
             <div id="custom-search-modal" class="custom-modal-backdrop" style="display:none;">
@@ -463,7 +434,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 const { project, version } = getRTDMetadata();
                 const wildcardQ = formatWildcardQuery(query);
 
-                // Build primary query using Elasticsearch wildcard syntax (e.g. "project:slug/ver 8009*")
                 let scopedQuery = project
                     ? (version ? `project:${project}/${version} ${wildcardQ}` : `project:${project} ${wildcardQ}`)
                     : wildcardQ;
@@ -476,7 +446,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     data = await response.json();
                 }
 
-                // Fallback 1: Try exact query if wildcard search yielded 0 results
                 if (!data || !data.results || data.results.length === 0) {
                     const exactQ = project
                         ? (version ? `project:${project}/${version} ${query}` : `project:${project} ${query}`)
@@ -487,7 +456,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
 
-                // Fallback 2: Try project-wide wildcard query if version branch returned 0 results
                 if ((!data || !data.results || data.results.length === 0) && project && version) {
                     const fallbackParams = new URLSearchParams({ q: `project:${project} ${wildcardQ}` });
                     const fallbackResp = await fetch(`/_/api/v3/search/?${fallbackParams.toString()}`);
@@ -588,7 +556,6 @@ document.addEventListener("DOMContentLoaded", function () {
             html += '</ul>';
             modalResults.innerHTML = html;
 
-            // Handle same-page modal navigation without reloading
             modalResults.querySelectorAll("a").forEach(link => {
                 link.addEventListener("click", function (e) {
                     const targetUrl = new URL(link.href, window.location.origin);
@@ -610,7 +577,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     initCustomSearchModal();
 
-    // Trigger expansion and text highlighting on page load
     const urlParams = new URLSearchParams(window.location.search);
     const queryParam = urlParams.get("highlight");
     const hashId = window.location.hash ? decodeURIComponent(window.location.hash.substring(1)) : "";

@@ -445,16 +445,11 @@ samp,
     display: none !important;
 }
 
-/* ========================================================
-   Card Help Tooltips: Default Inline + Top-Right Override
-   ======================================================== */
-
 .sd-card {
     position: relative !important;
     overflow: visible !important;
 }
 
-/* 1. DEFAULT: Inline Placement (sits right next to text/labels) */
 .card-help {
     position: relative !important;
     display: inline-flex !important;
@@ -467,7 +462,6 @@ samp,
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Inline Tooltip Box (pops UP above the inline icon) */
 .card-help::after {
     content: attr(data-tooltip);
     position: absolute;
@@ -494,7 +488,6 @@ samp,
     z-index: 1000;
 }
 
-/* Inline Caret (points DOWN to icon) */
 .card-help::before {
     content: "";
     position: absolute;
@@ -512,7 +505,6 @@ samp,
     z-index: 1001;
 }
 
-/* Hover/Focus triggers */
 .card-help:hover::after,
 .card-help:hover::before,
 .card-help:focus::after,
@@ -529,7 +521,6 @@ samp,
 }
 
 
-/* 2. OVERRIDE: Top-Right Corner Placement */
 .card-help-top-right .card-help {
     position: absolute !important;
     top: 12px !important;
@@ -538,7 +529,6 @@ samp,
     z-index: 10 !important;
 }
 
-/* Top-Right Tooltip Box (pops DOWN below top-right icon) */
 .card-help-top-right .card-help::after {
     bottom: auto;
     top: 120%;
@@ -547,7 +537,6 @@ samp,
     transform: translateY(-4px);
 }
 
-/* Top-Right Caret (points UP) */
 .card-help-top-right .card-help::before {
     bottom: auto;
     top: 95%;
@@ -564,7 +553,6 @@ samp,
     transform: translateY(0);
 }
 
-/* Custom Search Modal Styles */
 .custom-modal-backdrop {
     position: fixed;
     top: 0;
