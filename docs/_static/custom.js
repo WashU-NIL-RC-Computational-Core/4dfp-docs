@@ -1,8 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // Inject custom CSS for text highlight
     const highlightStyle = document.createElement('style');
     highlightStyle.textContent = `
         mark.custom-highlight, span.highlighted {
-            background-color: #F1B434 !important;
+            background-color: #fef08a !important;
             color: #000000 !important;
             padding: 2px 4px !important;
             border-radius: 3px !important;
@@ -96,6 +97,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Unfolds all hidden parent containers (<details>, Sphinx-Design tabs, collapsibles)
     function expandParents(element) {
         if (!element) return;
         let current = element.parentElement;
@@ -156,34 +158,40 @@ document.addEventListener("DOMContentLoaded", function () {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    function findAndHighlightText(searchTerm, scopeElement = document.body) {
-        if (!searchTerm || searchTerm.length < 2) return null;
+    const STOP_WORDS = new Set([
+        "a", "an", "and", "are", "as", "at", "be", "by", "for", "from",
+        "has", "he", "in", "is", "it", "its", "of", "on", "that", "the",
+        "to", "was", "were", "will", "with", "or", "x"
+    ]);
 
-        document.querySelectorAll("mark.custom-highlight").forEach(mark => {
-            const parent = mark.parentNode;
+    // Strips out all native Sphinx word highlights and previous custom highlights
+    function removeHighlights() {
+        document.querySelectorAll("span.highlighted, mark.custom-highlight").forEach(el => {
+            const parent = el.parentNode;
             if (parent) {
-                parent.replaceChild(document.createTextNode(mark.textContent), mark);
+                parent.replaceChild(document.createTextNode(el.textContent), el);
                 parent.normalize();
             }
         });
+    }
 
-        const searchRegex = new RegExp(`(${escapeRegExp(searchTerm)})`, "gi");
-        const mainContent = scopeElement.querySelector(".rst-content, main, [role='main']") || scopeElement;
-
+    // Wraps matching regex occurrences inside a specific element
+    function highlightRegexInElement(element, regex) {
         const walker = document.createTreeWalker(
-            mainContent,
+            element,
             NodeFilter.SHOW_TEXT,
             {
                 acceptNode: function (node) {
                     if (!node.parentElement) return NodeFilter.FILTER_REJECT;
                     const tag = node.parentElement.tagName.toLowerCase();
-                    if (["script", "style", "noscript", "input", "textarea", "select"].includes(tag)) {
+                    if (["script", "style", "mark", "noscript", "input", "textarea"].includes(tag)) {
                         return NodeFilter.FILTER_REJECT;
                     }
                     if (node.parentElement.closest("#custom-search-modal")) {
                         return NodeFilter.FILTER_REJECT;
                     }
-                    if (searchRegex.test(node.nodeValue)) {
+                    regex.lastIndex = 0;
+                    if (regex.test(node.nodeValue)) {
                         return NodeFilter.FILTER_ACCEPT;
                     }
                     return NodeFilter.FILTER_SKIP;
@@ -191,27 +199,108 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         );
 
-        const matchingNodes = [];
+        const nodesToProcess = [];
         while (walker.nextNode()) {
-            matchingNodes.push(walker.currentNode);
+            nodesToProcess.push(walker.currentNode);
         }
 
-        if (matchingNodes.length === 0) return null;
+        let firstMark = null;
 
-        const firstNode = matchingNodes[0];
-        const match = searchRegex.exec(firstNode.nodeValue);
+        nodesToProcess.forEach(node => {
+            regex.lastIndex = 0;
+            const match = regex.exec(node.nodeValue);
+            if (match) {
+                const mark = document.createElement("mark");
+                mark.className = "custom-highlight span.highlighted";
 
-        if (match) {
-            const mark = document.createElement("mark");
-            mark.className = "custom-highlight span.highlighted";
+                const matchNode = node.splitText(match.index);
+                matchNode.splitText(match[0].length);
 
-            const highlightedText = firstNode.splitText(match.index);
-            highlightedText.splitText(match[0].length);
+                mark.textContent = matchNode.nodeValue;
+                matchNode.parentNode.replaceChild(mark, matchNode);
 
-            mark.textContent = highlightedText.nodeValue;
-            highlightedText.parentNode.replaceChild(mark, highlightedText);
+                if (!firstMark) firstMark = mark;
+            }
+        });
 
-            return mark;
+        return firstMark || element;
+    }
+
+    // Precision Matcher: Finds and highlights ONLY the best matched block
+    function findAndHighlightBestMatch(query, scopeElement = document.body) {
+        if (!query || query.trim().length < 2) return null;
+
+        removeHighlights();
+
+        const mainContent = scopeElement.querySelector(".rst-content, main, [role='main']") || scopeElement;
+        const words = query.trim().split(/\s+/).map(w => w.trim()).filter(Boolean);
+        const keywords = words.filter(w => w.length > 1 && !STOP_WORDS.has(w.toLowerCase()));
+
+        if (words.length === 0) return null;
+
+        const blocks = Array.from(mainContent.querySelectorAll("pre, code, p, li, dt, dd, tr, .sd-card-body, .admonition"));
+
+        // Stage 1: Exact Phrase Match (flexible across spaces & newlines)
+        const escapedPhrase = words.map(w => escapeRegExp(w)).join("\\s+");
+        try {
+            const phraseRegex = new RegExp(escapedPhrase, "gi");
+            for (const block of blocks) {
+                if (phraseRegex.test(block.textContent)) {
+                    return highlightRegexInElement(block, phraseRegex);
+                }
+            }
+        } catch (e) { }
+
+        // Stage 2: Longest Sub-phrase Match (sliding window)
+        for (let len = Math.min(words.length - 1, 10); len >= 3; len--) {
+            for (let i = 0; i <= words.length - len; i++) {
+                const subWords = words.slice(i, i + len);
+                const subPhrase = subWords.map(w => escapeRegExp(w)).join("\\s+");
+                try {
+                    const subRegex = new RegExp(subPhrase, "gi");
+                    for (const block of blocks) {
+                        if (subRegex.test(block.textContent)) {
+                            return highlightRegexInElement(block, subRegex);
+                        }
+                    }
+                } catch (e) { }
+            }
+        }
+
+        // Stage 3: Block Keyword Density Match
+        if (keywords.length > 0) {
+            let bestBlock = null;
+            let maxScore = 0;
+            let bestMatchedKeywords = [];
+
+            blocks.forEach(block => {
+                const text = block.textContent.toLowerCase();
+                let score = 0;
+                const matchedInBlock = [];
+
+                keywords.forEach(kw => {
+                    if (text.includes(kw.toLowerCase())) {
+                        score += (kw.length >= 4 ? 2 : 1);
+                        matchedInBlock.push(kw);
+                    }
+                });
+
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestBlock = block;
+                    bestMatchedKeywords = matchedInBlock;
+                }
+            });
+
+            if (bestBlock && maxScore >= 2) {
+                const kwRegexStr = bestMatchedKeywords.map(kw => escapeRegExp(kw)).join("|");
+                try {
+                    const kwRegex = new RegExp(`\\b(${kwRegexStr})\\b`, "gi");
+                    return highlightRegexInElement(bestBlock, kwRegex);
+                } catch (e) {
+                    return bestBlock;
+                }
+            }
         }
 
         return null;
@@ -270,13 +359,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function highlightAndExpand(query, hashId) {
         let targetElement = null;
 
-        const existingHighlights = document.querySelectorAll("span.highlighted, mark.custom-highlight");
-        if (existingHighlights.length > 0) {
-            targetElement = existingHighlights[0];
-        }
-
-        if (!targetElement && query && query.trim().length > 0) {
-            targetElement = findAndHighlightText(query.trim());
+        // Run precision matcher first
+        if (query && query.trim().length > 0) {
+            targetElement = findAndHighlightBestMatch(query.trim());
         }
 
         if (!targetElement && hashId) {
@@ -284,7 +369,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         if (targetElement && hashId && query && targetElement.id === hashId) {
-            const deeperMatch = findAndHighlightText(query.trim(), targetElement);
+            const deeperMatch = findAndHighlightBestMatch(query.trim(), targetElement);
             if (deeperMatch) {
                 targetElement = deeperMatch;
             }
@@ -303,6 +388,9 @@ document.addEventListener("DOMContentLoaded", function () {
         return false;
     }
 
+    // -------------------------------------------------------------
+    // Custom Search Modal Implementation
+    // -------------------------------------------------------------
     function initCustomSearchModal() {
         const modalHtml = `
             <div id="custom-search-modal" class="custom-modal-backdrop" style="display:none;">
