@@ -1,4 +1,13 @@
 document.addEventListener("DOMContentLoaded", function () {
+    const cardLinks = document.querySelectorAll('.nav-card a, .sd-card a, a.sd-card-link');
+    cardLinks.forEach(link => {
+        ['mouseenter', 'mouseover', 'pointerenter'].forEach(eventType => {
+            link.addEventListener(eventType, function (e) {
+                e.stopPropagation();
+            }, true);
+        });
+    });
+
     const navTopLink = document.querySelector(".wy-nav-top a");
     const breadcrumbList = document.querySelector("ul.wy-breadcrumbs");
 
