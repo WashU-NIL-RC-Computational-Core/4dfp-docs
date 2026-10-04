@@ -103,6 +103,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let current = element.parentElement;
 
         while (current && current !== document.body) {
+            // 1. Open <details> and Sphinx-Design dropdowns
             if (current.tagName && current.tagName.toLowerCase() === "details") {
                 current.open = true;
                 current.setAttribute("open", "");
@@ -114,6 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
 
+            // 2. Open Sphinx-Design Tab Sets (.sd-tab-content)
             if (current.classList && current.classList.contains("sd-tab-content")) {
                 const tabSet = current.closest(".sd-tab-set");
                 if (tabSet) {
@@ -139,6 +141,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
 
+            // 3. Open Collapsible Admonitions & Togglebuttons
             if (current.classList && (current.classList.contains("togglebutton") || current.classList.contains("toggle-details") || current.classList.contains("admonition-toggle"))) {
                 if (current.tagName && current.tagName.toLowerCase() === "details") {
                     current.open = true;
@@ -158,40 +161,42 @@ document.addEventListener("DOMContentLoaded", function () {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    const STOP_WORDS = new Set([
-        "a", "an", "and", "are", "as", "at", "be", "by", "for", "from",
-        "has", "he", "in", "is", "it", "its", "of", "on", "that", "the",
-        "to", "was", "were", "will", "with", "or", "x"
-    ]);
+    // Highlights target phrase directly in DOM without highlighting standalone individual words
+    function findAndHighlightText(searchTerm, scopeElement = document.body) {
+        if (!searchTerm || searchTerm.length < 2) return null;
 
-    // Strips out all native Sphinx word highlights and previous custom highlights
-    function removeHighlights() {
-        document.querySelectorAll("span.highlighted, mark.custom-highlight").forEach(el => {
-            const parent = el.parentNode;
+        document.querySelectorAll("mark.custom-highlight").forEach(mark => {
+            const parent = mark.parentNode;
             if (parent) {
-                parent.replaceChild(document.createTextNode(el.textContent), el);
+                parent.replaceChild(document.createTextNode(mark.textContent), mark);
                 parent.normalize();
             }
         });
-    }
 
-    // Wraps matching regex occurrences inside a specific element
-    function highlightRegexInElement(element, regex) {
-        const walker = document.createTreeWalker(
-            element,
+        // Normalize query string (replace newlines and multiple spaces with flexible whitespace regex)
+        let cleanedTerm = searchTerm.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+        if (!cleanedTerm) return null;
+
+        const words = cleanedTerm.split(" ").map(w => escapeRegExp(w)).filter(Boolean);
+        if (words.length === 0) return null;
+
+        const phraseRegex = new RegExp(words.join("\\s+"), "gi");
+        const mainContent = scopeElement.querySelector(".rst-content, main, [role='main']") || scopeElement;
+
+        let walker = document.createTreeWalker(
+            mainContent,
             NodeFilter.SHOW_TEXT,
             {
                 acceptNode: function (node) {
                     if (!node.parentElement) return NodeFilter.FILTER_REJECT;
                     const tag = node.parentElement.tagName.toLowerCase();
-                    if (["script", "style", "mark", "noscript", "input", "textarea"].includes(tag)) {
+                    if (["script", "style", "noscript", "input", "textarea", "select"].includes(tag)) {
                         return NodeFilter.FILTER_REJECT;
                     }
                     if (node.parentElement.closest("#custom-search-modal")) {
                         return NodeFilter.FILTER_REJECT;
                     }
-                    regex.lastIndex = 0;
-                    if (regex.test(node.nodeValue)) {
+                    if (phraseRegex.test(node.nodeValue)) {
                         return NodeFilter.FILTER_ACCEPT;
                     }
                     return NodeFilter.FILTER_SKIP;
@@ -199,108 +204,57 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         );
 
-        const nodesToProcess = [];
+        let matchingNodes = [];
         while (walker.nextNode()) {
-            nodesToProcess.push(walker.currentNode);
+            matchingNodes.push(walker.currentNode);
         }
 
-        let firstMark = null;
+        // If whole phrase match is spread across sub-nodes, try matching leading key terms phrase (first 3-4 words)
+        if (matchingNodes.length === 0 && words.length > 1) {
+            const subPhrase = words.slice(0, Math.min(words.length, 4)).join("\\s+");
+            const subRegex = new RegExp(subPhrase, "gi");
 
-        nodesToProcess.forEach(node => {
-            regex.lastIndex = 0;
-            const match = regex.exec(node.nodeValue);
-            if (match) {
-                const mark = document.createElement("mark");
-                mark.className = "custom-highlight span.highlighted";
-
-                const matchNode = node.splitText(match.index);
-                matchNode.splitText(match[0].length);
-
-                mark.textContent = matchNode.nodeValue;
-                matchNode.parentNode.replaceChild(mark, matchNode);
-
-                if (!firstMark) firstMark = mark;
-            }
-        });
-
-        return firstMark || element;
-    }
-
-    // Precision Matcher: Finds and highlights ONLY the best matched block
-    function findAndHighlightBestMatch(query, scopeElement = document.body) {
-        if (!query || query.trim().length < 2) return null;
-
-        removeHighlights();
-
-        const mainContent = scopeElement.querySelector(".rst-content, main, [role='main']") || scopeElement;
-        const words = query.trim().split(/\s+/).map(w => w.trim()).filter(Boolean);
-        const keywords = words.filter(w => w.length > 1 && !STOP_WORDS.has(w.toLowerCase()));
-
-        if (words.length === 0) return null;
-
-        const blocks = Array.from(mainContent.querySelectorAll("pre, code, p, li, dt, dd, tr, .sd-card-body, .admonition"));
-
-        // Stage 1: Exact Phrase Match (flexible across spaces & newlines)
-        const escapedPhrase = words.map(w => escapeRegExp(w)).join("\\s+");
-        try {
-            const phraseRegex = new RegExp(escapedPhrase, "gi");
-            for (const block of blocks) {
-                if (phraseRegex.test(block.textContent)) {
-                    return highlightRegexInElement(block, phraseRegex);
-                }
-            }
-        } catch (e) { }
-
-        // Stage 2: Longest Sub-phrase Match (sliding window)
-        for (let len = Math.min(words.length - 1, 10); len >= 3; len--) {
-            for (let i = 0; i <= words.length - len; i++) {
-                const subWords = words.slice(i, i + len);
-                const subPhrase = subWords.map(w => escapeRegExp(w)).join("\\s+");
-                try {
-                    const subRegex = new RegExp(subPhrase, "gi");
-                    for (const block of blocks) {
-                        if (subRegex.test(block.textContent)) {
-                            return highlightRegexInElement(block, subRegex);
-                        }
+            walker = document.createTreeWalker(
+                mainContent,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: function (node) {
+                        if (!node.parentElement) return NodeFilter.FILTER_REJECT;
+                        const tag = node.parentElement.tagName.toLowerCase();
+                        if (["script", "style", "noscript", "input", "textarea", "select"].includes(tag)) return NodeFilter.FILTER_REJECT;
+                        if (node.parentElement.closest("#custom-search-modal")) return NodeFilter.FILTER_REJECT;
+                        if (subRegex.test(node.nodeValue)) return NodeFilter.FILTER_ACCEPT;
+                        return NodeFilter.FILTER_SKIP;
                     }
-                } catch (e) { }
+                }
+            );
+
+            while (walker.nextNode()) {
+                matchingNodes.push(walker.currentNode);
             }
         }
 
-        // Stage 3: Block Keyword Density Match
-        if (keywords.length > 0) {
-            let bestBlock = null;
-            let maxScore = 0;
-            let bestMatchedKeywords = [];
+        if (matchingNodes.length === 0) return null;
 
-            blocks.forEach(block => {
-                const text = block.textContent.toLowerCase();
-                let score = 0;
-                const matchedInBlock = [];
+        const firstNode = matchingNodes[0];
+        const activeRegex = phraseRegex.test(firstNode.nodeValue)
+            ? phraseRegex
+            : (words.length > 1 ? new RegExp(words.slice(0, Math.min(words.length, 4)).join("\\s+"), "gi") : new RegExp(words[0], "gi"));
 
-                keywords.forEach(kw => {
-                    if (text.includes(kw.toLowerCase())) {
-                        score += (kw.length >= 4 ? 2 : 1);
-                        matchedInBlock.push(kw);
-                    }
-                });
+        activeRegex.lastIndex = 0;
+        const match = activeRegex.exec(firstNode.nodeValue);
 
-                if (score > maxScore) {
-                    maxScore = score;
-                    bestBlock = block;
-                    bestMatchedKeywords = matchedInBlock;
-                }
-            });
+        if (match) {
+            const mark = document.createElement("mark");
+            mark.className = "custom-highlight span.highlighted";
 
-            if (bestBlock && maxScore >= 2) {
-                const kwRegexStr = bestMatchedKeywords.map(kw => escapeRegExp(kw)).join("|");
-                try {
-                    const kwRegex = new RegExp(`\\b(${kwRegexStr})\\b`, "gi");
-                    return highlightRegexInElement(bestBlock, kwRegex);
-                } catch (e) {
-                    return bestBlock;
-                }
-            }
+            const highlightedText = firstNode.splitText(match.index);
+            highlightedText.splitText(match[0].length);
+
+            mark.textContent = highlightedText.nodeValue;
+            highlightedText.parentNode.replaceChild(mark, highlightedText);
+
+            return mark;
         }
 
         return null;
@@ -346,22 +300,16 @@ document.addEventListener("DOMContentLoaded", function () {
         return { project, version };
     }
 
-    function formatWildcardQuery(query) {
-        if (!query) return "";
-        return query.trim().split(/\s+/).map(word => {
-            if (word.includes("*") || word.includes("?") || word.startsWith('"') || word.length < 2) {
-                return word;
-            }
-            return `${word}*`;
-        }).join(" ");
-    }
-
     function highlightAndExpand(query, hashId) {
         let targetElement = null;
 
-        // Run precision matcher first
-        if (query && query.trim().length > 0) {
-            targetElement = findAndHighlightBestMatch(query.trim());
+        const existingHighlights = document.querySelectorAll("span.highlighted, mark.custom-highlight");
+        if (existingHighlights.length > 0) {
+            targetElement = existingHighlights[0];
+        }
+
+        if (!targetElement && query && query.trim().length > 0) {
+            targetElement = findAndHighlightText(query.trim());
         }
 
         if (!targetElement && hashId) {
@@ -369,7 +317,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         if (targetElement && hashId && query && targetElement.id === hashId) {
-            const deeperMatch = findAndHighlightBestMatch(query.trim(), targetElement);
+            const deeperMatch = findAndHighlightText(query.trim(), targetElement);
             if (deeperMatch) {
                 targetElement = deeperMatch;
             }
@@ -515,16 +463,28 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
 
-        async function performSearch(query) {
+        async function performSearch(rawQuery) {
             modalResults.innerHTML = '<div class="custom-modal-state">Searching...</div>';
 
             try {
                 const { project, version } = getRTDMetadata();
-                const wildcardQ = formatWildcardQuery(query);
+
+                // Clean and normalize multi-line or long inputs into a single space-separated string
+                const cleanQuery = rawQuery.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+                const sanitized = cleanQuery.replace(/"/g, '');
+                const words = sanitized.split(" ");
+
+                // 1. Construct strict phrase search for multi-word queries to narrow down results
+                let primaryQ = "";
+                if (words.length === 1) {
+                    primaryQ = (sanitized.includes("*") || sanitized.length < 2) ? sanitized : `${sanitized}*`;
+                } else {
+                    primaryQ = `"${sanitized}"`;
+                }
 
                 let scopedQuery = project
-                    ? (version ? `project:${project}/${version} ${wildcardQ}` : `project:${project} ${wildcardQ}`)
-                    : wildcardQ;
+                    ? (version ? `project:${project}/${version} ${primaryQ}` : `project:${project} ${primaryQ}`)
+                    : primaryQ;
 
                 let apiUrl = `/_/api/v3/search/?q=${encodeURIComponent(scopedQuery)}`;
                 let response = await fetch(apiUrl);
@@ -534,25 +494,29 @@ document.addEventListener("DOMContentLoaded", function () {
                     data = await response.json();
                 }
 
-                if (!data || !data.results || data.results.length === 0) {
-                    const exactQ = project
-                        ? (version ? `project:${project}/${version} ${query}` : `project:${project} ${query}`)
-                        : query;
-                    const exactResp = await fetch(`/_/api/v3/search/?q=${encodeURIComponent(exactQ)}`);
-                    if (exactResp.ok) {
-                        data = await exactResp.json();
+                // 2. Fallback for multi-word queries: AND logic (matches all terms, still narrows down as you type)
+                if ((!data || !data.results || data.results.length === 0) && words.length > 1) {
+                    const andQuery = words.join(" AND ");
+                    const scopedAndQ = project
+                        ? (version ? `project:${project}/${version} ${andQuery}` : `project:${project} ${andQuery}`)
+                        : andQuery;
+
+                    const andResp = await fetch(`/_/api/v3/search/?q=${encodeURIComponent(scopedAndQ)}`);
+                    if (andResp.ok) {
+                        data = await andResp.json();
                     }
                 }
 
+                // 3. Fallback: Project-wide search
                 if ((!data || !data.results || data.results.length === 0) && project && version) {
-                    const fallbackParams = new URLSearchParams({ q: `project:${project} ${wildcardQ}` });
+                    const fallbackParams = new URLSearchParams({ q: `project:${project} ${primaryQ}` });
                     const fallbackResp = await fetch(`/_/api/v3/search/?${fallbackParams.toString()}`);
                     if (fallbackResp.ok) {
                         data = await fallbackResp.json();
                     }
                 }
 
-                renderResults(data && data.results ? data.results : [], query);
+                renderResults(data && data.results ? data.results : [], cleanQuery);
             } catch (err) {
                 console.error("Custom Search Error:", err);
                 const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.protocol === "file:";
@@ -561,7 +525,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     modalResults.innerHTML = `
                         <div class="custom-modal-state">
                             Read the Docs API search is unavailable in local previews.<br>
-                            <a href="${window.location.origin}/search.html?q=${encodeURIComponent(query)}" style="color: #2563eb; text-decoration: underline; margin-top: 8px; display: inline-block;">
+                            <a href="${window.location.origin}/search.html?q=${encodeURIComponent(rawQuery)}" style="color: #2563eb; text-decoration: underline; margin-top: 8px; display: inline-block;">
                                 Open standard local search page &rarr;
                             </a>
                         </div>
