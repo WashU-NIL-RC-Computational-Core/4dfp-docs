@@ -83,37 +83,66 @@ function initCustomDocScripts() {
     }
 
     function expandParents(element) {
+        if (!element) return;
+
+        let ancestors = [];
         let current = element.parentElement;
 
         while (current && current !== document.body) {
-            if (current.tagName.toLowerCase() === "details") {
-                current.open = true;
-            } else if (current.classList.contains("sd-dropdown")) {
-                const details = current.closest("details");
-                if (details) details.open = true;
+            if (current.tagName.toLowerCase() === "details" || current.classList.contains("sd-dropdown")) {
+                const detailsEl = current.tagName.toLowerCase() === "details" ? current : current.closest("details");
+                if (detailsEl) ancestors.push({ type: "details", el: detailsEl });
+            } else if (current.classList.contains("sd-tab-content")) {
+                ancestors.push({ type: "tab", el: current });
             }
+            current = current.parentElement;
+        }
 
-            if (current.classList.contains("sd-tab-content")) {
-                const tabSet = current.closest(".sd-tab-set");
+        ancestors.reverse();
+
+        const processed = new Set();
+
+        ancestors.forEach(item => {
+            if (processed.has(item.el)) return;
+            processed.add(item.el);
+
+            if (item.type === "details") {
+                item.el.open = true;
+                item.el.setAttribute("open", "");
+                item.el.dispatchEvent(new Event("toggle", { bubbles: true }));
+            } else if (item.type === "tab") {
+                const tabContent = item.el;
+                const tabSet = tabContent.closest(".sd-tab-set");
                 if (tabSet) {
-                    const contents = Array.from(tabSet.children).filter(c =>
-                        c.classList.contains("sd-tab-content")
-                    );
-                    const targetIndex = contents.indexOf(current);
+                    // Find index of this tab content within its tab set
+                    const allContents = Array.from(tabSet.querySelectorAll(":scope > .sd-tab-content"));
+                    let targetIndex = allContents.indexOf(tabContent);
 
-                    const inputs = Array.from(tabSet.children).filter(c =>
-                        c.tagName.toLowerCase() === "input"
-                    );
+                    if (targetIndex === -1) {
+                        const fallbackContents = Array.from(tabSet.children).filter(c => c.classList.contains("sd-tab-content"));
+                        targetIndex = fallbackContents.indexOf(tabContent);
+                    }
 
-                    if (inputs[targetIndex]) {
-                        inputs[targetIndex].checked = true;
-                        inputs[targetIndex].dispatchEvent(new Event("change", { bubbles: true }));
+                    if (targetIndex !== -1) {
+                        const labels = Array.from(tabSet.querySelectorAll(":scope > label.sd-tab-label, :scope > label"));
+                        const inputs = Array.from(tabSet.querySelectorAll(":scope > input"));
+
+                        const label = labels[targetIndex] || tabSet.querySelectorAll("label")[targetIndex];
+                        const input = inputs[targetIndex] || tabSet.querySelectorAll("input")[targetIndex];
+
+                        if (input) {
+                            input.checked = true;
+                            input.dispatchEvent(new Event("change", { bubbles: true }));
+                        }
+                        if (label) {
+                            label.click();
+                        } else if (input) {
+                            input.click();
+                        }
                     }
                 }
             }
-
-            current = current.parentElement;
-        }
+        });
     }
 
     function checkForTargetAndExpand() {
@@ -139,8 +168,12 @@ function initCustomDocScripts() {
 
             if (!targetElement && highlightTerm) {
                 const cleanTerm = highlightTerm.trim();
-                const candidateNodes = document.querySelectorAll(".rst-content pre, .rst-content code, .rst-content p, .rst-content td");
+                const contentArea = document.querySelector(".rst-content") || document.querySelector("main") || document.body;
+                const candidateNodes = contentArea.querySelectorAll("pre, code, span, p, td, div.highlight");
+
                 for (let el of candidateNodes) {
+                    if (el.closest(".wy-nav-side") || el.closest("footer")) continue;
+
                     if (el.textContent.includes(cleanTerm)) {
                         targetElement = el;
                         break;
@@ -161,7 +194,7 @@ function initCustomDocScripts() {
 
                 setTimeout(() => {
                     targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-                }, 200);
+                }, 250);
             } else if (attempts >= maxAttempts) {
                 sessionStorage.removeItem("rtd_search_query");
                 clearInterval(pollInterval);
