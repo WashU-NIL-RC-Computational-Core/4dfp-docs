@@ -1,52 +1,4 @@
-function initCustomDocScripts() {
-    // -------------------------------------------------------------
-    // 1. Prevent default hover behaviors on cards
-    // -------------------------------------------------------------
-    const cardLinks = document.querySelectorAll('.nav-card a, .sd-card a, a.sd-card-link');
-    cardLinks.forEach(link => {
-        ['mouseenter', 'mouseover', 'pointerenter'].forEach(eventType => {
-            link.addEventListener(eventType, function (e) {
-                e.stopPropagation();
-            }, true);
-        });
-    });
-
-    // -------------------------------------------------------------
-    // 2. Track search query (Shadow-DOM aware for RTD Web Components)
-    // -------------------------------------------------------------
-    document.addEventListener("input", function (e) {
-        const path = e.composedPath ? e.composedPath() : [e.target];
-        for (let el of path) {
-            if (el.tagName === 'INPUT' && (el.type === 'search' || el.type === 'text' || el.placeholder?.toLowerCase().includes('search'))) {
-                const query = el.value.trim();
-                if (query.length > 1) {
-                    sessionStorage.setItem("rtd_search_query", query);
-                }
-            }
-        }
-    }, true);
-
-    document.addEventListener("click", function (e) {
-        const path = e.composedPath ? e.composedPath() : [e.target];
-        for (let el of path) {
-            if (el.tagName === 'A' && el.href) {
-                const searchInput = findSearchInputInDOM();
-                if (searchInput && searchInput.value) {
-                    sessionStorage.setItem("rtd_search_query", searchInput.value.trim());
-                } else {
-                    try {
-                        const url = new URL(el.href);
-                        const q = url.searchParams.get("highlight") || url.searchParams.get("q");
-                        if (q) sessionStorage.setItem("rtd_search_query", q);
-                    } catch (err) { }
-                }
-            }
-        }
-    }, true);
-
-    // -------------------------------------------------------------
-    // 3. Breadcrumb / Page Title Navigation Bar Enhancement
-    // -------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", function () {
     const navTopLink = document.querySelector(".wy-nav-top a");
     const breadcrumbList = document.querySelector("ul.wy-breadcrumbs");
 
@@ -97,139 +49,327 @@ function initCustomDocScripts() {
 
             if (!isHamburger) {
                 event.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
             }
         });
     }
 
-    // -------------------------------------------------------------
-    // 4. Run Search Target Unfold & Highlight Logic
-    // -------------------------------------------------------------
-    handleSearchTargetHighlighting();
-}
+    const contentWrap = document.querySelector(".wy-nav-content-wrap");
+    const navSide = document.querySelector(".wy-nav-side");
 
-/**
- * Searches Shadow DOMs for RTD Search Inputs
- */
-function findSearchInputInDOM() {
-    let input = document.querySelector("readthedocs-search input, input[type='search']");
-    if (input) return input;
+    if (contentWrap && navSide) {
+        contentWrap.addEventListener("click", function (event) {
+            const isMenuOpen = navSide.classList.contains("shift") || contentWrap.classList.contains("shift");
 
-    const rtdSearch = document.querySelector("readthedocs-search");
-    if (rtdSearch && rtdSearch.shadowRoot) {
-        return rtdSearch.shadowRoot.querySelector("input");
-    }
-    return null;
-}
-
-/**
- * Locates text query, expands nested components, and scrolls target into view (no highlight animation)
- */
-function handleSearchTargetHighlighting() {
-    const urlParams = new URLSearchParams(window.location.search);
-    let query = sessionStorage.getItem("rtd_search_query") || urlParams.get("highlight") || urlParams.get("q") || urlParams.get("query");
-
-    // Consume query so normal refreshes don't re-trigger
-    sessionStorage.removeItem("rtd_search_query");
-
-    const contentArea = document.querySelector(".rst-content, main, [role='main']");
-    if (!contentArea) return;
-
-    let targetElement = null;
-
-    // STEP A: PRIORITIZE TEXT CONTENT MATCH OVER URL HASH
-    if (query && query.trim().length > 1) {
-        const queryLower = query.trim().toLowerCase();
-        const walker = document.createTreeWalker(
-            contentArea,
-            NodeFilter.SHOW_TEXT,
-            {
-                acceptNode: function (node) {
-                    const parent = node.parentElement;
-                    if (!parent) return NodeFilter.FILTER_REJECT;
-                    const tag = parent.tagName.toLowerCase();
-                    if (['script', 'style', 'noscript', 'textarea'].includes(tag)) return NodeFilter.FILTER_REJECT;
-                    return node.textContent.toLowerCase().includes(queryLower)
-                        ? NodeFilter.FILTER_ACCEPT
-                        : NodeFilter.FILTER_SKIP;
+            if (isMenuOpen) {
+                const hamburger = document.querySelector(".wy-nav-top i") || document.querySelector('[data-toggle="wy-nav-shift"]');
+                if (hamburger) {
+                    hamburger.click();
+                } else {
+                    document.querySelectorAll(".shift").forEach(el => el.classList.remove("shift"));
                 }
             }
-        );
+        });
+    }
 
-        const matchNode = walker.nextNode();
-        if (matchNode) {
-            targetElement = matchNode.parentElement;
+    function expandParents(element) {
+        let current = element.parentElement;
+
+        while (current && current !== document.body) {
+            if (current.tagName.toLowerCase() === "details") {
+                current.open = true;
+            } else if (current.classList.contains("sd-dropdown")) {
+                const details = current.closest("details");
+                if (details) details.open = true;
+            }
+
+            if (current.classList.contains("sd-tab-content")) {
+                const tabSet = current.closest(".sd-tab-set");
+                if (tabSet) {
+                    const contents = Array.from(tabSet.children).filter(c =>
+                        c.classList.contains("sd-tab-content")
+                    );
+                    const targetIndex = contents.indexOf(current);
+
+                    const inputs = Array.from(tabSet.children).filter(c =>
+                        c.tagName.toLowerCase() === "input"
+                    );
+
+                    if (inputs[targetIndex]) {
+                        inputs[targetIndex].checked = true;
+                        inputs[targetIndex].dispatchEvent(new Event("change", { bubbles: true }));
+                    }
+                }
+            }
+
+            current = current.parentElement;
         }
     }
 
-    // STEP B: FALLBACK TO LOCATION HASH ONLY IF NO TEXT MATCH WAS FOUND
-    if (!targetElement && window.location.hash) {
-        try {
-            targetElement = document.querySelector(window.location.hash);
-        } catch (e) { }
+    // -------------------------------------------------------------
+    // Custom Search Modal Implementation
+    // -------------------------------------------------------------
+    function initCustomSearchModal() {
+        // Inject Modal HTML into body
+        const modalHtml = `
+            <div id="custom-search-modal" class="custom-modal-backdrop" style="display:none;">
+                <div class="custom-modal-container">
+                    <div class="custom-modal-header">
+                        <svg class="custom-modal-search-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="search" id="custom-modal-input" placeholder="Search documentation..." autocomplete="off" />
+                        <span class="custom-modal-close">&times;</span>
+                    </div>
+                    <div id="custom-modal-results" class="custom-modal-results">
+                        <div class="custom-modal-state">Type to start searching...</div>
+                    </div>
+                    <div class="custom-modal-footer">
+                        <span><kbd>↑</kbd> <kbd>↓</kbd> Navigate</span>
+                        <span><kbd>↵</kbd> Select</span>
+                        <span><kbd>ESC</kbd> Close</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML("beforeend", modalHtml);
+
+        const modal = document.getElementById("custom-search-modal");
+        const modalInput = document.getElementById("custom-modal-input");
+        const modalResults = document.getElementById("custom-modal-results");
+        const modalClose = modal.querySelector(".custom-modal-close");
+
+        let selectedIndex = -1;
+        let debounceTimer = null;
+
+        function openModal(initialQuery = "") {
+            modal.style.display = "flex";
+            document.body.style.overflow = "hidden";
+            modalInput.value = initialQuery;
+            modalInput.focus();
+            if (initialQuery.trim().length >= 2) {
+                performSearch(initialQuery);
+            } else {
+                modalResults.innerHTML = '<div class="custom-modal-state">Type to start searching...</div>';
+            }
+        }
+
+        function closeModal() {
+            modal.style.display = "none";
+            document.body.style.overflow = "";
+            modalInput.value = "";
+            selectedIndex = -1;
+        }
+
+        // Intercept sidebar search box clicks/focus
+        const sidebarSearchInput = document.querySelector("#rtd-search-form input[name='q'], input[name='q']");
+        if (sidebarSearchInput) {
+            sidebarSearchInput.addEventListener("focus", function (e) {
+                e.preventDefault();
+                sidebarSearchInput.blur();
+                openModal(sidebarSearchInput.value);
+            });
+            sidebarSearchInput.addEventListener("click", function (e) {
+                e.preventDefault();
+                openModal(sidebarSearchInput.value);
+            });
+        }
+
+        // Global hotkey: Cmd+K or Ctrl+K
+        document.addEventListener("keydown", function (e) {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+                e.preventDefault();
+                if (modal.style.display === "flex") {
+                    closeModal();
+                } else {
+                    openModal();
+                }
+            } else if (e.key === "Escape" && modal.style.display === "flex") {
+                closeModal();
+            }
+        });
+
+        modalClose.addEventListener("click", closeModal);
+        modal.addEventListener("click", function (e) {
+            if (e.target === modal) closeModal();
+        });
+
+        // Search Input Event
+        modalInput.addEventListener("input", function () {
+            const query = modalInput.value.trim();
+            clearTimeout(debounceTimer);
+            selectedIndex = -1;
+
+            if (query.length < 2) {
+                modalResults.innerHTML = '<div class="custom-modal-state">Type to start searching...</div>';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                performSearch(query);
+            }, 250);
+        });
+
+        // Keyboard Navigation (Up, Down, Enter)
+        modalInput.addEventListener("keydown", function (e) {
+            const items = modalResults.querySelectorAll(".custom-search-item");
+            if (items.length === 0) return;
+
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                selectedIndex = (selectedIndex + 1) % items.length;
+                updateSelection(items);
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+                updateSelection(items);
+            } else if (e.key === "Enter" && selectedIndex >= 0) {
+                e.preventDefault();
+                items[selectedIndex].querySelector("a").click();
+            }
+        });
+
+        function updateSelection(items) {
+            items.forEach((item, index) => {
+                if (index === selectedIndex) {
+                    item.classList.add("selected");
+                    item.scrollIntoView({ block: "nearest" });
+                } else {
+                    item.classList.remove("selected");
+                }
+            });
+        }
+
+        async function performSearch(query) {
+            modalResults.innerHTML = '<div class="custom-modal-state">Searching...</div>';
+
+            try {
+                let apiUrl = `/_/api/v2/search/?q=${encodeURIComponent(query)}`;
+
+                // Read the Docs requires project and version parameters
+                if (window.READTHEDOCS_DATA) {
+                    if (window.READTHEDOCS_DATA.project) {
+                        apiUrl += `&project=${encodeURIComponent(window.READTHEDOCS_DATA.project)}`;
+                    }
+                    if (window.READTHEDOCS_DATA.version) {
+                        apiUrl += `&version=${encodeURIComponent(window.READTHEDOCS_DATA.version)}`;
+                    }
+                }
+
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                renderResults(data.results || [], query);
+            } catch (err) {
+                console.error("Custom Search Error:", err);
+
+                // Handle local environment vs live Read the Docs
+                const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.protocol === "file:";
+
+                if (isLocal) {
+                    modalResults.innerHTML = `
+                        <div class="custom-modal-state">
+                            Read the Docs API search is unavailable in local previews.<br>
+                            <a href="${window.location.origin}/search.html?q=${encodeURIComponent(query)}" style="color: #2563eb; text-decoration: underline; margin-top: 8px; display: inline-block;">
+                                Open standard local search page &rarr;
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    modalResults.innerHTML = '<div class="custom-modal-state">Error fetching search results. Press F12 to inspect the browser console.</div>';
+                }
+            }
+        }
+
+        function renderResults(results, query) {
+            if (!results || results.length === 0) {
+                modalResults.innerHTML = '<div class="custom-modal-state">No results found</div>';
+                return;
+            }
+
+            let html = '<ul class="custom-search-list">';
+            results.slice(0, 10).forEach(res => {
+                const pageTitle = res.title || "Untitled";
+                let pageUrl = res.path || (res.domain + res.path);
+
+                if (!pageUrl.includes("highlight=")) {
+                    const parts = pageUrl.split("#");
+                    const separator = parts[0].includes("?") ? "&" : "?";
+                    pageUrl = `${parts[0]}${separator}highlight=${encodeURIComponent(query)}${parts[1] ? "#" + parts[1] : ""}`;
+                }
+
+                let snippet = "";
+                if (res.blocks && res.blocks.length > 0) {
+                    const block = res.blocks[0];
+                    if (block.highlights && block.highlights.content && block.highlights.content.length > 0) {
+                        snippet = block.highlights.content[0];
+                    } else if (block.title) {
+                        snippet = block.title;
+                    }
+                }
+
+                html += `
+                    <li class="custom-search-item">
+                        <a href="${pageUrl}">
+                            <div class="custom-search-title">${pageTitle}</div>
+                            ${snippet ? `<div class="custom-search-snippet">${snippet}</div>` : ""}
+                        </a>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            modalResults.innerHTML = html;
+
+            // In-page navigation handler
+            modalResults.querySelectorAll("a").forEach(link => {
+                link.addEventListener("click", function () {
+                    const targetUrl = new URL(link.href, window.location.origin);
+                    if (targetUrl.pathname === window.location.pathname) {
+                        closeModal();
+                        if (targetUrl.hash) {
+                            const hashId = targetUrl.hash.substring(1);
+                            const targetElement = document.getElementById(hashId) || document.getElementsByName(hashId)[0];
+                            if (targetElement) {
+                                expandParents(targetElement);
+                                setTimeout(() => {
+                                    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+                                }, 100);
+                            }
+                        }
+                    }
+                });
+            });
+        }
     }
 
-    if (!targetElement) return;
+    // Initialize custom search modal
+    initCustomSearchModal();
 
-    // STEP C: EXPAND ALL PARENT DROPDOWNS & NESTED TABS
-    expandParents(targetElement);
+    // On-load section expander and scroller
+    setTimeout(function () {
+        let targetElement = null;
 
-    setTimeout(() => {
-        targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 350);
-}
-
-function expandParents(el) {
-    const tabsToActivate = [];
-    let current = el;
-
-    while (current && current !== document.body) {
-        if (current.tagName === 'DETAILS') {
-            current.open = true;
-            current.setAttribute('open', '');
-            current.dispatchEvent(new Event('toggle', { bubbles: true }));
+        const highlightedSpans = document.querySelectorAll("span.highlighted");
+        if (highlightedSpans.length > 0) {
+            targetElement = highlightedSpans[0];
         }
 
-        if (current.classList && current.classList.contains('sd-tab-content')) {
-            tabsToActivate.unshift(current);
+        if (!targetElement && window.location.hash) {
+            const hashId = window.location.hash.substring(1);
+            targetElement = document.getElementById(hashId) || document.getElementsByName(hashId)[0];
         }
 
-        current = current.parentElement;
-    }
+        if (targetElement) {
+            expandParents(targetElement);
 
-    // Activate collected tabs sequentially from top-level to nested
-    tabsToActivate.forEach(activateSdTab);
-}
-
-/**
- * Activates a specific Sphinx-Design tab content element
- */
-function activateSdTab(tabContent) {
-    const tabSet = tabContent.closest('.sd-tab-set');
-    if (!tabSet) return;
-
-    const contents = Array.from(tabSet.children).filter(c => c.classList.contains('sd-tab-content'));
-    const index = contents.indexOf(tabContent);
-
-    if (index !== -1) {
-        const inputs = Array.from(tabSet.children).filter(c => c.tagName === 'INPUT' && c.type === 'radio');
-        const labels = Array.from(tabSet.children).filter(c => c.classList.contains('sd-tab-label'));
-
-        const targetInput = inputs[index];
-        const targetLabel = labels[index];
-
-        if (targetInput) {
-            targetInput.checked = true;
-            targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+            setTimeout(() => {
+                targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 150);
         }
-        if (targetLabel) {
-            targetLabel.click();
-        }
-    }
-}
-
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initCustomDocScripts);
-} else {
-    initCustomDocScripts();
-}
+    }, 300);
+});
