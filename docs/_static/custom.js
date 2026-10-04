@@ -85,17 +85,20 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function expandParents(element) {
+        if (!element) return;
         let current = element.parentElement;
 
         while (current && current !== document.body) {
-            if (current.tagName.toLowerCase() === "details") {
+            // Unfold standard HTML <details> and Sphinx-Design dropdowns
+            if (current.tagName && current.tagName.toLowerCase() === "details") {
                 current.open = true;
-            } else if (current.classList.contains("sd-dropdown")) {
-                const details = current.closest("details");
+            } else if (current.classList && current.classList.contains("sd-dropdown")) {
+                const details = current.tagName.toLowerCase() === "details" ? current : current.closest("details");
                 if (details) details.open = true;
             }
 
-            if (current.classList.contains("sd-tab-content")) {
+            // Select Sphinx-Design active tabs
+            if (current.classList && current.classList.contains("sd-tab-content")) {
                 const tabSet = current.closest(".sd-tab-set");
                 if (tabSet) {
                     const contents = Array.from(tabSet.children).filter(c =>
@@ -114,6 +117,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
 
+            // Sphinx togglebutton / collapsible admonitions
+            if (current.classList && (current.classList.contains("togglebutton") || current.classList.contains("toggle-details"))) {
+                if (current.tagName.toLowerCase() === "details") {
+                    current.open = true;
+                } else {
+                    const toggleBtn = current.querySelector(".toggle-button");
+                    if (toggleBtn && current.classList.contains("admonition-hidden")) {
+                        toggleBtn.click();
+                    }
+                }
+            }
+
             current = current.parentElement;
         }
     }
@@ -122,7 +137,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // Custom Search Modal Implementation
     // -------------------------------------------------------------
     function initCustomSearchModal() {
-        // Inject Modal HTML into body
         const modalHtml = `
             <div id="custom-search-modal" class="custom-modal-backdrop" style="display:none;">
                 <div class="custom-modal-container">
@@ -171,7 +185,6 @@ document.addEventListener("DOMContentLoaded", function () {
             selectedIndex = -1;
         }
 
-        // Intercept sidebar search box clicks/focus
         const sidebarSearchInput = document.querySelector("#rtd-search-form input[name='q'], input[name='q']");
         if (sidebarSearchInput) {
             sidebarSearchInput.addEventListener("focus", function (e) {
@@ -185,7 +198,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
 
-        // Global hotkey: Cmd+K or Ctrl+K
         document.addEventListener("keydown", function (e) {
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
                 e.preventDefault();
@@ -204,7 +216,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if (e.target === modal) closeModal();
         });
 
-        // Search Input Event
         modalInput.addEventListener("input", function () {
             const query = modalInput.value.trim();
             clearTimeout(debounceTimer);
@@ -220,7 +231,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 250);
         });
 
-        // Keyboard Navigation (Up, Down, Enter)
         modalInput.addEventListener("keydown", function (e) {
             const items = modalResults.querySelectorAll(".custom-search-item");
             if (items.length === 0) return;
@@ -256,22 +266,30 @@ document.addEventListener("DOMContentLoaded", function () {
             try {
                 let project = "";
                 let version = "";
+                let apiHost = "";
 
                 if (window.READTHEDOCS_DATA) {
                     project = window.READTHEDOCS_DATA.project || "";
                     version = window.READTHEDOCS_DATA.version || "";
+                    apiHost = window.READTHEDOCS_DATA.api_host || "";
                 }
 
-                // Format query using API v3 search syntax: "project:slug/version search_terms"
-                let searchQ = query;
-                if (project && version) {
-                    searchQ = `project:${project}/${version} ${query}`;
-                } else if (project) {
-                    searchQ = `project:${project} ${query}`;
-                }
+                // RTD API v3 expects query parameters separately: ?q=...&project=...&version=...
+                const params = new URLSearchParams();
+                params.append("q", query);
+                if (project) params.append("project", project);
+                if (version) params.append("version", version);
 
-                let apiUrl = `/_/api/v3/search/?q=${encodeURIComponent(searchQ)}`;
+                let baseUrl = "/_/api/v3/search/";
+                let apiUrl = `${baseUrl}?${params.toString()}`;
+
                 let response = await fetch(apiUrl);
+
+                // Fallback to absolute API host if relative proxy fails
+                if (!response.ok && apiHost) {
+                    const fallbackUrl = `${apiHost.replace(/\/$/, "")}/api/v3/search/?${params.toString()}`;
+                    response = await fetch(fallbackUrl);
+                }
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -279,18 +297,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 let data = await response.json();
 
-                // Fallback 1: Try without specific version slug if 0 results returned
+                // Fallback 1: Query without version scoping if 0 results
                 if ((!data.results || data.results.length === 0) && project && version) {
-                    const fallbackQ = `project:${project} ${query}`;
-                    const fallbackResp = await fetch(`/_/api/v3/search/?q=${encodeURIComponent(fallbackQ)}`);
+                    const fallbackParams = new URLSearchParams({ q: query, project: project });
+                    const fallbackResp = await fetch(`${baseUrl}?${fallbackParams.toString()}`);
                     if (fallbackResp.ok) {
                         data = await fallbackResp.json();
                     }
                 }
 
-                // Fallback 2: Try un-scoped raw query if project index is still empty
+                // Fallback 2: Query raw terms if project scoping yielded 0 results
                 if ((!data.results || data.results.length === 0) && project) {
-                    const rawResp = await fetch(`/_/api/v3/search/?q=${encodeURIComponent(query)}`);
+                    const rawResp = await fetch(`${baseUrl}?q=${encodeURIComponent(query)}`);
                     if (rawResp.ok) {
                         data = await rawResp.json();
                     }
@@ -299,7 +317,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 renderResults(data.results || [], query);
             } catch (err) {
                 console.error("Custom Search Error:", err);
-
                 const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.protocol === "file:";
 
                 if (isLocal) {
@@ -323,53 +340,66 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            let html = '<ul class="custom-search-list">';
-            results.slice(0, 10).forEach(res => {
+            let items = [];
+
+            results.forEach(res => {
                 const pageTitle = res.title || "Untitled";
-                let pageUrl = res.path || "";
+                let basePath = res.path || "";
 
-                if (res.domain && res.path) {
-                    pageUrl = `https://${res.domain}${res.path}`;
-                }
-
-                // Append highlight parameter for Sphinx target highlighting
-                if (pageUrl && !pageUrl.includes("highlight=")) {
-                    const parts = pageUrl.split("#");
-                    const separator = parts[0].includes("?") ? "&" : "?";
-                    pageUrl = `${parts[0]}${separator}highlight=${encodeURIComponent(query)}${parts[1] ? "#" + parts[1] : ""}`;
-                }
-
-                let snippet = "";
-
-                // Extract snippet from blocks or top-level highlights in API v3 structure
+                // Parse section-level blocks from API v3 for targeted anchoring
                 if (res.blocks && res.blocks.length > 0) {
-                    for (const block of res.blocks) {
-                        if (block.highlights && block.highlights.content && block.highlights.content.length > 0) {
-                            snippet = block.highlights.content.join(" ... ");
-                            break;
-                        } else if (block.highlights && block.highlights.title && block.highlights.title.length > 0) {
-                            snippet = block.highlights.title.join(" ... ");
-                            break;
-                        } else if (block.content) {
+                    res.blocks.forEach(block => {
+                        let blockTitle = block.title || pageTitle;
+                        let anchor = block.id ? `#${block.id}` : "";
+                        let separator = basePath.includes("?") ? "&" : "?";
+                        let fullUrl = `${basePath}${separator}highlight=${encodeURIComponent(query)}${anchor}`;
+
+                        let snippet = "";
+                        if (block.highlights) {
+                            if (block.highlights.content && block.highlights.content.length > 0) {
+                                snippet = block.highlights.content.join(" ... ");
+                            } else if (block.highlights.title && block.highlights.title.length > 0) {
+                                snippet = block.highlights.title.join(" ... ");
+                            }
+                        }
+                        if (!snippet && block.content) {
                             snippet = block.content.substring(0, 150) + "...";
-                            break;
+                        }
+
+                        items.push({
+                            title: blockTitle !== pageTitle ? `${pageTitle} › ${blockTitle}` : pageTitle,
+                            url: fullUrl,
+                            snippet: snippet
+                        });
+                    });
+                } else {
+                    let separator = basePath.includes("?") ? "&" : "?";
+                    let fullUrl = `${basePath}${separator}highlight=${encodeURIComponent(query)}`;
+
+                    let snippet = "";
+                    if (res.highlights) {
+                        if (res.highlights.content && res.highlights.content.length > 0) {
+                            snippet = res.highlights.content.join(" ... ");
+                        } else if (res.highlights.title && res.highlights.title.length > 0) {
+                            snippet = res.highlights.title.join(" ... ");
                         }
                     }
-                }
 
-                if (!snippet && res.highlights) {
-                    if (res.highlights.content && res.highlights.content.length > 0) {
-                        snippet = res.highlights.content.join(" ... ");
-                    } else if (res.highlights.title && res.highlights.title.length > 0) {
-                        snippet = res.highlights.title.join(" ... ");
-                    }
+                    items.push({
+                        title: pageTitle,
+                        url: fullUrl,
+                        snippet: snippet
+                    });
                 }
+            });
 
+            let html = '<ul class="custom-search-list">';
+            items.slice(0, 15).forEach(item => {
                 html += `
                     <li class="custom-search-item">
-                        <a href="${pageUrl}">
-                            <div class="custom-search-title">${pageTitle}</div>
-                            ${snippet ? `<div class="custom-search-snippet">${snippet}</div>` : ""}
+                        <a href="${item.url}">
+                            <div class="custom-search-title">${item.title}</div>
+                            ${item.snippet ? `<div class="custom-search-snippet">${item.snippet}</div>` : ""}
                         </a>
                     </li>
                 `;
@@ -377,7 +407,7 @@ document.addEventListener("DOMContentLoaded", function () {
             html += '</ul>';
             modalResults.innerHTML = html;
 
-            // Handle same-page fragment clicks and parent unfolding
+            // Same-page smooth navigation and unfolding
             modalResults.querySelectorAll("a").forEach(link => {
                 link.addEventListener("click", function () {
                     const targetUrl = new URL(link.href, window.location.origin);
@@ -399,29 +429,39 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Initialize custom search modal
     initCustomSearchModal();
 
-    // On-load section expander and scroller
-    setTimeout(function () {
-        let targetElement = null;
+    // Auto-expand hidden parents and scroll into view when navigating to highlighted terms
+    function handleHighlightAndScroll() {
+        function processTarget() {
+            let targetElement = document.querySelector("span.highlighted");
 
-        const highlightedSpans = document.querySelectorAll("span.highlighted");
-        if (highlightedSpans.length > 0) {
-            targetElement = highlightedSpans[0];
+            if (!targetElement && window.location.hash) {
+                const hashId = decodeURIComponent(window.location.hash.substring(1));
+                targetElement = document.getElementById(hashId) || document.getElementsByName(hashId)[0];
+            }
+
+            if (targetElement) {
+                expandParents(targetElement);
+                setTimeout(() => {
+                    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+                }, 100);
+                return true;
+            }
+            return false;
         }
 
-        if (!targetElement && window.location.hash) {
-            const hashId = window.location.hash.substring(1);
-            targetElement = document.getElementById(hashId) || document.getElementsByName(hashId)[0];
-        }
-
-        if (targetElement) {
-            expandParents(targetElement);
-
-            setTimeout(() => {
-                targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Retry polling to wait for Sphinx doctools.js to apply span.highlighted
+        if (!processTarget()) {
+            let attempts = 0;
+            const interval = setInterval(() => {
+                attempts++;
+                if (processTarget() || attempts > 10) {
+                    clearInterval(interval);
+                }
             }, 150);
         }
-    }, 300);
+    }
+
+    handleHighlightAndScroll();
 });
