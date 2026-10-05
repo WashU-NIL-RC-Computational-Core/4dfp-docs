@@ -8,6 +8,7 @@
 
     document.addEventListener("paste", (event) => {
         const target = event.target;
+        console.log(`debug paste target ${target}`);
         if (target && target.matches("readthedocs-search input, input[type='search']")) {
             const pastedText = (event.clipboardData || window.clipboardData).getData("text");
 
@@ -85,9 +86,13 @@
             rawQuery = initialSessionStorage;
         }
 
+        console.log(`debug initialSessionStorage ${initialSessionStorage}`);
+
         if (!rawQuery && initialLocalStorage) {
             rawQuery = initialLocalStorage;
         }
+
+        console.log(`debug initialLocalStorage ${initialLocalStorage}`);
 
         if (!rawQuery && initialReferrer) {
             try {
@@ -98,7 +103,7 @@
             }
         }
 
-        console.log(rawQuery);
+        console.log(`debug initialReferrer ${initialReferrer}`);
 
         if (!rawQuery) return [];
 
