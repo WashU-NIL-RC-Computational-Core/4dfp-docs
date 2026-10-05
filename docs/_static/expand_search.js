@@ -96,11 +96,17 @@
             sessionStorage.removeItem("rtd_search_query");
         }
 
+        console.log(`debug initialSessionStorage: ${initialSessionStorage}`);
+
         if (!rawQuery && initialLocalStorage) {
             rawQuery = initialLocalStorage;
         }
 
+        console.log(`debug initialLocalStorage: ${initialLocalStorage}`);
+
         if (!rawQuery) return [];
+
+        console.log(`debug rawQuery: ${rawQuery}`);
 
         return rawQuery;
     }
