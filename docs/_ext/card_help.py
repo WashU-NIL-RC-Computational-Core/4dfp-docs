@@ -5,7 +5,7 @@ from sphinx.addnodes import pending_xref
 def card_help_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     """
     Custom Sphinx role for info help tooltips.
-    - Usage 1 (Glossary Link Preview): :card-help:`term:DICOM.studies.txt`
+    - Usage 1 (Glossary Link Preview): :card-help:`term:<dicom_directory>.studies.txt`
     - Usage 2 (Custom CSS Tooltip): :card-help:`Hover text goes here`
     """
     svg_icon = (

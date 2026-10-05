@@ -12,13 +12,14 @@ dcm_dump_file [-b] [-e] [-E] [-f] [-g] [-l] [-L] [-m <mult>] [-t] [-v] [-w <flag
 Description
 -----------
 
-Inspect and display the internal header metadata of DICOM files provided via absolute or relative paths. The tool accepts individual DICOM files, multiple files, or directory locations as input. When a directory path is provided, 
-``dcm_dump_file`` recursively scans all sub-directories to process every file found.
+Inspects and prints the internal :term:`DICOM Header` metadata of DICOM files. You can provide paths to single files, multiple files, or entire directories. When given a directory path, ``dcm_dump_file`` searches through all subdirectories to process every file it finds.
 
-This tool prints human-readable DICOM attributes—such as patient demographic data, scanner acquisition settings, and study/series identification tags—directly to stdout. Raw binary image pixel data is summarized by tag structure and byte length rather than printed in raw form.
+This tool prints readable scanner information (such as patient details, scanner acquisition settings, and study or series numbers) directly to your terminal screen. Instead of printing raw image pixels, it displays a summary of the image data size and structure.
 
-.. important:: 
-   Options used must be placed **before** any file or directory arguments. Options placed after will be ignored and treated as invalid file names.
+Higher-level 4dfp scripts, like :ref:`dcm_sort`, use ``dcm_dump_file`` behind the scenes to read image header tags.
+
+.. important::
+   Place all option flags **before** any file or directory arguments. Flags placed after file names are ignored and treated as invalid file paths.
 
 Usage
 -----
@@ -30,32 +31,29 @@ Usage
    * - Flag
      - Description
    * - ``-b``
-     - Read data using :term:`Big-Endian` byte order (common in legacy systems).
+     - Reads data using :term:`Big-Endian` byte order (used in older imaging systems).
    * - ``-e``
-     - Exit immediately on file open failure, skipping remaining files.
+     - Exits immediately on file open failure, skipping remaining files.
    * - ``-E``
-     - Process files using :term:`DICOM Part 10` format with eFilm workstation compatibility.
+     - Processes files using :term:`DICOM Part 10` format with eFilm workstation compatibility.
    * - ``-f``
-     - Format stdout into clean, aligned text columns for easier reading.
+     - Formats stdout into clean, aligned text columns for easier reading.
    * - ``-g``
-     - Ignore group length attributes (useful for files with corrupted size markers).
+     - Ignores group length attributes (useful for files with corrupted size markers).
    * - ``-l``
-     - Use retired length-to-end attributes to calculate overall object size.
+     - Uses retired length-to-end attributes to calculate overall file size.
    * - ``-L``
-     - Read data using :term:`Explicit Little-Endian` byte order (standard PC format).
+     - Reads data using :term:`Explicit Little-Endian` byte order (standard PC format).
    * - ``-m <mult>``
-     - Limit displayed items for repeated data fields (e.g., ``-m 5`` displays first 5 entries).
+     - Limits displayed items for repeated data fields (e.g., ``-m 5`` displays first 5 entries).
    * - ``-t``
-     - Parse files using :term:`DICOM Part 10` standards while ignoring minor type mismatches.
+     - Parses files using :term:`DICOM Part 10` standards while ignoring minor type mismatches.
    * - ``-v``
-     - Enable verbose logging to display detailed technical updates during processing.
+     - Enables verbose logging to display detailed technical updates during processing.
    * - ``-w <flag>``
-     - Enable advanced file opening options (e.g., ``-w REPEAT`` permits duplicate tags).
+     - Enables advanced file opening options (e.g., ``-w REPEAT`` permits duplicate tags).
    * - ``-z``
-     - Perform automated format conversion and data verification on header attributes.
-
-.. note:: 
-   Options that require values **MUST** have a space between the option and its value (e.g., ``-m 5``).
+     - Performs automated format conversion and data verification on header attributes.
 
 .. note:: 
    If a file fails to open initially, ``dcm_dump_file`` automatically retries parsing with the ``-t`` flag enabled.
@@ -70,12 +68,17 @@ Examples
 
       .. tab-item:: 📁 Case 1: Dump Header Info
 
+         Use ``dcm_dump_file`` when you need to inspect raw DICOM metadata, verify scanner settings (such as sequence names or TE/TR times), or troubleshoot files before running 4dfp conversion scripts.
+
+         .. note::
+            In all commands below, replace ``<file_or_directory>`` with your actual file path or directory name (for example, ``/data/scan1.dcm`` or ``/data/DICOM``).
+
          .. card:: 📥 Input Data
             :class-card: sd-bg-light sd-border-1 mb-3
 
             .. div:: card-help-top-right
 
-              :card-help:`Hover over image or click to inspect DICOM source directory structure`
+              :card-help:`You can inspect a single DICOM file or an entire directory. When given a directory, the tool recursively scans all subdirectories.`
 
             DICOM files usually have a file extension of ``.dcm`` (or :term:`Siemens .IMA` when using Siemens scanners).
 
@@ -87,6 +90,8 @@ Examples
          .. tab-set::
 
             .. tab-item:: ⚡ Command 1: Standard Display
+
+               Run the tool without flags to print all DICOM header tags directly to your terminal screen.
 
                **1. Execute Command:**
 
@@ -102,6 +107,8 @@ Examples
                   :width: 70%
 
             .. tab-item:: ⚡ Command 2: Formatted Display
+
+               Use the ``-f`` flag to format the output into clean, aligned text columns. This makes reading tag group numbers, descriptions, and values much easier.
 
                **1. Execute Command:**
 
@@ -121,10 +128,12 @@ Examples
 
          .. tab-set::
 
-            .. tab-item:: ❌ Error Scenario 1: Not a DICOM File
+            .. tab-item:: ❌ Not a DICOM File
                :class-label: tab-error
 
-               **Cause:** Executing ``dcm_dump_file`` against a non-DICOM file:
+               This error occurs if you try to inspect a file that is not in DICOM format (such as a text log file, PDF report, or non-DICOM image).
+
+               **1. Execute Command:**
 
                .. code-block:: bash
 
@@ -132,7 +141,7 @@ Examples
 
                **Error Output:**
 
-               .. index:: 80092, 20092, readPreamble, Illegal Stream Length, DCM_OpenFile
+               The tool attempts to read the standard 128-byte preamble header. When it cannot find valid DICOM tags, it fails to open the file:
 
                .. code-block:: text
 
@@ -142,3 +151,53 @@ Examples
                .. image:: /_static/tools/dicom_utilities/dcm_dump_file/errors/not_a_dicom.png
                   :alt: Error output when trying to parse non-DICOM file
                   :align: center
+
+            .. tab-item:: ❌ Path Does Not Exist
+               :class-label: tab-error
+
+               **Cause:** Providing a file or directory path that does not exist or contains a typo.
+
+               **Command Attempt:**
+
+               .. code-block:: bash
+
+                  dcm_dump_file raw_scan_folder
+
+               **Error Output:**
+
+               The tool attempts to locate the specified path. When it cannot find the directory, it outputs a failure message to the terminal screen and stops execution.
+
+               .. index:: DCM_OpenFile, failed to open file
+
+               .. code-block:: text
+
+                  20092 DCM failed to open file: raw_scan_folder in DCM_OpenFile
+
+               .. admonition:: Resolution
+                  :class: warning
+
+                  Check your file path for typos and confirm the directory exists before re-running the command. You can use ``ls`` to list folder contents in your current directory.
+
+            .. tab-item:: ❌ Flags Placed After Directory Arguments
+               :class-label: tab-error
+
+               **Cause:** Placing option flags (such as ``-f`` or ``-v``) after file or directory arguments instead of before them.
+
+               **Command Attempt:**
+
+               .. code-block:: bash
+
+                  dcm_dump_file DICOM -f
+
+               **Observed Behavior:**
+
+               The tool processes options from left to right. Any flag placed after a directory path is ignored as a flag and treated as an invalid file name. The script tries to open a file literally named ``-f`` and throws an open failure error.
+
+               .. code-block:: text
+
+                  20092 DCM failed to open file: -f in DCM_OpenFile
+
+               .. admonition:: Resolution
+                  :class: warning
+
+                  Always place option flags **before** any file or directory paths (use ``dcm_dump_file -f DICOM``).

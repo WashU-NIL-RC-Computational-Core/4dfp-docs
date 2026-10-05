@@ -112,3 +112,11 @@ Contents
       :class-card: nav-card
 
       Definitions for DICOM transfer syntaxes, byte orders, 4dfp session structures, and key terms.
+
+|
+
+.. note::
+
+   **Data Privacy & Anonymization Notice**
+
+   All DICOM header metadata, file paths, and terminal outputs shown across these examples use open-access data from the **Midnight Scan Club (MSC)** dataset on OpenNeuro or fabricated example values. No Protected Health Information (PHI) or patient-identifying data is used in this documentation.
