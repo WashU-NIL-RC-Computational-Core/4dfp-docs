@@ -9,6 +9,7 @@
     document.addEventListener("input", (e) => {
         if (e.target && e.target.matches("readthedocs-search input, input[type='search']")) {
             const query = e.target.value.trim();
+            console.log(`debug search: ${query}`);
             if (query.length > 0) {
                 sessionStorage.setItem("rtd_search_query", query);
             } else {
@@ -21,6 +22,7 @@
         const link = e.target.closest("a[href]");
         if (link) {
             const query = sessionStorage.getItem("rtd_search_query");
+            console.log(`debug search: ${query}`);
             if (query) {
                 try {
                     const url = new URL(link.href, window.location.origin);
@@ -66,6 +68,8 @@
                 // Ignore invalid referrer URLs
             }
         }
+
+        console.log(rawQuery);
 
         if (!rawQuery) return [];
 
