@@ -93,20 +93,17 @@
 
         if (!rawQuery && initialSessionStorage) {
             rawQuery = initialSessionStorage;
+            initialSessionStorage = null;
             sessionStorage.removeItem("rtd_search_query");
         }
 
-        console.log(`debug initialSessionStorage: ${initialSessionStorage}`);
-
         if (!rawQuery && initialLocalStorage) {
             rawQuery = initialLocalStorage;
+            initialLocalStorage = null;
+            sessionStorage.removeItem("sphinx_highlight_terms");
         }
 
-        console.log(`debug initialLocalStorage: ${initialLocalStorage}`);
-
         if (!rawQuery) return [];
-
-        console.log(`debug rawQuery: ${rawQuery}`);
 
         return rawQuery;
     }
@@ -179,6 +176,8 @@
             while ((node = walker.nextNode())) {
                 const text = node.nodeValue;
                 if (text.replace(/[\r\n]+/g, ' ').toLowerCase().includes(term.toLowerCase())) {
+                    console.log(`debug text: ${text}`);
+                    console.log(`debug term: ${term}`);
                     const parent = node.parentElement;
                     if (
                         parent &&
