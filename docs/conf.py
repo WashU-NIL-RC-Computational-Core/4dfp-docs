@@ -126,7 +126,11 @@ html_show_sourcelink = False
 # further.  For a list of options available for each theme, see the
 # documentation.
 
-html_theme_options = {'prev_next_buttons_location': None,  }
+html_theme_options = {
+    "prev_next_buttons_location": None, 
+    "version_selector": False,
+    "language_selector": False,  
+    }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
