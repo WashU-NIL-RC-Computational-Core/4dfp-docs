@@ -31,10 +31,13 @@
     });
 
     document.addEventListener("input", (e) => {
-        console.log(`debug e: ${e.target}`);
-        if (e.target && e.target.matches("readthedocs-search input, input[type='search']")) {
-            const query = e.target.value.trim();
-            console.log(`debug search: ${query}`);
+        const path = e.composedPath ? e.composedPath() : [e.target];
+        const inputEl = path.find((el) => el && el.tagName === "INPUT");
+
+        if (inputEl) {
+            const query = inputEl.value.trim();
+            console.log(`debug search query: ${query}`);
+
             if (query.length > 0) {
                 sessionStorage.setItem("rtd_search_query", query);
             } else {
@@ -44,10 +47,11 @@
     });
 
     document.addEventListener("click", (e) => {
-        const link = e.target.closest("a[href]");
+        const path = e.composedPath ? e.composedPath() : [e.target];
+        const link = path.find((el) => el && el.tagName === "A" && el.hasAttribute("href"));
+
         if (link) {
             const query = sessionStorage.getItem("rtd_search_query");
-            console.log(`debug search: ${query}`);
             if (query) {
                 try {
                     const url = new URL(link.href, window.location.origin);
