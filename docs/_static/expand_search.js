@@ -6,39 +6,51 @@
         return;
     }
 
-    document.addEventListener("paste", (event) => {
-        const target = event.target;
-        console.log(`debug paste target ${target}`);
-        if (target && target.matches("readthedocs-search input, input[type='search']")) {
-            const pastedText = (event.clipboardData || window.clipboardData).getData("text");
+    document.addEventListener("paste", (e) => {
+        const path = e.composedPath ? e.composedPath() : [e.target];
+        const inputEl = path.find(
+            (el) =>
+                el &&
+                el.tagName === "INPUT" &&
+                (el.type === "search" || el.type === "text")
+        );
 
-            if (pastedText && pastedText.length > 40) {
-                event.preventDefault();
+        if (inputEl) {
+            const clipboardData = e.clipboardData || window.clipboardData;
+            let pastedText = clipboardData ? clipboardData.getData("text") : "";
 
-                const tokens = pastedText
-                    .split(/[\s,()\[\]{}:"';\/\\#]+/)
-                    .map((t) => t.trim())
-                    .filter((t) => t.length >= 4 || /^\d+$/.test(t));
+            if (pastedText) {
+                let cleaned = pastedText.replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
 
-                const uniqueTokens = [...new Set(tokens)].slice(0, 6);
+                if (cleaned.includes(" ") && !cleaned.startsWith('"') && !cleaned.endsWith('"')) {
+                    cleaned = `"${cleaned}"`;
+                }
 
-                const cleanQuery = `"${uniqueTokens.slice(0, 4).join(" ")}"`;
+                console.log(`debug paste query: ${cleaned}`);
 
-                target.value = cleanQuery;
-                target.dispatchEvent(new Event("input", { bubbles: true }));
-                target.dispatchEvent(event);
+                sessionStorage.setItem("rtd_search_query", cleaned);
+
+                setTimeout(() => {
+                    if (inputEl.value !== cleaned) {
+                        inputEl.value = cleaned;
+                        inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+                    }
+                }, 10);
             }
         }
     });
 
     document.addEventListener("input", (e) => {
         const path = e.composedPath ? e.composedPath() : [e.target];
-        const inputEl = path.find((el) => el && el.tagName === "INPUT");
+        const inputEl = path.find(
+            (el) =>
+                el &&
+                el.tagName === "INPUT" &&
+                (el.type === "search" || el.type === "text")
+        );
 
         if (inputEl) {
             const query = inputEl.value.trim();
-            console.log(`debug search query: ${query}`);
-
             if (query.length > 0) {
                 sessionStorage.setItem("rtd_search_query", query);
             } else {
@@ -84,30 +96,21 @@
 
         if (!rawQuery && initialSessionStorage) {
             rawQuery = initialSessionStorage;
+            sessionStorage.removeItem("rtd_search_query");
         }
-
-        console.log(`debug initialSessionStorage ${initialSessionStorage}`);
 
         if (!rawQuery && initialLocalStorage) {
             rawQuery = initialLocalStorage;
         }
 
-        console.log(`debug initialLocalStorage ${initialLocalStorage}`);
-
-        if (!rawQuery && initialReferrer) {
-            try {
-                const refParams = new URL(initialReferrer).searchParams;
-                rawQuery = refParams.get("q") || refParams.get("highlight") || "";
-            } catch (e) {
-                // Ignore invalid referrer URLs
-            }
-        }
-
-        console.log(`debug initialReferrer ${initialReferrer}`);
-
         if (!rawQuery) return [];
 
-        return rawQuery;
+        const tokens = rawQuery
+            .split(/[\s,()\[\]{}:"';\/\\#]+/)
+            .map((t) => t.trim())
+            .filter((t) => t.length > 1);
+
+        return tokens;
     }
 
     function getAncestorContainers(element) {
