@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
     document.head.appendChild(highlightStyle);
 
-    // Disable native Sphinx search word highlighting (prevents single-word highlights)
+    // Disable native Sphinx search word highlighting
     if (window.Documentation) {
         window.Documentation.highlightSearchWords = function () { };
     }
@@ -102,25 +102,87 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Stop-word dictionary to prevent highlighting generic common terms
+    // Stop-words list for filtering out generic prose terms during highlighting
     const STOP_WORDS = new Set([
         "a", "an", "the", "in", "on", "at", "to", "for", "of", "with", "by", "from",
         "up", "about", "into", "over", "after", "is", "are", "was", "were", "be",
         "been", "being", "have", "has", "had", "do", "does", "did", "and", "but",
-        "or", "nor", "so", "yet", "if", "not", "no", "this", "that", "these", "those", "read"
+        "or", "nor", "so", "yet", "if", "not", "no", "this", "that", "these", "those"
     ]);
 
-    // Unfolds all hidden parent and child containers (<details>, Sphinx-Design tabs/dropdowns, collapsibles)
+    // Activates tabs (Sphinx-Design, Sphinx-Tabs, ARIA tabpanels)
+    function activateTabForElement(element) {
+        if (!element || !element.classList) return;
+
+        // 1. Sphinx-Design Tabs (.sd-tab-content)
+        if (element.classList.contains("sd-tab-content")) {
+            const tabSet = element.closest(".sd-tab-set");
+            if (tabSet) {
+                const contents = Array.from(tabSet.querySelectorAll(":scope > .sd-tab-content, .sd-tab-content"));
+                const idx = contents.indexOf(element);
+                const labels = tabSet.querySelectorAll(".sd-tab-label");
+                const inputs = tabSet.querySelectorAll("input");
+
+                if (inputs[idx]) {
+                    inputs[idx].checked = true;
+                    inputs[idx].dispatchEvent(new Event("change", { bubbles: true }));
+                }
+                if (labels[idx]) {
+                    labels[idx].click();
+                }
+            }
+        }
+
+        // 2. Sphinx-Tabs (.sphinx-tabs-panel) or ARIA Tab Panels
+        if (element.classList.contains("sphinx-tabs-panel") ||
+            (element.getAttribute && element.getAttribute("role") === "tabpanel") ||
+            element.classList.contains("tab-pane") ||
+            element.classList.contains("tab-content")) {
+
+            element.removeAttribute("hidden");
+            element.style.display = "";
+            element.classList.add("active", "is-active", "show");
+
+            const panelId = element.id;
+            const tabContainer = element.closest(".sphinx-tabs, .tabs, [role='tablist']") || element.parentElement;
+
+            if (tabContainer) {
+                let tabBtn = null;
+                if (panelId) {
+                    tabBtn = tabContainer.querySelector(`[aria-controls="${panelId}"], [data-target="#${panelId}"], a[href="#${panelId}"]`);
+                }
+                if (!tabBtn) {
+                    const panels = Array.from(tabContainer.querySelectorAll(".sphinx-tabs-panel, [role='tabpanel'], .tab-pane"));
+                    const idx = panels.indexOf(element);
+                    const btns = tabContainer.querySelectorAll(".sphinx-tabs-tab, [role='tab'], .nav-link, .tab-label");
+                    tabBtn = btns[idx];
+                }
+
+                if (tabBtn) {
+                    try { tabBtn.click(); } catch (e) { }
+                    tabBtn.setAttribute("aria-selected", "true");
+                    tabBtn.classList.add("active", "selected");
+                }
+            }
+        }
+    }
+
+    // Unfolds parent containers (<details>, Sphinx-Design dropdowns, tabs, collapsibles)
     function expandParents(element) {
         if (!element) return;
 
         let current = element;
         while (current && current !== document.body) {
+            // Activate tab panel if element resides inside a tab
+            activateTabForElement(current);
+
+            // Native <details> tag
             if (current.tagName && current.tagName.toLowerCase() === "details") {
                 current.open = true;
                 current.setAttribute("open", "");
             }
 
+            // Sphinx-Design Dropdowns (.sd-dropdown)
             if (current.classList) {
                 if (current.classList.contains("sd-dropdown")) {
                     current.classList.remove("sd-is-closed");
@@ -132,44 +194,22 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
 
-                if (current.classList.contains("sd-tab-content")) {
-                    const tabSet = current.closest(".sd-tab-set");
-                    if (tabSet) {
-                        const contents = Array.from(tabSet.children).filter(c =>
-                            c.classList.contains("sd-tab-content")
-                        );
-                        const targetIndex = contents.indexOf(current);
-
-                        const inputs = Array.from(tabSet.children).filter(c =>
-                            c.tagName && c.tagName.toLowerCase() === "input"
-                        );
-                        const labels = Array.from(tabSet.children).filter(c =>
-                            c.classList.contains("sd-tab-label")
-                        );
-
-                        if (inputs[targetIndex]) {
-                            inputs[targetIndex].checked = true;
-                            inputs[targetIndex].dispatchEvent(new Event("change", { bubbles: true }));
-                        }
-                        if (labels[targetIndex]) {
-                            labels[targetIndex].click();
-                        }
-                    }
-                }
-
+                // Collapsible Admonitions & Togglebuttons
                 if (current.classList.contains("togglebutton") ||
                     current.classList.contains("toggle-details") ||
                     current.classList.contains("admonition-toggle") ||
                     current.classList.contains("toggle-hidden") ||
-                    current.classList.contains("admonition-hidden")) {
+                    current.classList.contains("admonition-hidden") ||
+                    current.classList.contains("toggle") ||
+                    current.classList.contains("dropdown")) {
 
-                    current.classList.remove("toggle-hidden", "admonition-hidden");
+                    current.classList.remove("toggle-hidden", "admonition-hidden", "collapsed", "is-closed");
 
                     if (current.tagName && current.tagName.toLowerCase() === "details") {
                         current.open = true;
                         current.setAttribute("open", "");
                     } else {
-                        const toggleBtn = current.querySelector(".toggle-button, .toggle-details-toggle, .sd-dropdown-title, summary");
+                        const toggleBtn = current.querySelector("summary, .sd-dropdown-title, .toggle-button, .toggle-details-toggle, .admonition-title");
                         if (toggleBtn) {
                             try { toggleBtn.click(); } catch (e) { }
                         }
@@ -180,17 +220,20 @@ document.addEventListener("DOMContentLoaded", function () {
             current = current.parentElement;
         }
 
-        const childDropdowns = element.querySelectorAll ? element.querySelectorAll("details, .sd-dropdown") : [];
-        childDropdowns.forEach(d => {
-            if (d.tagName && d.tagName.toLowerCase() === "details") {
-                d.open = true;
-                d.setAttribute("open", "");
-            }
-            if (d.classList && d.classList.contains("sd-dropdown")) {
-                d.classList.remove("sd-is-closed");
-                d.classList.add("sd-is-open");
-            }
-        });
+        // Open child dropdowns if element itself is a container
+        if (element.querySelectorAll) {
+            const childDropdowns = element.querySelectorAll("details, .sd-dropdown");
+            childDropdowns.forEach(d => {
+                if (d.tagName && d.tagName.toLowerCase() === "details") {
+                    d.open = true;
+                    d.setAttribute("open", "");
+                }
+                if (d.classList && d.classList.contains("sd-dropdown")) {
+                    d.classList.remove("sd-is-closed");
+                    d.classList.add("sd-is-open");
+                }
+            });
+        }
     }
 
     function escapeRegExp(string) {
@@ -276,7 +319,6 @@ document.addEventListener("DOMContentLoaded", function () {
     function highlightSignificantTokens(container, tokens) {
         if (!container || !tokens || tokens.length === 0) return;
 
-        // Only highlight key non-stopword terms/codes (length > 3 or digits like error codes)
         const keyTokens = tokens.filter(t => (t.length >= 4 || /^\d+$/.test(t)) && !STOP_WORDS.has(t));
         if (keyTokens.length === 0) return;
 
@@ -330,31 +372,52 @@ document.addEventListener("DOMContentLoaded", function () {
         const cleanedTerm = searchTerm.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
         if (!cleanedTerm) return null;
 
-        // Step 1: Look for exact full contiguous match
+        // Step 1: Look for exact full contiguous text node match
         const exactNode = findExactTextNode(mainContent, cleanedTerm);
         if (exactNode) {
             return highlightTextNode(exactNode, cleanedTerm);
         }
 
-        // Step 2: Extract distinct log lines / clauses for sub-phrase matching
-        const lines = searchTerm.split(/[\r\n]+/).map(l => l.trim()).filter(l => l.length >= 6);
-        for (let line of lines) {
+        // Step 2: Split multi-line query into separate lines and test each line
+        const rawLines = searchTerm.split(/[\r\n]+/).map(l => l.trim()).filter(l => l.length >= 4);
+        for (let line of rawLines) {
             const lineNode = findExactTextNode(mainContent, line);
             if (lineNode) {
                 return highlightTextNode(lineNode, line);
             }
         }
 
-        // Step 3: Container Token Density Scoring Fallback (handles log lines split across markup/code blocks inside dropdowns)
+        // Step 3: Extract error codes and identifiers from multi-line query
+        const keyPhrases = [];
+        const numbers = cleanedTerm.match(/\b\d{4,}\b/g);
+        if (numbers) keyPhrases.push(...numbers);
+
+        const identifiers = cleanedTerm.match(/\b[A-Za-z0-9_]{5,}\b/g);
+        if (identifiers) {
+            identifiers.forEach(id => {
+                if (!STOP_WORDS.has(id.toLowerCase())) {
+                    keyPhrases.push(id);
+                }
+            });
+        }
+
+        for (let phrase of keyPhrases) {
+            const phraseNode = findExactTextNode(mainContent, phrase);
+            if (phraseNode) {
+                return highlightTextNode(phraseNode, phrase);
+            }
+        }
+
+        // Step 4: Token Density Scoring Fallback for containers across tabs & code blocks
         const allTokens = cleanedTerm.toLowerCase()
-            .replace(/[^a-z0-9]/g, " ")
+            .replace(/[^a-z0-9_]/g, " ")
             .split(/\s+/)
             .filter(t => t.length > 1 && !STOP_WORDS.has(t));
 
         if (allTokens.length === 0) return null;
 
         const candidateContainers = mainContent.querySelectorAll(
-            "details, .sd-dropdown, div.highlight, pre, code, .admonition, section, div.section, p, li"
+            "details, .sd-dropdown, .sphinx-tabs-panel, .sd-tab-content, [role='tabpanel'], div.highlight, pre, code, .admonition, section, div.section, p, li"
         );
 
         let bestContainer = null;
@@ -369,9 +432,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const uniqueTokens = new Set(allTokens);
             uniqueTokens.forEach(token => {
                 if (text.includes(token)) {
-                    // Give extra priority weight to error numbers (e.g. 80092, 20092) and long functions
                     if (/^\d{4,}$/.test(token) || token.length > 6) {
-                        score += 3;
+                        score += 4;
                     } else {
                         score += 1;
                     }
