@@ -77,6 +77,7 @@
                 if (cleaned.includes(" ") && !cleaned.startsWith('"') && !cleaned.endsWith('"')) {
                     cleaned = `"${cleaned}"`;
                 }
+                console.log(`debug cleaned: ${cleaned}`);
                 sessionStorage.setItem("rtd_search_query", cleaned);
             }
         }
@@ -114,6 +115,8 @@
             rawQuery = initialSessionStorage;
             sessionStorage.removeItem("rtd_search_query");
         }
+
+        console.log(`debug initialSessionStorage ${initialSessionStorage}`);
 
         if (!rawQuery && initialLocalStorage) {
             rawQuery = initialLocalStorage;
