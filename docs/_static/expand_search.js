@@ -6,7 +6,32 @@
         return;
     }
 
+    document.addEventListener("paste", (event) => {
+        const target = event.target;
+        if (target && target.matches("readthedocs-search input, input[type='search']")) {
+            const pastedText = (event.clipboardData || window.clipboardData).getData("text");
+
+            if (pastedText && pastedText.length > 40) {
+                event.preventDefault();
+
+                const tokens = pastedText
+                    .split(/[\s,()\[\]{}:"';\/\\#]+/)
+                    .map((t) => t.trim())
+                    .filter((t) => t.length >= 4 || /^\d+$/.test(t));
+
+                const uniqueTokens = [...new Set(tokens)].slice(0, 6);
+
+                const cleanQuery = `"${uniqueTokens.slice(0, 4).join(" ")}"`;
+
+                target.value = cleanQuery;
+                target.dispatchEvent(new Event("input", { bubbles: true }));
+                target.dispatchEvent(event);
+            }
+        }
+    });
+
     document.addEventListener("input", (e) => {
+        console.log(`debug e: ${e.target}`);
         if (e.target && e.target.matches("readthedocs-search input, input[type='search']")) {
             const query = e.target.value.trim();
             console.log(`debug search: ${query}`);
