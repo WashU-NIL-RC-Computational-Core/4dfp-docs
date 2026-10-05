@@ -56,7 +56,6 @@
 
     document.addEventListener("paste", (e) => {
         const path = e.composedPath ? e.composedPath() : [e.target];
-        console.log(`debug path: ${path}`);
         const inputEl = path.find(
             (el) =>
                 el &&
@@ -64,24 +63,28 @@
                 (el.type === "search" || el.type === "text")
         );
 
-        console.log(`debug paste: ${inputEl}`);
-
         if (inputEl) {
+            e.preventDefault();
+
             const clipboardData = e.clipboardData || window.clipboardData;
             let pastedText = clipboardData ? clipboardData.getData("text") : "";
 
-            console.log(`debug pastedText: ${pastedText}`);
-
             if (pastedText) {
                 let cleaned = pastedText.replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
+
                 if (cleaned.includes(" ") && !cleaned.startsWith('"') && !cleaned.endsWith('"')) {
                     cleaned = `"${cleaned}"`;
                 }
-                console.log(`debug cleaned: ${cleaned}`);
+
+                inputEl.value = cleaned;
+
                 sessionStorage.setItem("rtd_search_query", cleaned);
+
+                inputEl.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+                inputEl.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
             }
         }
-    });
+    }, true);
 
     document.addEventListener("click", (e) => {
         const path = e.composedPath ? e.composedPath() : [e.target];
