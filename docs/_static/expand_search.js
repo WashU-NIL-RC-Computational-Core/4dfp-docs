@@ -35,44 +35,65 @@
     const initialSessionStorage = sessionStorage.getItem("rtd_search_query");
     const initialLocalStorage = localStorage.getItem("sphinx_highlight_terms");
 
-    document.addEventListener("input", (e) => {
-        const path = e.composedPath ? e.composedPath() : [e.target];
-        const inputEl = path.find(
-            (el) =>
-                el &&
-                el.tagName === "INPUT" &&
-                (el.type === "search" || el.type === "text")
-        );
+    function processPastedText(rawText) {
+        if (!rawText) return;
+        let cleaned = rawText.replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
 
-        if (inputEl) {
-            const query = inputEl.value.trim();
+        if (cleaned.includes(" ") && !cleaned.startsWith('"') && !cleaned.endsWith('"')) {
+            cleaned = `"${cleaned}"`;
+        }
+
+        console.log(`debug captured paste: ${cleaned}`);
+        sessionStorage.setItem("rtd_search_query", cleaned);
+    }
+
+    function setupRtdSearchListeners() {
+        const rtdSearch = document.querySelector("readthedocs-search");
+        if (!rtdSearch || !rtdSearch.shadowRoot) return;
+
+        const input = rtdSearch.shadowRoot.querySelector("input");
+        if (!input || input.dataset.customBound) return;
+
+        input.dataset.customBound = "true";
+
+        input.addEventListener("paste", (e) => {
+            const clipboardData = e.clipboardData || window.clipboardData;
+            const pastedText = clipboardData ? clipboardData.getData("text") : "";
+            if (pastedText) {
+                processPastedText(pastedText);
+            }
+        });
+
+        input.addEventListener("input", (e) => {
+            const query = input.value.trim();
             if (query.length > 0) {
-                sessionStorage.setItem("rtd_search_query", query);
+                processPastedText(query);
             } else {
                 sessionStorage.removeItem("rtd_search_query");
             }
-        }
-    });
+        });
+    }
 
-    document.addEventListener("paste", (e) => {
+    const observer = new MutationObserver(() => setupRtdSearchListeners());
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    document.addEventListener("focusin", setupRtdSearchListeners, true);
+    document.addEventListener("pointerdown", setupRtdSearchListeners, true);
+
+    document.addEventListener("click", (e) => {
         const path = e.composedPath ? e.composedPath() : [e.target];
-        const inputEl = path.find(
-            (el) =>
-                el &&
-                el.tagName === "INPUT" &&
-                (el.type === "search" || el.type === "text")
-        );
+        const link = path.find((el) => el && el.tagName === "A" && el.hasAttribute("href"));
 
-        if (inputEl) {
-            const clipboardData = e.clipboardData || window.clipboardData;
-            let pastedText = clipboardData ? clipboardData.getData("text") : "";
-
-            if (pastedText) {
-                let cleaned = pastedText.replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
-                if (cleaned.includes(" ") && !cleaned.startsWith('"') && !cleaned.endsWith('"')) {
-                    cleaned = `"${cleaned}"`;
-                }
-                sessionStorage.setItem("rtd_search_query", cleaned);
+        if (link) {
+            const query = sessionStorage.getItem("rtd_search_query");
+            if (query) {
+                try {
+                    const url = new URL(link.href, window.location.origin);
+                    if (!url.searchParams.has("highlight")) {
+                        url.searchParams.set("highlight", query);
+                        link.href = url.toString();
+                    }
+                } catch (err) { }
             }
         }
     });
