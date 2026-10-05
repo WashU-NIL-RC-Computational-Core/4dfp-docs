@@ -6,6 +6,11 @@
         return;
     }
 
+    try {
+        localStorage.removeItem("sphinx_highlight_terms");
+        sessionStorage.removeItem("sphinx_highlight_terms");
+    } catch (e) { }
+
     const disableSphinxHighlight = () => {
         if (window.SphinxHighlight) {
             window.SphinxHighlight.highlightSearchWords = function () { };
@@ -28,6 +33,7 @@
 
     const initialSearch = window.location.search;
     const initialSessionStorage = sessionStorage.getItem("rtd_search_query");
+    const initialLocalStorage = localStorage.getItem("sphinx_highlight_terms");
 
     document.addEventListener("input", (e) => {
         const path = e.composedPath ? e.composedPath() : [e.target];
@@ -101,77 +107,143 @@
 
         if (!rawQuery && initialSessionStorage) {
             rawQuery = initialSessionStorage;
-            initialSessionStorage = null;
             sessionStorage.removeItem("rtd_search_query");
         }
 
-        if (!rawQuery) return [];
+        if (!rawQuery && initialLocalStorage) {
+            rawQuery = initialLocalStorage;
+            try {
+                localStorage.removeItem("sphinx_highlight_terms");
+            } catch (e) { }
+        }
 
-        return rawQuery;
+        if (!rawQuery) return "";
+
+        let cleaned = rawQuery.trim();
+        if (cleaned.startsWith('"') && cleaned.endsWith('"') && cleaned.length > 2) {
+            cleaned = cleaned.slice(1, -1).trim();
+        }
+
+        return cleaned;
+    }
+
+    function clearSphinxHighlights() {
+        document
+            .querySelectorAll("span.highlighted, mark.highlighted, .highlighted")
+            .forEach((el) => {
+                if (!el.classList.contains("custom-search-highlight")) {
+                    const parent = el.parentNode;
+                    if (parent) {
+                        while (el.firstChild) {
+                            parent.insertBefore(el.firstChild, el);
+                        }
+                        parent.removeChild(el);
+                        parent.normalize();
+                    }
+                }
+            });
     }
 
     function applyCustomHighlighting() {
-        const terms = getHighlightTerms();
-        if (terms.length === 0) return [];
+        clearSphinxHighlights();
 
-        const validTerms = terms.filter((t) => t.length > 2 || /^\d+$/.test(t));
-        if (validTerms.length === 0) return [];
+        const rawTerm = getHighlightTerms();
+        if (!rawTerm || rawTerm.length < 2) return [];
 
-        const escaped = validTerms
-            .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-            .join("|");
-        const regex = new RegExp(`(${escaped})`, "gi");
+        // Helper: Converts spaces in query to flexible regex \s+ (matches spaces, \n, \t)
+        function buildFlexRegex(term) {
+            const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const flexPattern = escaped.replace(/\s+/g, "\\s+");
+            return new RegExp(`(${flexPattern})`, "gi");
+        }
 
-        const targets = [];
-        const walker = document.createTreeWalker(
-            document.body,
-            NodeFilter.SHOW_TEXT,
-            null,
-            false
-        );
+        // Helper: Scans DOM text nodes and highlights matches for given phrases
+        function findAndHighlight(phrases) {
+            const targets = [];
+            const regexes = phrases.map((p) => buildFlexRegex(p));
 
-        const matchingNodes = [];
-        let node;
-        while ((node = walker.nextNode())) {
-            const parent = node.parentElement;
-            if (
-                parent &&
-                !["SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA", "INPUT"].includes(parent.tagName) &&
-                !parent.classList.contains("custom-search-highlight")
-            ) {
-                if (regex.test(node.nodeValue)) {
-                    matchingNodes.push(node);
+            const walker = document.createTreeWalker(
+                document.body,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+
+            const matchingWork = [];
+            let node;
+            while ((node = walker.nextNode())) {
+                const parent = node.parentElement;
+                if (
+                    parent &&
+                    !["SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA", "INPUT"].includes(parent.tagName) &&
+                    !parent.classList.contains("custom-search-highlight")
+                ) {
+                    const text = node.nodeValue;
+                    for (const regex of regexes) {
+                        regex.lastIndex = 0;
+                        if (regex.test(text)) {
+                            matchingWork.push({ node, regex });
+                            break;
+                        }
+                    }
                 }
+            }
+
+            matchingWork.forEach(({ node: textNode, regex }) => {
+                const text = textNode.nodeValue;
+                const frag = document.createDocumentFragment();
+                let lastIndex = 0;
+
+                regex.lastIndex = 0;
+                text.replace(regex, (match, p1, offset) => {
+                    if (offset > lastIndex) {
+                        frag.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
+                    }
+
+                    const mark = document.createElement("mark");
+                    mark.className = "custom-search-highlight";
+                    mark.textContent = match;
+                    frag.appendChild(mark);
+                    targets.push(mark);
+
+                    lastIndex = offset + match.length;
+                });
+
+                if (lastIndex < text.length) {
+                    frag.appendChild(document.createTextNode(text.substring(lastIndex)));
+                }
+
+                if (textNode.parentNode) {
+                    textNode.parentNode.replaceChild(frag, textNode);
+                }
+            });
+
+            return targets;
+        }
+
+        let targets = findAndHighlight([rawTerm]);
+
+        if (targets.length === 0) {
+            const linePhrases = rawTerm
+                .split(/(?:\r?\n|in \w+\s+)/g)
+                .map((s) => s.trim())
+                .filter((s) => s.length > 3);
+
+            if (linePhrases.length > 0) {
+                targets = findAndHighlight(linePhrases);
             }
         }
 
-        matchingNodes.forEach((textNode) => {
-            const text = textNode.nodeValue;
-            const frag = document.createDocumentFragment();
-            let lastIndex = 0;
+        if (targets.length === 0) {
+            const keywords = rawTerm
+                .split(/[\s,()\[\]{}:"';\/\\#]+/)
+                .map((t) => t.trim())
+                .filter((t) => t.length > 3 || /^\d+$/.test(t));
 
-            text.replace(regex, (match, p1, offset) => {
-                if (offset > lastIndex) {
-                    frag.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
-                }
-
-                const mark = document.createElement("mark");
-                mark.className = "custom-search-highlight";
-                mark.textContent = match;
-                frag.appendChild(mark);
-                targets.push(mark);
-
-                lastIndex = offset + match.length;
-            });
-
-            if (lastIndex < text.length) {
-                frag.appendChild(document.createTextNode(text.substring(lastIndex)));
+            if (keywords.length > 0) {
+                targets = findAndHighlight(keywords);
             }
-
-            if (textNode.parentNode) {
-                textNode.parentNode.replaceChild(frag, textNode);
-            }
-        });
+        }
 
         return targets;
     }
@@ -220,8 +292,9 @@
     }
 
     function processAutoExpand() {
+        disableSphinxHighlight();
         const targets = applyCustomHighlighting();
-        if (targets.length === 0) return false;
+        if (targets.length === 0) return;
 
         targets.forEach((target) => {
             const ancestors = getAncestorContainers(target);
@@ -231,12 +304,9 @@
         setTimeout(() => {
             targets[0].scrollIntoView({ behavior: "smooth", block: "center" });
         }, 150);
-
-        return true;
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-        disableSphinxHighlight();
         processAutoExpand();
     });
 })();
