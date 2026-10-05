@@ -26,8 +26,6 @@
                     cleaned = `"${cleaned}"`;
                 }
 
-                console.log(`debug paste query: ${cleaned}`);
-
                 sessionStorage.setItem("rtd_search_query", cleaned);
 
                 setTimeout(() => {
@@ -80,7 +78,6 @@
     });
 
     const initialSearch = window.location.search;
-    const initialReferrer = document.referrer;
     const initialLocalStorage = localStorage.getItem("sphinx_highlight_terms");
     const initialSessionStorage = sessionStorage.getItem("rtd_search_query");
 
@@ -105,12 +102,7 @@
 
         if (!rawQuery) return [];
 
-        const tokens = rawQuery
-            .split(/[\s,()\[\]{}:"';\/\\#]+/)
-            .map((t) => t.trim())
-            .filter((t) => t.length > 1);
-
-        return tokens;
+        return rawQuery;
     }
 
     function getAncestorContainers(element) {
@@ -181,8 +173,6 @@
             while ((node = walker.nextNode())) {
                 const text = node.nodeValue;
                 if (text.replace(/[\r\n]+/g, ' ').toLowerCase().includes(term.toLowerCase())) {
-                    console.log(`debug text ${text.replace(/[\r\n]+/g, ' ').toLowerCase()}`);
-                    console.log(`debug term ${term}`);
                     const parent = node.parentElement;
                     if (
                         parent &&
