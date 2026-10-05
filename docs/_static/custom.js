@@ -102,61 +102,91 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Unfolds all hidden parent containers (<details>, Sphinx-Design tabs, collapsibles)
+    // Unfolds all hidden parent and child containers (<details>, Sphinx-Design tabs/dropdowns, collapsibles)
     function expandParents(element) {
         if (!element) return;
-        let current = element.parentElement;
 
+        // 1. Expand current element and all upwards parent containers
+        let current = element;
         while (current && current !== document.body) {
             if (current.tagName && current.tagName.toLowerCase() === "details") {
                 current.open = true;
                 current.setAttribute("open", "");
-            } else if (current.classList && current.classList.contains("sd-dropdown")) {
-                const details = current.tagName && current.tagName.toLowerCase() === "details" ? current : current.closest("details");
-                if (details) {
-                    details.open = true;
-                    details.setAttribute("open", "");
-                }
             }
 
-            if (current.classList && current.classList.contains("sd-tab-content")) {
-                const tabSet = current.closest(".sd-tab-set");
-                if (tabSet) {
-                    const contents = Array.from(tabSet.children).filter(c =>
-                        c.classList.contains("sd-tab-content")
-                    );
-                    const targetIndex = contents.indexOf(current);
-
-                    const inputs = Array.from(tabSet.children).filter(c =>
-                        c.tagName && c.tagName.toLowerCase() === "input"
-                    );
-                    const labels = Array.from(tabSet.children).filter(c =>
-                        c.classList.contains("sd-tab-label")
-                    );
-
-                    if (inputs[targetIndex]) {
-                        inputs[targetIndex].checked = true;
-                        inputs[targetIndex].dispatchEvent(new Event("change", { bubbles: true }));
-                    }
-                    if (labels[targetIndex]) {
-                        labels[targetIndex].click();
+            if (current.classList) {
+                if (current.classList.contains("sd-dropdown")) {
+                    current.classList.remove("sd-is-closed");
+                    current.classList.add("sd-is-open");
+                    const details = current.tagName && current.tagName.toLowerCase() === "details" ? current : current.closest("details");
+                    if (details) {
+                        details.open = true;
+                        details.setAttribute("open", "");
                     }
                 }
-            }
 
-            if (current.classList && (current.classList.contains("togglebutton") || current.classList.contains("toggle-details") || current.classList.contains("admonition-toggle"))) {
-                if (current.tagName && current.tagName.toLowerCase() === "details") {
-                    current.open = true;
-                } else {
-                    const toggleBtn = current.querySelector(".toggle-button, .toggle-details-toggle");
-                    if (toggleBtn && (current.classList.contains("admonition-hidden") || current.classList.contains("toggle-hidden"))) {
-                        toggleBtn.click();
+                // Sphinx-Design Tab Sets (.sd-tab-content)
+                if (current.classList.contains("sd-tab-content")) {
+                    const tabSet = current.closest(".sd-tab-set");
+                    if (tabSet) {
+                        const contents = Array.from(tabSet.children).filter(c =>
+                            c.classList.contains("sd-tab-content")
+                        );
+                        const targetIndex = contents.indexOf(current);
+
+                        const inputs = Array.from(tabSet.children).filter(c =>
+                            c.tagName && c.tagName.toLowerCase() === "input"
+                        );
+                        const labels = Array.from(tabSet.children).filter(c =>
+                            c.classList.contains("sd-tab-label")
+                        );
+
+                        if (inputs[targetIndex]) {
+                            inputs[targetIndex].checked = true;
+                            inputs[targetIndex].dispatchEvent(new Event("change", { bubbles: true }));
+                        }
+                        if (labels[targetIndex]) {
+                            labels[targetIndex].click();
+                        }
+                    }
+                }
+
+                // Collapsible Admonitions & Togglebuttons
+                if (current.classList.contains("togglebutton") ||
+                    current.classList.contains("toggle-details") ||
+                    current.classList.contains("admonition-toggle") ||
+                    current.classList.contains("toggle-hidden") ||
+                    current.classList.contains("admonition-hidden")) {
+
+                    current.classList.remove("toggle-hidden", "admonition-hidden");
+
+                    if (current.tagName && current.tagName.toLowerCase() === "details") {
+                        current.open = true;
+                        current.setAttribute("open", "");
+                    } else {
+                        const toggleBtn = current.querySelector(".toggle-button, .toggle-details-toggle, .sd-dropdown-title");
+                        if (toggleBtn && (current.classList.contains("admonition-hidden") || current.classList.contains("toggle-hidden"))) {
+                            toggleBtn.click();
+                        }
                     }
                 }
             }
 
             current = current.parentElement;
         }
+
+        // 2. Also expand child dropdowns if element itself is a dropdown/container
+        const childDropdowns = element.querySelectorAll ? element.querySelectorAll("details, .sd-dropdown") : [];
+        childDropdowns.forEach(d => {
+            if (d.tagName && d.tagName.toLowerCase() === "details") {
+                d.open = true;
+                d.setAttribute("open", "");
+            }
+            if (d.classList && d.classList.contains("sd-dropdown")) {
+                d.classList.remove("sd-is-closed");
+                d.classList.add("sd-is-open");
+            }
+        });
     }
 
     function escapeRegExp(string) {
@@ -182,12 +212,12 @@ document.addEventListener("DOMContentLoaded", function () {
             if (parent) {
                 const textNode = document.createTextNode(mark.textContent);
                 parent.replaceChild(textNode, mark);
-                parent.normalize(); // Merges broken adjacent text nodes back into a single continuous node
+                parent.normalize();
             }
         });
     }
 
-    // Strictly highlights ONLY exact contiguous phrase matches
+    // Highlights exact phrase matches or identifies parent container element in dropdowns
     function findAndHighlightText(searchTerm, scopeElement = document.body) {
         if (!searchTerm || searchTerm.trim().length < 2) return null;
 
@@ -203,6 +233,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const phraseRegex = new RegExp(phrasePattern, "gi");
         const mainContent = scopeElement.querySelector(".rst-content, main, [role='main']") || scopeElement;
 
+        // Attempt 1: Look for a single DOM text node containing the continuous phrase
         const walker = document.createTreeWalker(
             mainContent,
             NodeFilter.SHOW_TEXT,
@@ -225,28 +256,74 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         );
 
-        const matchingNodes = [];
-        while (walker.nextNode()) {
-            matchingNodes.push(walker.currentNode);
+        if (walker.nextNode()) {
+            const firstNode = walker.currentNode;
+            phraseRegex.lastIndex = 0;
+            const match = phraseRegex.exec(firstNode.nodeValue);
+
+            if (match) {
+                const mark = document.createElement("mark");
+                mark.className = "custom-highlight";
+
+                const highlightedText = firstNode.splitText(match.index);
+                highlightedText.splitText(match[0].length);
+
+                mark.textContent = highlightedText.nodeValue;
+                highlightedText.parentNode.replaceChild(mark, highlightedText);
+
+                return mark;
+            }
         }
 
-        if (matchingNodes.length === 0) return null;
+        // Attempt 2: Search across HTML containers (pre, code, sd-dropdown) where Sphinx split words into sub-spans
+        const candidates = mainContent.querySelectorAll("pre, code, p, li, td, div.highlight, div.sd-dropdown, details, section, [class*='highlight']");
+        const normSearch = normalizeForComparison(cleanedTerm);
 
-        const firstNode = matchingNodes[0];
-        phraseRegex.lastIndex = 0;
-        const match = phraseRegex.exec(firstNode.nodeValue);
+        for (let el of candidates) {
+            if (el.closest("#custom-search-modal")) continue;
+            const normText = normalizeForComparison(el.textContent);
+            if (normText && normText.includes(normSearch)) {
+                return el;
+            }
+        }
 
-        if (match) {
-            const mark = document.createElement("mark");
-            mark.className = "custom-highlight";
+        // Attempt 3: Keyphrase leading sequence match for multi-word queries
+        if (words.length > 3) {
+            const leadingPhrase = words.slice(0, 4).map(w => escapeRegExp(w)).join("\\s+");
+            const leadingRegex = new RegExp(leadingPhrase, "gi");
 
-            const highlightedText = firstNode.splitText(match.index);
-            highlightedText.splitText(match[0].length);
+            const walker2 = document.createTreeWalker(
+                mainContent,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: function (node) {
+                        if (!node.parentElement) return NodeFilter.FILTER_REJECT;
+                        const tag = node.parentElement.tagName.toLowerCase();
+                        if (["script", "style", "noscript", "input", "textarea", "select"].includes(tag)) return NodeFilter.FILTER_REJECT;
+                        if (node.parentElement.closest("#custom-search-modal")) return NodeFilter.FILTER_REJECT;
+                        leadingRegex.lastIndex = 0;
+                        return leadingRegex.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+                    }
+                }
+            );
 
-            mark.textContent = highlightedText.nodeValue;
-            highlightedText.parentNode.replaceChild(mark, highlightedText);
+            if (walker2.nextNode()) {
+                const node = walker2.currentNode;
+                leadingRegex.lastIndex = 0;
+                const match = leadingRegex.exec(node.nodeValue);
+                if (match) {
+                    const mark = document.createElement("mark");
+                    mark.className = "custom-highlight";
 
-            return mark;
+                    const highlightedText = node.splitText(match.index);
+                    highlightedText.splitText(match[0].length);
+
+                    mark.textContent = highlightedText.nodeValue;
+                    node.parentNode.replaceChild(mark, highlightedText);
+
+                    return mark;
+                }
+            }
         }
 
         return null;
