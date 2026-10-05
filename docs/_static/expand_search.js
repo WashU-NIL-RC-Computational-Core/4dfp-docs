@@ -54,17 +54,21 @@
         }
     });
 
-    document.addEventListener("paste", (e) => {
-        const path = e.composedPath ? e.composedPath() : [e.target];
-        const inputEl = path.find(
-            (el) =>
-                el &&
-                el.tagName === "INPUT" &&
-                (el.type === "search" || el.type === "text")
-        );
+    window.addEventListener(
+        "paste",
+        (e) => {
+            const path = e.composedPath ? e.composedPath() : [e.target];
+            const inputEl = path.find(
+                (el) =>
+                    el &&
+                    el.tagName === "INPUT" &&
+                    (el.type === "search" || el.type === "text")
+            );
 
-        if (inputEl) {
+            if (!inputEl) return;
+
             e.preventDefault();
+            e.stopImmediatePropagation();
 
             const clipboardData = e.clipboardData || window.clipboardData;
             let pastedText = clipboardData ? clipboardData.getData("text") : "";
@@ -76,15 +80,28 @@
                     cleaned = `"${cleaned}"`;
                 }
 
-                inputEl.value = cleaned;
+                const nativeSetter = Object.getOwnPropertyDescriptor(
+                    HTMLInputElement.prototype,
+                    "value"
+                ).set;
+                nativeSetter.call(inputEl, cleaned);
 
                 sessionStorage.setItem("rtd_search_query", cleaned);
 
-                inputEl.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
-                inputEl.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+                const inputEvent = new InputEvent("input", {
+                    bubbles: true,
+                    composed: true,
+                    inputType: "insertFromPaste",
+                    data: cleaned,
+                });
+                inputEl.dispatchEvent(inputEvent);
+
+                const changeEvent = new Event("change", { bubbles: true, composed: true });
+                inputEl.dispatchEvent(changeEvent);
             }
-        }
-    }, true);
+        },
+        true
+    );
 
     document.addEventListener("click", (e) => {
         const path = e.composedPath ? e.composedPath() : [e.target];
@@ -161,14 +178,12 @@
         const rawTerm = getHighlightTerms();
         if (!rawTerm || rawTerm.length < 2) return [];
 
-        // Helper: Converts spaces in query to flexible regex \s+ (matches spaces, \n, \t)
         function buildFlexRegex(term) {
             const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
             const flexPattern = escaped.replace(/\s+/g, "\\s+");
             return new RegExp(`(${flexPattern})`, "gi");
         }
 
-        // Helper: Scans DOM text nodes and highlights matches for given phrases
         function findAndHighlight(phrases) {
             const targets = [];
             const regexes = phrases.map((p) => buildFlexRegex(p));
