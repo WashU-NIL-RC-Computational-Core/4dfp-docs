@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
     document.head.appendChild(highlightStyle);
 
-    // Disable native Sphinx search word highlighting
+    // Disable native Sphinx search word highlighting (prevents single-word highlights)
     if (window.Documentation) {
         window.Documentation.highlightSearchWords = function () { };
     }
@@ -102,11 +102,18 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Stop-word dictionary to prevent highlighting generic common terms
+    const STOP_WORDS = new Set([
+        "a", "an", "the", "in", "on", "at", "to", "for", "of", "with", "by", "from",
+        "up", "about", "into", "over", "after", "is", "are", "was", "were", "be",
+        "been", "being", "have", "has", "had", "do", "does", "did", "and", "but",
+        "or", "nor", "so", "yet", "if", "not", "no", "this", "that", "these", "those", "read"
+    ]);
+
     // Unfolds all hidden parent and child containers (<details>, Sphinx-Design tabs/dropdowns, collapsibles)
     function expandParents(element) {
         if (!element) return;
 
-        // 1. Expand current element and all upwards parent containers
         let current = element;
         while (current && current !== document.body) {
             if (current.tagName && current.tagName.toLowerCase() === "details") {
@@ -125,7 +132,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
 
-                // Sphinx-Design Tab Sets (.sd-tab-content)
                 if (current.classList.contains("sd-tab-content")) {
                     const tabSet = current.closest(".sd-tab-set");
                     if (tabSet) {
@@ -151,7 +157,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
 
-                // Collapsible Admonitions & Togglebuttons
                 if (current.classList.contains("togglebutton") ||
                     current.classList.contains("toggle-details") ||
                     current.classList.contains("admonition-toggle") ||
@@ -164,9 +169,9 @@ document.addEventListener("DOMContentLoaded", function () {
                         current.open = true;
                         current.setAttribute("open", "");
                     } else {
-                        const toggleBtn = current.querySelector(".toggle-button, .toggle-details-toggle, .sd-dropdown-title");
-                        if (toggleBtn && (current.classList.contains("admonition-hidden") || current.classList.contains("toggle-hidden"))) {
-                            toggleBtn.click();
+                        const toggleBtn = current.querySelector(".toggle-button, .toggle-details-toggle, .sd-dropdown-title, summary");
+                        if (toggleBtn) {
+                            try { toggleBtn.click(); } catch (e) { }
                         }
                     }
                 }
@@ -175,7 +180,6 @@ document.addEventListener("DOMContentLoaded", function () {
             current = current.parentElement;
         }
 
-        // 2. Also expand child dropdowns if element itself is a dropdown/container
         const childDropdowns = element.querySelectorAll ? element.querySelectorAll("details, .sd-dropdown") : [];
         childDropdowns.forEach(d => {
             if (d.tagName && d.tagName.toLowerCase() === "details") {
@@ -217,25 +221,15 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Highlights exact phrase matches or identifies parent container element in dropdowns
-    function findAndHighlightText(searchTerm, scopeElement = document.body) {
-        if (!searchTerm || searchTerm.trim().length < 2) return null;
-
-        removeAllHighlightsAndNormalize(scopeElement);
-
-        const cleanedTerm = searchTerm.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
-        if (!cleanedTerm) return null;
-
-        const words = cleanedTerm.split(" ").filter(Boolean);
+    function findExactTextNode(container, phrase) {
+        const words = phrase.split(/\s+/).filter(Boolean);
         if (words.length === 0) return null;
 
         const phrasePattern = words.map(w => escapeRegExp(w)).join("\\s+");
         const phraseRegex = new RegExp(phrasePattern, "gi");
-        const mainContent = scopeElement.querySelector(".rst-content, main, [role='main']") || scopeElement;
 
-        // Attempt 1: Look for a single DOM text node containing the continuous phrase
         const walker = document.createTreeWalker(
-            mainContent,
+            container,
             NodeFilter.SHOW_TEXT,
             {
                 acceptNode: function (node) {
@@ -248,82 +242,151 @@ document.addEventListener("DOMContentLoaded", function () {
                         return NodeFilter.FILTER_REJECT;
                     }
                     phraseRegex.lastIndex = 0;
-                    if (phraseRegex.test(node.nodeValue)) {
-                        return NodeFilter.FILTER_ACCEPT;
-                    }
-                    return NodeFilter.FILTER_SKIP;
+                    return phraseRegex.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
                 }
             }
         );
 
-        if (walker.nextNode()) {
-            const firstNode = walker.currentNode;
-            phraseRegex.lastIndex = 0;
-            const match = phraseRegex.exec(firstNode.nodeValue);
+        return walker.nextNode() ? walker.currentNode : null;
+    }
 
+    function highlightTextNode(node, phrase) {
+        const words = phrase.split(/\s+/).filter(Boolean);
+        const phrasePattern = words.map(w => escapeRegExp(w)).join("\\s+");
+        const phraseRegex = new RegExp(phrasePattern, "gi");
+
+        phraseRegex.lastIndex = 0;
+        const match = phraseRegex.exec(node.nodeValue);
+
+        if (match) {
+            const mark = document.createElement("mark");
+            mark.className = "custom-highlight";
+
+            const highlightedText = node.splitText(match.index);
+            highlightedText.splitText(match[0].length);
+
+            mark.textContent = highlightedText.nodeValue;
+            highlightedText.parentNode.replaceChild(mark, highlightedText);
+
+            return mark;
+        }
+        return null;
+    }
+
+    function highlightSignificantTokens(container, tokens) {
+        if (!container || !tokens || tokens.length === 0) return;
+
+        // Only highlight key non-stopword terms/codes (length > 3 or digits like error codes)
+        const keyTokens = tokens.filter(t => (t.length >= 4 || /^\d+$/.test(t)) && !STOP_WORDS.has(t));
+        if (keyTokens.length === 0) return;
+
+        const pattern = keyTokens.map(t => escapeRegExp(t)).join("|");
+        const regex = new RegExp(`\\b(${pattern})\\b`, "gi");
+
+        const walker = document.createTreeWalker(
+            container,
+            NodeFilter.SHOW_TEXT,
+            {
+                acceptNode: function (node) {
+                    if (!node.parentElement) return NodeFilter.FILTER_REJECT;
+                    const tag = node.parentElement.tagName.toLowerCase();
+                    if (["script", "style", "noscript", "input", "textarea", "select", "mark"].includes(tag)) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    if (node.parentElement.closest("#custom-search-modal")) return NodeFilter.FILTER_REJECT;
+                    regex.lastIndex = 0;
+                    return regex.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+                }
+            }
+        );
+
+        const nodesToProcess = [];
+        while (walker.nextNode()) {
+            nodesToProcess.push(walker.currentNode);
+        }
+
+        nodesToProcess.forEach(node => {
+            regex.lastIndex = 0;
+            const match = regex.exec(node.nodeValue);
             if (match) {
                 const mark = document.createElement("mark");
                 mark.className = "custom-highlight";
 
-                const highlightedText = firstNode.splitText(match.index);
+                const highlightedText = node.splitText(match.index);
                 highlightedText.splitText(match[0].length);
 
                 mark.textContent = highlightedText.nodeValue;
                 highlightedText.parentNode.replaceChild(mark, highlightedText);
+            }
+        });
+    }
 
-                return mark;
+    function findAndHighlightText(searchTerm, scopeElement = document.body) {
+        if (!searchTerm || searchTerm.trim().length < 2) return null;
+
+        removeAllHighlightsAndNormalize(scopeElement);
+
+        const mainContent = scopeElement.querySelector(".rst-content, main, [role='main']") || scopeElement;
+        const cleanedTerm = searchTerm.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+        if (!cleanedTerm) return null;
+
+        // Step 1: Look for exact full contiguous match
+        const exactNode = findExactTextNode(mainContent, cleanedTerm);
+        if (exactNode) {
+            return highlightTextNode(exactNode, cleanedTerm);
+        }
+
+        // Step 2: Extract distinct log lines / clauses for sub-phrase matching
+        const lines = searchTerm.split(/[\r\n]+/).map(l => l.trim()).filter(l => l.length >= 6);
+        for (let line of lines) {
+            const lineNode = findExactTextNode(mainContent, line);
+            if (lineNode) {
+                return highlightTextNode(lineNode, line);
             }
         }
 
-        // Attempt 2: Search across HTML containers (pre, code, sd-dropdown) where Sphinx split words into sub-spans
-        const candidates = mainContent.querySelectorAll("pre, code, p, li, td, div.highlight, div.sd-dropdown, details, section, [class*='highlight']");
-        const normSearch = normalizeForComparison(cleanedTerm);
+        // Step 3: Container Token Density Scoring Fallback (handles log lines split across markup/code blocks inside dropdowns)
+        const allTokens = cleanedTerm.toLowerCase()
+            .replace(/[^a-z0-9]/g, " ")
+            .split(/\s+/)
+            .filter(t => t.length > 1 && !STOP_WORDS.has(t));
 
-        for (let el of candidates) {
-            if (el.closest("#custom-search-modal")) continue;
-            const normText = normalizeForComparison(el.textContent);
-            if (normText && normText.includes(normSearch)) {
-                return el;
-            }
-        }
+        if (allTokens.length === 0) return null;
 
-        // Attempt 3: Keyphrase leading sequence match for multi-word queries
-        if (words.length > 3) {
-            const leadingPhrase = words.slice(0, 4).map(w => escapeRegExp(w)).join("\\s+");
-            const leadingRegex = new RegExp(leadingPhrase, "gi");
+        const candidateContainers = mainContent.querySelectorAll(
+            "details, .sd-dropdown, div.highlight, pre, code, .admonition, section, div.section, p, li"
+        );
 
-            const walker2 = document.createTreeWalker(
-                mainContent,
-                NodeFilter.SHOW_TEXT,
-                {
-                    acceptNode: function (node) {
-                        if (!node.parentElement) return NodeFilter.FILTER_REJECT;
-                        const tag = node.parentElement.tagName.toLowerCase();
-                        if (["script", "style", "noscript", "input", "textarea", "select"].includes(tag)) return NodeFilter.FILTER_REJECT;
-                        if (node.parentElement.closest("#custom-search-modal")) return NodeFilter.FILTER_REJECT;
-                        leadingRegex.lastIndex = 0;
-                        return leadingRegex.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+        let bestContainer = null;
+        let maxScore = 0;
+
+        candidateContainers.forEach(container => {
+            if (container.closest("#custom-search-modal")) return;
+
+            const text = container.textContent.toLowerCase();
+            let score = 0;
+
+            const uniqueTokens = new Set(allTokens);
+            uniqueTokens.forEach(token => {
+                if (text.includes(token)) {
+                    // Give extra priority weight to error numbers (e.g. 80092, 20092) and long functions
+                    if (/^\d{4,}$/.test(token) || token.length > 6) {
+                        score += 3;
+                    } else {
+                        score += 1;
                     }
                 }
-            );
+            });
 
-            if (walker2.nextNode()) {
-                const node = walker2.currentNode;
-                leadingRegex.lastIndex = 0;
-                const match = leadingRegex.exec(node.nodeValue);
-                if (match) {
-                    const mark = document.createElement("mark");
-                    mark.className = "custom-highlight";
-
-                    const highlightedText = node.splitText(match.index);
-                    highlightedText.splitText(match[0].length);
-
-                    mark.textContent = highlightedText.nodeValue;
-                    node.parentNode.replaceChild(mark, highlightedText);
-
-                    return mark;
-                }
+            if (score > maxScore) {
+                maxScore = score;
+                bestContainer = container;
             }
+        });
+
+        if (bestContainer && maxScore >= 2) {
+            highlightSignificantTokens(bestContainer, allTokens);
+            return bestContainer;
         }
 
         return null;
