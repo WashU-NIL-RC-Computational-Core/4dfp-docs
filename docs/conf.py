@@ -1,3 +1,6 @@
+import os
+import sys
+
 # -*- coding: utf-8 -*-
 #
 # 4dfp documentation build configuration file, created by
@@ -30,7 +33,10 @@
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.mathjax']
+sys.path.insert(0, os.path.abspath('_ext'))
+
+extensions = ["sphinx.ext.mathjax", "sphinx_copybutton", "sphinx_sitemap", "sphinxcontrib.lightbox2", "sphinx_design", "myst_parser", "card_help",]
+myst_enable_extensions = ["colon_fence"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -49,6 +55,11 @@ project = u'4dfp'
 copyright = u'2017, Avi Snyder, Jon Koller, Haley Acevedo'
 author = u'Avi Snyder, Jon Koller, Haley Acevedo'
 
+html_baseurl = "https://4dfp.readthedocs.io/en/latest/"
+
+sitemap_url_scheme = "{lang}{version}{link}"
+sitemap_locales = [None]
+
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
@@ -63,12 +74,38 @@ release = u'0.1.0'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+
+# IMPORTANT Remove scripts/tools from list when updated
+exclude_patterns = [
+    '_build', 
+    'Thumbs.db', 
+    '.DS_Store', 
+    'scripts/_deprecated/index.rst',
+    'scripts/dti/index.rst',
+    'scripts/fcmri/index.rst',
+    'scripts/fmri/index.rst',
+    'scripts/misc/index.rst',
+    'scripts/registration/index.rst',
+    'tools/dti/index.rst',
+    'tools/evaluate_and_roi/index.rst',
+    'tools/filter_in_space/index.rst',
+    'tools/filter_in_time/index.rst',
+    'tools/fmri/index.rst',
+    'tools/format_string/index.rst',
+    'tools/glm/index.rst',
+    'tools/image_algebra/index.rst',
+    'tools/img_segmentation_and_gfc/index.rst',
+    'tools/interconvert_formats/index.rst',
+    'tools/rearrange_voxels/index.rst',
+    'tools/register_in_space/index.rst',
+    'tools/spm_stats/index.rst',
+    'tools/threshold_and_mask/index.rst',
+]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -83,17 +120,31 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+html_show_sourcelink = False
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#
-# html_theme_options = {}
+
+html_theme_options = {
+    "prev_next_buttons_location": None, 
+    "version_selector": False,
+    "language_selector": False,  
+    }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+html_logo = "_static/WashU-Reverse_web.png"
+
+html_favicon = '_static/WashU-SHIELD-Red_RGB.png' 
+
+def setup(app):
+    app.add_css_file('custom.css')
+    app.add_js_file('custom.js')
+    app.add_js_file('expand_search.js')
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
