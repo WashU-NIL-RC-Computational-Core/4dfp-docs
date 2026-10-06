@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const cardLinks = document.querySelectorAll('.nav-card a.sd-card-link, a.sd-card-link');
+    const cardLinks = document.querySelectorAll('a.sd-stretched-link, a.sd-card-link, .nav-card a');
     cardLinks.forEach(link => {
         ['mouseenter', 'mouseover', 'pointerenter'].forEach(eventType => {
             link.addEventListener(eventType, function (e) {
