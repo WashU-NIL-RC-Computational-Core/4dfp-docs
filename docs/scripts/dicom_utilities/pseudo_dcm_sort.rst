@@ -216,7 +216,7 @@ Examples
 
                      .. div:: card-help-top-right
 
-                        :card-help:`term:<dicom_directory>.studies.txt`
+                        :card-help:`term:\<dicom_directory\>.studies.txt`
 
                     .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case2/cmd1/pds_c2_cmd1_studies_txt.png
                         :alt: Contents of DICOM.studies.txt

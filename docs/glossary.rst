@@ -26,7 +26,7 @@ Glossary
    Explicit Little-Endian
       The standard byte order used by modern PCs (x86/x64). It stores the smallest (least significant) byte first and explicitly includes a 2-character Value Representation (VR) tag that names the data type for each item.
 
-   Siemens .IMA
+   Siemens IMA
       A file extension used by Siemens MRI scanners. These are standard DICOM files or raw headers saved with a Siemens-specific extension.
 
    Symbolic Link

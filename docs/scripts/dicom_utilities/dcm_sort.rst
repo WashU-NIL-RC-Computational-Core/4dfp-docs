@@ -198,7 +198,7 @@ Examples
 
                 .. div:: card-help-top-right
 
-                  :card-help:`term:<dicom_directory>.studies.txt`
+                  :card-help:`term:\<dicom_directory\>.studies.txt`
 
                 .. image:: /_static/scripts/dicom_utilities/dcm_sort/case1/cmd3/dicom_studies_txt.png
                     :alt: Contents of DICOM.studies.txt

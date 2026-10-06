@@ -80,7 +80,7 @@ Examples
 
               :card-help:`You can inspect a single DICOM file or an entire directory. When given a directory, the tool recursively scans all subdirectories.`
 
-            DICOM files usually have a file extension of ``.dcm`` (or :term:`Siemens .IMA` when using Siemens scanners).
+            DICOM files usually have a file extension of ``.dcm`` (or :term:`Siemens IMA` when using Siemens scanners).
 
             .. image:: /_static/tools/dicom_utilities/dcm_dump_file/case1/ddf_c1_source_data.png
                :alt: Source directory with nested sub-folders
