@@ -15,7 +15,7 @@ dcm_sort <DICOM_directory> [-d] [-c] [-t] [-i] [-e<ext>] [-r<str>] [-p<str>]
 Description
 -----------
 
-Sorts DICOM files from the target directory into numbered subfolders named ``study<N>`` (such as ``study1``, ``study2``) in your current working directory (``$CWD``). 
+Sorts DICOM files from the target directory into numbered subfolders named ``study<N>`` (such as ``study1``, ``study2``) in your current working directory. 
 The folder number **``<N>``** comes directly from the scan's **REL Series Number** (the acquisition sequence number assigned by the scanner). For example, DICOM files from Series 3 are placed into folder ``study3``. This ``study<N>`` folder layout is required by downstream 4dfp conversion tools.
 You can provide either an absolute or relative directory path. By default, ``dcm_sort`` creates :term:`Symbolic Link` shortcuts to the original files rather than copying them.
 

@@ -12,8 +12,9 @@ pseudo_dcm_sort <DICOM_directory> [-d] [-s] [-e<ext>] [-r<str>] [-i] [-t]
 Description
 -----------
 
-Searches nested subdirectories inside the target directory and sorts DICOM files into numbered ``study<N>`` subfolders in your current working directory (``$CWD``).
-Use ``pseudo_dcm_sort.csh`` when your raw data is organized into numeric subject or session folders (such as ``001/DICOM/`` or ``002/DICOM/``). For flat directories where all DICOM files sit in a single folder, use :ref:`dcm_sort` instead.
+Searches nested subdirectories inside the target directory and sorts DICOM files into numbered ``study<N>`` subfolders in your current working directory.
+Use ``pseudo_dcm_sort.csh`` when your raw data is organized into numeric subject or session folders (such as ``001/DICOM/`` or ``002/DICOM/``). 
+This script was originally developed to process unzipped DICOM datasets downloaded direclty from the Central Neuroimaging Data Archive (CNDA), an platform utilized by WashU. For flat directories where all DICOM files sit in a single folder, use :ref:`dcm_sort` instead.
 By default, ``pseudo_dcm_sort.csh`` creates :term:`Symbolic Link` shortcuts to the original files rather than copying them.
 
 This script uses :ref:`dcm_dump_file` to read the following DICOM header fields:
