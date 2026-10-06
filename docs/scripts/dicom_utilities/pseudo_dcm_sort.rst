@@ -7,7 +7,7 @@ Pseudo DICOM Sort
 Synopsis
 --------
 
-pseudo_dcm_sort <DICOM_directory> [-d] [-s] [-e<ext>] [-r<str>] [-i] [-t]
+pseudo_dcm_sort.csh <DICOM_directory> [-d] [-s] [-e<ext>] [-r<str>] [-i] [-t]
 
 Description
 -----------
