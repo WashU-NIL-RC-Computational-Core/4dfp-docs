@@ -71,7 +71,7 @@ Examples
          Use ``dcm_dump_file`` when you need to inspect raw DICOM metadata, verify scanner settings (such as sequence names or TE/TR times), or troubleshoot files before running 4dfp conversion scripts.
 
          .. note::
-            In all commands below, replace ``<file_or_directory>`` with your actual file path or directory name (for example, ``/data/scan1.dcm`` or ``/data/DICOM``).
+            In all commands below, replace ``IM_0013.dcm`` with your actual file path or directory name (for example, ``/data/scan1.dcm`` or ``/data/DICOM``).
 
          .. card:: 📥 Input Data
             :class-card: sd-bg-light sd-border-1 mb-3
@@ -97,7 +97,7 @@ Examples
 
                .. code-block:: bash
 
-                  dcm_dump_file <file_or_directory>
+                  dcm_dump_file IM_0013.dcm
 
                **2. Terminal Output:**
 
@@ -114,7 +114,7 @@ Examples
 
                .. code-block:: bash
 
-                  dcm_dump_file -f <file_or_directory>
+                  dcm_dump_file -f IM_0013.dcm
 
                **2. Terminal Output:**
 
