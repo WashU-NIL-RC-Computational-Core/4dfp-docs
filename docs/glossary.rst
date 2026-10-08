@@ -15,7 +15,7 @@ Glossary
    DICOM Part 10
       Section 10 of the NEMA DICOM standard (PS 3.10) that defines how DICOM files are saved on disk. Each file starts with a 128-byte preamble, followed by the 4-character code ``DICM`` and standard data tags.
 
-   \<dicom_directory\>.studies.txt
+   <dicom_directory>.studies.txt
       A text summary file created by 4dfp DICOM sorting scripts (like ``dcm_sort``). It lists every scan series in an MRI session across four space-separated columns:
 
       * **Column 1 (REL Series Number):** The sequence or order number of the scan in the session.

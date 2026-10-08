@@ -91,8 +91,8 @@
 
       Spatial orientation conversions (transverse, sagittal, coronal), coordinate flipping, axis reindexing, spatial cropping, frame extraction, temporal averaging/appending, and mosaic-to-volume unpacking.
 
-   .. grid-item-card:: 🎯 Register In Space (and other t4 Oriented Programs)
-      :link: register_in_space/register-in-space
+   .. grid-item-card:: 🎯 Spatial Registration & Transforms
+      :link: spacial_registration_and_transforms/index
       :link-type: doc
       :class-card: nav-card
 

@@ -102,7 +102,6 @@ exclude_patterns = [
     'tools/img_segmentation_and_gfc/index.rst',
     'tools/interconvert_formats/index.rst',
     'tools/rearrange_voxels/index.rst',
-    'tools/register_in_space/index.rst',
     'tools/spm_stats/index.rst',
     'tools/threshold_and_mask/index.rst',
 ]
