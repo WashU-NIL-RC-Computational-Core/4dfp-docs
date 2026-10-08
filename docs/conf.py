@@ -38,6 +38,8 @@ sys.path.insert(0, os.path.abspath('_ext'))
 extensions = ["sphinx.ext.mathjax", "sphinx_copybutton", "sphinx_sitemap", "sphinxcontrib.lightbox2", "sphinx_design", "myst_parser", "card_help",]
 myst_enable_extensions = ["colon_fence"]
 
+html_extra_path = ['_static/google2f78e4b9feaa2279.html']
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
