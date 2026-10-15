@@ -1,10 +1,23 @@
 .. _t4_resolve:
 
 t4_resolve
-----------
+==========
+.. rubric:: Tool: ``t4_resolve``
+
+Synopsis
+--------
+
+t4_resolve <image1> <image2> ...
+
+Description
+-----------
+
 compute optimal rigid body transforms connecting a set of images
 
-Usage:	t4_resolve <image1> <image2> ...
+Usage
+-----
+
+t4_null vm11b_mpr1_to_711-2B_t4
 
 Options
 
@@ -17,5 +30,5 @@ Options
 -r<flt>	set VOI rms radius in mm (default=50)
 =======	=============================================================================
 
-N.B.:	t4_resolve looks for t4 files <image1>_to_<image2>_t4, <image1>_to_<image3>_t4, ... |br|
+N.B.:	t4_resolve looks for t4 files <image1>_to_<image2>_t4, <image1>_to_<image3>_t4, ...
 N.B.:	t4_resolve automatically strips filename extensions when constructing t4 filenames

@@ -1,12 +1,21 @@
 .. _wrpsmg_4dfp:
 
 wrpsmg_4dfp
+===========
+.. rubric:: Tool: ``t4_null``
+
+Synopsis
+--------
+
+wrpsmg_4dfp [options] <inlist> <outfile>
+
+Description
 -----------
+
 apply transforms, resample and average difference images (list directed)
 
-Usage:	wrpsmg_4dfp [options] <inlist> <outfile>
-
-Options
+Usage
+-----
 
 ==========	================================================
 -N			output NaN (default 0.0) for undefined values

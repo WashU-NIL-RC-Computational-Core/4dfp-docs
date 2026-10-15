@@ -1,12 +1,21 @@
 .. _t4img_4dfp:
 
 t4img_4dfp
-----------
+==========
+.. rubric:: Tool: ``t4img_4dfp``
+
+Synopsis
+--------
+
+t4img_4dfp <t4file> <imgfile> [outfile]
+
+Description
+-----------
+
 single image wrapper for :ref:`t4imgs_4dfp`
 
-Usage:	t4img_4dfp <t4file> <imgfile> [outfile]
-
-Examples::
+Usage
+-----
 
 	t4img_4dfp vce1_mprS_to_711-2B_t4 vce1_mprS.4dfp.img -O222
 	t4img_4dfp vce1_mprS_to_711-2B_t4 vce1_mprS vce_mprS_711-2B -O222
@@ -29,5 +38,5 @@ Options
 outfile		specify name for output file (default is <imgfile>t)
 ==========	===================================================
 
-N.B.:	4dfp filename extensions are optional |br|
+N.B.:	4dfp filename extensions are optional
 N.B.:	option -n causes fidl ROI names to be copied to the output ifh

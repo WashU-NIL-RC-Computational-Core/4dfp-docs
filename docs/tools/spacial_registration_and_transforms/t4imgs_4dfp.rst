@@ -1,12 +1,21 @@
 .. _t4imgs_4dfp:
 
 t4imgs_4dfp
+===========
+.. rubric:: Tool: ``t4imgs_4dfp``
+
+Synopsis
+--------
+
+t4imgs_4dfp [options] <inlist> <outfile>
+
+Description
 -----------
+
 apply transforms, resample and average (list directed)
 
-Usage:	t4imgs_4dfp [options] <inlist> <outfile>
-
-Example inlist::
+Usage
+-----
 
 	<imgfile1>	t4=<t4_file1>
 	<imgfile2>	t4=<t4_file2>
