@@ -182,7 +182,7 @@ Repeating identical modes in succession allows solvers to re-center sampling gri
 
 .. rubric:: Standard Registration Pipelines
 
-*The code below illustrate a few registration sequences. Actual script implementations may differ in exact syntax.*
+*The C code below illustrates a few registration sequences. Actual script implementations may differ in exact syntax.*
 
 .. tab-set::
 
@@ -193,11 +193,13 @@ Repeating identical modes in succession allows solvers to re-center sampling gri
 
          :octicon:`file-code;1em;sd-text-primary` Pipeline Script: :bdg-secondary:`cross_bold_pp_2019.csh`
 
-         .. code-block:: bash
+         .. code-block:: csh
 
-            for mode in 4099 4099 3075 2051 2051; do
-                imgreg_4dfp target_frame target_mask source_frame source_mask output_trans.t4 $mode
-            done
+            set mode = (4099 4099 3075 2051 2051)
+            while ( $j <= $#mode )
+                imgreg_4dfp target_frame target_mask source_frame source_mask output_trans.t4 $mode[j]
+                @j++
+            end
 
    .. tab-item:: T2w to Atlas
 
@@ -206,11 +208,13 @@ Repeating identical modes in succession allows solvers to re-center sampling gri
 
          :octicon:`file-code;1em;sd-text-primary` Pipeline Script: :bdg-secondary:`cross_bold_pp_2019.csh`
 
-         .. code-block:: bash
+         .. code-block:: csh
 
-            for mode in 4099 1027 2051 2051 10243; do
-                imgreg_4dfp target_frame target_mask source_frame source_mask output_trans.t4 $mode
-            done
+            set mode = (4099 1027 2051 2051 10243)
+            while ( $j <= $#mode )
+                imgreg_4dfp target_frame target_mask source_frame source_mask output_trans.t4 $mode[j]
+                @j++
+            end
 
    .. tab-item:: T2w to MP-RAGE
 
@@ -219,11 +223,13 @@ Repeating identical modes in succession allows solvers to re-center sampling gri
 
          :octicon:`file-code;1em;sd-text-primary` Pipeline Script: :bdg-secondary:`cross_bold_pp_2019.csh`
 
-         .. code-block:: bash
+         .. code-block:: csh
 
-            for mode in 4099 4099 1027 2051 2051 10243; do
-                imgreg_4dfp target_frame target_mask source_frame source_mask output_trans.t4 $mode
-            done
+            set mode = (4099 4099 1027 2051 2051 10243)
+            while ( $j <= $#mode )
+                imgreg_4dfp target_frame target_mask source_frame source_mask output_trans.t4 $mode[j]
+                @j++
+            end
             
 Examples
 --------
