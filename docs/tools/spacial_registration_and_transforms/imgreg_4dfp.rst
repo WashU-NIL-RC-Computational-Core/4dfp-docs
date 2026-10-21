@@ -216,7 +216,7 @@ Repeating identical modes in succession allows solvers to re-center sampling gri
                 @j++
             end
 
-   .. tab-item:: T2w to MP-RAGE
+   .. tab-item:: T2w to T1
 
       .. card::
          :class-header: sd-bg-light sd-font-weight-bold
