@@ -567,6 +567,17 @@ span.highlighted {
     color: inherit !important;
 }
 
+p.rubric {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #212529;
+    margin-top: 2.25rem;
+    margin-bottom: 0.85rem;
+    padding-left: 0.75rem;
+    border-left: 4px solid #BA0C2F;
+    line-height: 1.25;
+}
+
 @media screen and (max-width: 768px) {
 
     .wy-nav-top {
