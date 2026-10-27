@@ -230,351 +230,351 @@ Repeating identical modes in succession allows solvers to re-center sampling gri
 Examples
 --------
 
-.. dropdown:: 💡 Click to show/hide usage examples
-   :animate: fade-in
+.. .. dropdown:: 💡 Click to show/hide usage examples
+..    :animate: fade-in
 
-   .. tab-set::
+..    .. tab-set::
 
-    .. tab-item:: 📁 Case 1: T1 to Atlas
+..     .. tab-item:: 📁 Case 1: T1 to Atlas
 
-        In standard processing pipelines, registration is performed progressively by looping over a sequence of refining modes: ``4099`` $\rightarrow$ ``4099`` $\rightarrow$ ``1027`` $\rightarrow$ ``2051`` $\rightarrow$ ``2051`` $\rightarrow$ ``10243``.
+..         In standard processing pipelines, registration is performed progressively by looping over a sequence of refining modes: ``4099`` $\rightarrow$ ``4099`` $\rightarrow$ ``1027`` $\rightarrow$ ``2051`` $\rightarrow$ ``2051`` $\rightarrow$ ``10243``.
 
-        * **4099** (``1 + 2 + 4096``): Coarse 3D translational search (7.5 mm grid steps). Run twice to guarantee convergence.
-        * **1027** (``1 + 2 + 1024``): Fast 3D local optimization (12.0 mm sampling steps).
-        * **2051** (``1 + 2 + 2048``): Standard fine 3D local optimization (5.0 mm sampling steps). Run twice to refine parameters.
-        * **10243** (``1 + 2 + 2048 + 8192``): Fine 3D Newton-Raphson optimization using Hessian matrix inversion.
+..         * **4099** (``1 + 2 + 4096``): Coarse 3D translational search (7.5 mm grid steps). Run twice to guarantee convergence.
+..         * **1027** (``1 + 2 + 1024``): Fast 3D local optimization (12.0 mm sampling steps).
+..         * **2051** (``1 + 2 + 2048``): Standard fine 3D local optimization (5.0 mm sampling steps). Run twice to refine parameters.
+..         * **10243** (``1 + 2 + 2048 + 8192``): Fine 3D Newton-Raphson optimization using Hessian matrix inversion.
 
-        .. card:: 📥 Input Data Overview
-          :class-card: sd-bg-light sd-border-1 mb-3
+..         .. card:: 📥 Input Data Overview
+..           :class-card: sd-bg-light sd-border-1 mb-3
 
-          .. grid:: 1 2 2 2
-              :gutter: 3
+..           .. grid:: 1 2 2 2
+..               :gutter: 3
 
-              .. grid-item::
+..               .. grid-item::
 
-                **Target (Reference) Image:**
+..                 **Target (Reference) Image:**
 
-                * **Root Name:** ``711-2C_target`` (Atlas Template)
-                * **Mask:** ``711-2C_target_mskt``
-                * **Space:** 711-2C Atlas
+..                 * **Root Name:** ``711-2C_target`` (Atlas Template)
+..                 * **Mask:** ``711-2C_target_mskt``
+..                 * **Space:** 711-2C Atlas
 
-              .. grid-item::
+..               .. grid-item::
 
-                **Source (Moving) Image:**
+..                 **Source (Moving) Image:**
 
-                * **Root Name:** ``SUBJ_MSC01_mpr`` (Subject T1 MPRAGE)
-                * **Mask:** ``SUBJ_MSC01_mpr_mskt``
-                * **Output Matrix:** ``SUBJ_MSC01_mpr_to_711-2C_t4``
-                * **Initial Score:** $\eta = 0.14$ (Unregistered baseline)
+..                 * **Root Name:** ``SUBJ_MSC01_mpr`` (Subject T1 MPRAGE)
+..                 * **Mask:** ``SUBJ_MSC01_mpr_mskt``
+..                 * **Output Matrix:** ``SUBJ_MSC01_mpr_to_711-2C_t4``
+..                 * **Initial Score:** $\eta = 0.14$ (Unregistered baseline)
 
-          .. figure:: /_static/tools/imgreg_4dfp/workflow/step0_unregistered_input.png
-              :alt: Unregistered target and source image overlay before registration
-              :align: center
-              :width: 100%
+..           .. figure:: /_static/tools/imgreg_4dfp/workflow/step0_unregistered_input.png
+..               :alt: Unregistered target and source image overlay before registration
+..               :align: center
+..               :width: 100%
 
-              **Unregistered Input State:** Moving source image (red contours) overlaid on target atlas (grayscale) using identity matrix prior to running ``imgreg_4dfp``. Notice significant translational offset ($>10\text{ mm}$).
+..               **Unregistered Input State:** Moving source image (red contours) overlaid on target atlas (grayscale) using identity matrix prior to running ``imgreg_4dfp``. Notice significant translational offset ($>10\text{ mm}$).
 
-        .. tab-set::
+..         .. tab-set::
 
-          .. tab-item:: Coarse Search (Mode 4099)
-              :sync: pass-4099
+..           .. tab-item:: Coarse Search (Mode 4099)
+..               :sync: pass-4099
 
-              **Engine:** Brute-force grid search translation | **Step Size:** Fixed 7.5 mm grid | **Bits:** ``1 + 2 + 4096``
+..               **Engine:** Brute-force grid search translation | **Step Size:** Fixed 7.5 mm grid | **Bits:** ``1 + 2 + 4096``
 
-              **Purpose:** Recovers large initial translational offsets between the target and source images before local optimization begins.
+..               **Purpose:** Recovers large initial translational offsets between the target and source images before local optimization begins.
 
-              .. code-block:: bash
+..               .. code-block:: bash
 
-                # Pass 1 & 2: Run twice to recover large spatial shifts
-                imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 4099
-                imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 4099
+..                 # Pass 1 & 2: Run twice to recover large spatial shifts
+..                 imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 4099
+..                 imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 4099
 
-              **What Happens Under the Hood:**
+..               **What Happens Under the Hood:**
 
-              * Executes a 3D translation grid search across X, Y, and Z axes.
-              * Updates translational parameters in :term:`t4file` while leaving rotational parameters unchanged.
-              * Bypasses step size flags and Hessian solver logic entirely.
+..               * Executes a 3D translation grid search across X, Y, and Z axes.
+..               * Updates translational parameters in :term:`t4file` while leaving rotational parameters unchanged.
+..               * Bypasses step size flags and Hessian solver logic entirely.
 
-              .. figure:: /_static/tools/imgreg_4dfp/workflow/step1_mode4099.png
-                :alt: Terminal output and spatial overlay after Mode 4099 coarse search
-                :align: center
-                :width: 100%
+..               .. figure:: /_static/tools/imgreg_4dfp/workflow/step1_mode4099.png
+..                 :alt: Terminal output and spatial overlay after Mode 4099 coarse search
+..                 :align: center
+..                 :width: 100%
 
-                **Mode 4099 Output ($\eta = 0.52$):** Coarse translation grid search aligns center-of-mass positions between source and target volumes.
+..                 **Mode 4099 Output ($\eta = 0.52$):** Coarse translation grid search aligns center-of-mass positions between source and target volumes.
 
-          .. tab-item:: Fast Local Pass (Mode 1027)
-              :sync: pass-1027
+..           .. tab-item:: Fast Local Pass (Mode 1027)
+..               :sync: pass-1027
 
-              **Engine:** Local optimization | **Step Size:** 12.0 mm (Fast) | **Bits:** ``1 + 2 + 1024``
+..               **Engine:** Local optimization | **Step Size:** 12.0 mm (Fast) | **Bits:** ``1 + 2 + 1024``
 
-              **Purpose:** Establishes initial 6-DOF (translation + rotation) local spatial alignment across a broad search radius.
+..               **Purpose:** Establishes initial 6-DOF (translation + rotation) local spatial alignment across a broad search radius.
 
-              .. code-block:: bash
+..               .. code-block:: bash
 
-                # Pass 3: Rapid local adjustment
-                imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 1027
+..                 # Pass 3: Rapid local adjustment
+..                 imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 1027
 
-              **What Happens Under the Hood:**
+..               **What Happens Under the Hood:**
 
-              * Switches execution to the local gradient optimization engine.
-              * Begins evaluating 3D rotations alongside translations using a wide 12.0 mm step size.
-              * Rapidly brings major anatomical landmarks into approximate orientation.
+..               * Switches execution to the local gradient optimization engine.
+..               * Begins evaluating 3D rotations alongside translations using a wide 12.0 mm step size.
+..               * Rapidly brings major anatomical landmarks into approximate orientation.
 
-              .. figure:: /_static/tools/imgreg_4dfp/workflow/step2_mode1027.png
-                :alt: Terminal output and spatial overlay after Mode 1027 fast local pass
-                :align: center
-                :width: 100%
+..               .. figure:: /_static/tools/imgreg_4dfp/workflow/step2_mode1027.png
+..                 :alt: Terminal output and spatial overlay after Mode 1027 fast local pass
+..                 :align: center
+..                 :width: 100%
 
-                **Mode 1027 Output ($\eta = 0.71$):** Initial 6-DOF orientation aligns pitch, roll, and yaw angles across wide sampling steps.
+..                 **Mode 1027 Output ($\eta = 0.71$):** Initial 6-DOF orientation aligns pitch, roll, and yaw angles across wide sampling steps.
 
-          .. tab-item:: Fine Local Alignment (Mode 2051)
-              :sync: pass-2051
+..           .. tab-item:: Fine Local Alignment (Mode 2051)
+..               :sync: pass-2051
 
-              **Engine:** Local optimization | **Step Size:** 5.0 mm (Fine) | **Bits:** ``1 + 2 + 2048``
+..               **Engine:** Local optimization | **Step Size:** 5.0 mm (Fine) | **Bits:** ``1 + 2 + 2048``
 
-              **Purpose:** Performs main sub-voxel registration, narrowing step sizes to refine spatial parameters.
+..               **Purpose:** Performs main sub-voxel registration, narrowing step sizes to refine spatial parameters.
 
-              .. code-block:: bash
+..               .. code-block:: bash
 
-                # Pass 4 & 5: Run twice for standard sub-voxel convergence
-                imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 2051
-                imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 2051
+..                 # Pass 4 & 5: Run twice for standard sub-voxel convergence
+..                 imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 2051
+..                 imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 2051
 
-              **What Happens Under the Hood:**
+..               **What Happens Under the Hood:**
 
-              * Overrides Fast step size and restricts parameter adjustments to 5.0 mm increments.
-              * Fine-tunes slice-by-slice overlap and corrects residual rotational angles.
-              * Prepares matrix parameters for final second-order solver convergence.
+..               * Overrides Fast step size and restricts parameter adjustments to 5.0 mm increments.
+..               * Fine-tunes slice-by-slice overlap and corrects residual rotational angles.
+..               * Prepares matrix parameters for final second-order solver convergence.
 
-              .. figure:: /_static/tools/imgreg_4dfp/workflow/step3_mode2051.png
-                :alt: Terminal output and spatial overlay after Mode 2051 fine local pass
-                :align: center
-                :width: 100%
+..               .. figure:: /_static/tools/imgreg_4dfp/workflow/step3_mode2051.png
+..                 :alt: Terminal output and spatial overlay after Mode 2051 fine local pass
+..                 :align: center
+..                 :width: 100%
 
-                **Mode 2051 Output ($\eta = 0.88$):** Fine local optimization achieves high structural agreement along cortical boundaries.
+..                 **Mode 2051 Output ($\eta = 0.88$):** Fine local optimization achieves high structural agreement along cortical boundaries.
 
-          .. tab-item:: Hessian Polishing (Mode 10243)
-              :sync: pass-10243
+..           .. tab-item:: Hessian Polishing (Mode 10243)
+..               :sync: pass-10243
 
-              **Engine:** ``fimgreg_`` + Newton-Raphson | **Step Size:** 5.0 mm (Fine) | **Bits:** ``1 + 2 + 2048 + 8192``
+..               **Engine:** ``fimgreg_`` + Newton-Raphson | **Step Size:** 5.0 mm (Fine) | **Bits:** ``1 + 2 + 2048 + 8192``
 
-              **Purpose:** Executes second-order Hessian matrix optimization for final high-precision parameter convergence.
+..               **Purpose:** Executes second-order Hessian matrix optimization for final high-precision parameter convergence.
 
-              .. code-block:: bash
+..               .. code-block:: bash
 
-                # Pass 6: Final 2nd-order Newton-Raphson polishing
-                imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 10243
+..                 # Pass 6: Final 2nd-order Newton-Raphson polishing
+..                 imgreg_4dfp 711-2C_target 711-2C_target_mskt SUBJ_MSC01_mpr SUBJ_MSC01_mpr_mskt SUBJ_MSC01_mpr_to_711-2C_t4 10243
 
-              **What Happens Under the Hood:**
+..               **What Happens Under the Hood:**
 
-              * Activates the Newton-Raphson solver (:bdg-dark:`8192`) using the 5.0 mm step size (:bdg-info:`2048`).
-              * Computes second-order derivatives to find the exact peak of the cost function surface.
-              * Writes out the final fully-converged $4 \times 4$ transformation matrix to :term:`t4file`.
+..               * Activates the Newton-Raphson solver (:bdg-dark:`8192`) using the 5.0 mm step size (:bdg-info:`2048`).
+..               * Computes second-order derivatives to find the exact peak of the cost function surface.
+..               * Writes out the final fully-converged $4 \times 4$ transformation matrix to :term:`t4file`.
 
-              .. figure:: /_static/tools/imgreg_4dfp/workflow/step4_mode10243.png
-                :alt: Terminal output and final spatial overlay after Mode 10243 Hessian polishing
-                :align: center
-                :width: 100%
+..               .. figure:: /_static/tools/imgreg_4dfp/workflow/step4_mode10243.png
+..                 :alt: Terminal output and final spatial overlay after Mode 10243 Hessian polishing
+..                 :align: center
+..                 :width: 100%
 
-                **Mode 10243 Output ($\eta = 0.94$):** Final Hessian matrix Newton-Raphson polishing yields full convergence.
+..                 **Mode 10243 Output ($\eta = 0.94$):** Final Hessian matrix Newton-Raphson polishing yields full convergence.
 
 
-    .. tab-item:: ⚠️ Common Errors
-      :class-label: tab-error
+..     .. tab-item:: ⚠️ Common Errors
+..       :class-label: tab-error
 
-      .. tab-set::
+..       .. tab-set::
 
-          .. tab-item:: ❌ Insufficient Arguments (Missing Parameters)
-            :class-label: tab-error
+..           .. tab-item:: ❌ Insufficient Arguments (Missing Parameters)
+..             :class-label: tab-error
 
-            **Cause:** Running ``imgreg_4dfp`` without specifying all 6 required positional arguments: ``<target_img>``, ``<target_mask>``, ``<source_img>``, ``<source_mask>``, ``<t4file>``, and ``<mode>``.
+..             **Cause:** Running ``imgreg_4dfp`` without specifying all 6 required positional arguments: ``<target_img>``, ``<target_mask>``, ``<source_img>``, ``<source_mask>``, ``<t4file>``, and ``<mode>``.
 
-            **Command Attempt:**
+..             **Command Attempt:**
 
-            .. code-block:: bash
+..             .. code-block:: bash
 
-                imgreg_4dfp
+..                 imgreg_4dfp
 
-            **Observed Behavior:**
+..             **Observed Behavior:**
 
-            The program prints standard usage instructions and terminates without performing any image registration or modifying matrix files.
+..             The program prints standard usage instructions and terminates without performing any image registration or modifying matrix files.
 
-            .. code-block:: text
+..             .. code-block:: text
 
-                Usage: imgreg_4dfp <target> <tmask> <source> <smask> <t4file> <mode>
+..                 Usage: imgreg_4dfp <target> <tmask> <source> <smask> <t4file> <mode>
 
-            .. image:: /_static/tools/imgreg_4dfp/errors/insufficient_args.png
-                :alt: Terminal output showing usage syntax due to missing arguments
-                :align: center
+..             .. image:: /_static/tools/imgreg_4dfp/errors/insufficient_args.png
+..                 :alt: Terminal output showing usage syntax due to missing arguments
+..                 :align: center
 
-            .. admonition:: Resolution
-                :class: warning
+..             .. admonition:: Resolution
+..                 :class: warning
 
-                Ensure all 6 positional arguments are supplied in order. If masks are not needed, pass ``none`` for ``<target_mask>`` and ``<source_mask>``.
+..                 Ensure all 6 positional arguments are supplied in order. If masks are not needed, pass ``none`` for ``<target_mask>`` and ``<source_mask>``.
 
-          .. tab-item:: ❌ Non-Existent Target or Source Image
-            :class-label: tab-error
+..           .. tab-item:: ❌ Non-Existent Target or Source Image
+..             :class-label: tab-error
 
-            **Cause:** Specifying a target or source image root name that does not exist in the working directory or is missing its corresponding ``.4dfp.ifh`` header file.
+..             **Cause:** Specifying a target or source image root name that does not exist in the working directory or is missing its corresponding ``.4dfp.ifh`` header file.
 
-            **Command Attempt:**
+..             **Command Attempt:**
 
-            .. code-block:: bash
+..             .. code-block:: bash
 
-                imgreg_4dfp missing_target none source_frame none transform_t4 2051
+..                 imgreg_4dfp missing_target none source_frame none transform_t4 2051
 
-            **Observed Behavior:**
+..             **Observed Behavior:**
 
-            The application fails when attempting to read the missing image header or binary payload, outputting an file open error and aborting execution.
+..             The application fails when attempting to read the missing image header or binary payload, outputting an file open error and aborting execution.
 
-            .. code-block:: text
+..             .. code-block:: text
 
-                GetIFH: error opening missing_target.4dfp.ifh
-                imgreg_4dfp error: read error on target image
+..                 GetIFH: error opening missing_target.4dfp.ifh
+..                 imgreg_4dfp error: read error on target image
 
-            .. image:: /_static/tools/imgreg_4dfp/errors/missing_image_file.png
-                :alt: Terminal output showing file opening error for missing image
-                :align: center
+..             .. image:: /_static/tools/imgreg_4dfp/errors/missing_image_file.png
+..                 :alt: Terminal output showing file opening error for missing image
+..                 :align: center
 
-            .. admonition:: Resolution
-                :class: warning
+..             .. admonition:: Resolution
+..                 :class: warning
 
-                Verify that both the ``.4dfp.img`` binary file and ``.4dfp.ifh`` header file exist in the working path. Do not include the ``.4dfp.img`` extension in the command line argument; supply only the root file name.
+..                 Verify that both the ``.4dfp.img`` binary file and ``.4dfp.ifh`` header file exist in the working path. Do not include the ``.4dfp.img`` extension in the command line argument; supply only the root file name.
 
-          .. tab-item:: ❌ Missing or Malformed t4file
-            :class-label: tab-error
+..           .. tab-item:: ❌ Missing or Malformed t4file
+..             :class-label: tab-error
 
-            **Cause:** Passing a path to a :term:`t4file` that does not exist, or specifying a corrupted text file that cannot be parsed into a valid $4 \times 4$ transformation matrix.
+..             **Cause:** Passing a path to a :term:`t4file` that does not exist, or specifying a corrupted text file that cannot be parsed into a valid $4 \times 4$ transformation matrix.
 
-            **Command Attempt:**
+..             **Command Attempt:**
 
-            .. code-block:: bash
+..             .. code-block:: bash
 
-                imgreg_4dfp target_frame none source_frame none missing_matrix_t4 2051
+..                 imgreg_4dfp target_frame none source_frame none missing_matrix_t4 2051
 
-            **Observed Behavior:**
+..             **Observed Behavior:**
 
-            The tool attempts to load the transformation matrix and throws an I/O error when reading matrix parameters, exiting before registration optimization starts.
+..             The tool attempts to load the transformation matrix and throws an I/O error when reading matrix parameters, exiting before registration optimization starts.
 
-            .. code-block:: text
+..             .. code-block:: text
 
-                rft4: error reading missing_matrix_t4
-                imgreg_4dfp: t4 matrix read error
+..                 rft4: error reading missing_matrix_t4
+..                 imgreg_4dfp: t4 matrix read error
 
-            .. image:: /_static/tools/imgreg_4dfp/errors/missing_t4_file.png
-                :alt: Terminal output displaying t4 matrix read error
-                :align: center
+..             .. image:: /_static/tools/imgreg_4dfp/errors/missing_t4_file.png
+..                 :alt: Terminal output displaying t4 matrix read error
+..                 :align: center
 
-            .. admonition:: Resolution
-                :class: warning
+..             .. admonition:: Resolution
+..                 :class: warning
 
-                If starting a registration sequence from scratch, initialize a new identity matrix using ``t4_null transform_t4`` prior to calling ``imgreg_4dfp``.
+..                 If starting a registration sequence from scratch, initialize a new identity matrix using ``t4_null transform_t4`` prior to calling ``imgreg_4dfp``.
 
-          .. tab-item:: ❌ 2D Slice Dimension Mismatch with 3D Mode Flag
-            :class-label: tab-error
+..           .. tab-item:: ❌ 2D Slice Dimension Mismatch with 3D Mode Flag
+..             :class-label: tab-error
 
-            **Cause:** Setting 3D Mode (:bdg-secondary:`2`) when attempting to align single-slice 2D planar images ($NZ < 2$).
+..             **Cause:** Setting 3D Mode (:bdg-secondary:`2`) when attempting to align single-slice 2D planar images ($NZ < 2$).
 
-            **Command Attempt:**
+..             **Command Attempt:**
 
-            .. code-block:: bash
+..             .. code-block:: bash
 
-                imgreg_4dfp target_2d_slice none source_2d_slice none transform_t4 2051
+..                 imgreg_4dfp target_2d_slice none source_2d_slice none transform_t4 2051
 
-            **Observed Behavior:**
+..             **Observed Behavior:**
 
-            The program detects $NZ < 2$ in the image volume header, automatically strips Bit ``2`` from the mode bitmask to prevent invalid 3D spatial operations, and outputs a warning before proceeding in 2D mode.
+..             The program detects $NZ < 2$ in the image volume header, automatically strips Bit ``2`` from the mode bitmask to prevent invalid 3D spatial operations, and outputs a warning before proceeding in 2D mode.
 
-            .. code-block:: text
+..             .. code-block:: text
 
-                nz < 2: disabling 3D alignment mode
-                image alignment mode  2049 decimal     0801 hex
+..                 nz < 2: disabling 3D alignment mode
+..                 image alignment mode  2049 decimal     0801 hex
 
-            .. image:: /_static/tools/imgreg_4dfp/errors/dimension_mismatch.png
-                :alt: Terminal output showing automatic disabling of 3D mode for 2D slice
-                :align: center
+..             .. image:: /_static/tools/imgreg_4dfp/errors/dimension_mismatch.png
+..                 :alt: Terminal output showing automatic disabling of 3D mode for 2D slice
+..                 :align: center
 
-            .. admonition:: Resolution
-                :class: warning
+..             .. admonition:: Resolution
+..                 :class: warning
 
-                For single-slice 2D images, explicitly omit Bit ``2`` from the ``<mode>`` integer (e.g., use **Mode 2049** instead of **2051**) to prevent unintended parameter overrides.
+..                 For single-slice 2D images, explicitly omit Bit ``2`` from the ``<mode>`` integer (e.g., use **Mode 2049** instead of **2051**) to prevent unintended parameter overrides.
 
-          .. tab-item:: ❌ Alignment Disabled (Mode Flag Missing Bit 1)
-            :class-label: tab-error
+..           .. tab-item:: ❌ Alignment Disabled (Mode Flag Missing Bit 1)
+..             :class-label: tab-error
 
-            **Cause:** Passing a mode integer where the Enable Alignment master switch (:bdg-primary:`1`) is not set (e.g., Mode ``0`` or Mode ``2050``).
+..             **Cause:** Passing a mode integer where the Enable Alignment master switch (:bdg-primary:`1`) is not set (e.g., Mode ``0`` or Mode ``2050``).
 
-            **Command Attempt:**
+..             **Command Attempt:**
 
-            .. code-block:: bash
+..             .. code-block:: bash
 
-                imgreg_4dfp target_frame none source_frame none transform_t4 0
+..                 imgreg_4dfp target_frame none source_frame none transform_t4 0
 
-            **Observed Behavior:**
+..             **Observed Behavior:**
 
-            The subroutine initializes, computes the initial overlap score (:term:`eta Alignment Score`), and immediately returns without updating parameter arrays or modifying the output :term:`t4file`.
+..             The subroutine initializes, computes the initial overlap score (:term:`eta Alignment Score`), and immediately returns without updating parameter arrays or modifying the output :term:`t4file`.
 
-            .. code-block:: text
+..             .. code-block:: text
 
-                image alignment mode     0 decimal        0 hex
-                transform update disabled (mode 1 bit off)
+..                 image alignment mode     0 decimal        0 hex
+..                 transform update disabled (mode 1 bit off)
 
-            .. image:: /_static/tools/imgreg_4dfp/errors/disabled_mode_zero.png
-                :alt: Terminal output showing transform update disabled due to mode 0
-                :align: center
+..             .. image:: /_static/tools/imgreg_4dfp/errors/disabled_mode_zero.png
+..                 :alt: Terminal output showing transform update disabled due to mode 0
+..                 :align: center
 
-            .. admonition:: Resolution
-                :class: warning
+..             .. admonition:: Resolution
+..                 :class: warning
 
-                Always ensure Bit ``1`` is added to your mode integer whenever parameter calculation and matrix updating are required.
+..                 Always ensure Bit ``1`` is added to your mode integer whenever parameter calculation and matrix updating are required.
 
-          .. tab-item:: ⚠️ Alignment Score Plateaus Low
-            :class-label: tab-error
+..           .. tab-item:: ⚠️ Alignment Score Plateaus Low
+..             :class-label: tab-error
 
-            **Cause:** The optimization engine converged locally, but spatial overlap failed to achieve a high correlation score. This occurs when structural or parameter mismatches prevent the local search engine from finding global convergence.
+..             **Cause:** The optimization engine converged locally, but spatial overlap failed to achieve a high correlation score. This occurs when structural or parameter mismatches prevent the local search engine from finding global convergence.
 
-            **Observed Behavior:**
+..             **Observed Behavior:**
 
-            Subsequent optimization passes (``2051``, ``10243``) exit normally, but the printed correlation score (η) stays trapped with a low score.
+..             Subsequent optimization passes (``2051``, ``10243``) exit normally, but the printed correlation score (η) stays trapped with a low score.
 
-            .. code-block:: text
+..             .. code-block:: text
 
-                mode 2051:  eta,q 0.2941    0.8120
-                mode 10243: eta,q 0.3012    0.8210  (plateaued)
+..                 mode 2051:  eta,q 0.2941    0.8120
+..                 mode 10243: eta,q 0.3012    0.8210  (plateaued)
 
-            .. grid:: 1 2 2 2
-                :gutter: 2
+..             .. grid:: 1 2 2 2
+..                 :gutter: 2
 
-                .. grid-item-card:: 🛑 Gross Rotation / Axis Flip
-                  :class-card: sd-bg-light sd-border-1
+..                 .. grid-item-card:: 🛑 Gross Rotation / Axis Flip
+..                   :class-card: sd-bg-light sd-border-1
 
-                  Coarse mode (``4099``) only searches translation. If images are rotated > 20° or mirrored, translation alone cannot fix alignment.
+..                   Coarse mode (``4099``) only searches translation. If images are rotated > 20° or mirrored, translation alone cannot fix alignment.
 
-                .. grid-item-card:: 🛑 Unmasked Neck / Skull Noise
-                  :class-card: sd-bg-light sd-border-1
+..                 .. grid-item-card:: 🛑 Unmasked Neck / Skull Noise
+..                   :class-card: sd-bg-light sd-border-1
 
-                  Passing ``none`` for masks forces evaluation of non-brain tissue, neck muscle, and FOV cutoffs, capping max η.
+..                   Passing ``none`` for masks forces evaluation of non-brain tissue, neck muscle, and FOV cutoffs, capping max η.
 
-                .. grid-item-card:: 🛑 Sub-Optimal Similarity Metric
-                  :class-card: sd-bg-light sd-border-1
+..                 .. grid-item-card:: 🛑 Sub-Optimal Similarity Metric
+..                   :class-card: sd-bg-light sd-border-1
 
-                  Default mode aligns image edges. Cross-modality or low-contrast images may require Direct Intensity Matching (:bdg-light:`256`).
+..                   Default mode aligns image edges. Cross-modality or low-contrast images may require Direct Intensity Matching (:bdg-light:`256`).
 
-                .. grid-item-card:: 🛑 Incorrect Header Center
-                  :class-card: sd-bg-light sd-border-1
+..                 .. grid-item-card:: 🛑 Incorrect Header Center
+..                   :class-card: sd-bg-light sd-border-1
 
-                  Mismatched origins in the ``.ifh`` header (``center`` field) place the initial 7.5 mm grid search outside the brain volume.
+..                   Mismatched origins in the ``.ifh`` header (``center`` field) place the initial 7.5 mm grid search outside the brain volume.
 
-            .. admonition:: Diagnostic & Resolution Protocol
-                :class: warning
+..             .. admonition:: Diagnostic & Resolution Protocol
+..                 :class: warning
 
-                1. **Visually inspect current alignment:** Resample the source image using your current t4file file and overlay it on the target:
+..                 1. **Visually inspect current alignment:** Resample the source image using your current t4file file and overlay it on the target:
                   
-                  .. code-block:: bash
+..                   .. code-block:: bash
 
-                      t4img_4dfp t4file source_frame source_aligned -Otarget_space
+..                       t4img_4dfp t4file source_frame source_aligned -Otarget_space
 
-                2. **If rotated or flipped:** Use ``flip_4dfp`` or apply a manual starting reorientation :term:`t4file` before running ``imgreg_4dfp``.
-                3. **If unmasked:** Pass explicit brain mask files for ``<target_mask>`` and ``<source_mask>`` instead of ``none``.
-                4. **If same modality with soft edges:** Add Bit :bdg-light:`256` to enable Direct Intensity Matching (e.g., use **Mode 2307** instead of **Mode 2051**).
+..                 2. **If rotated or flipped:** Use ``flip_4dfp`` or apply a manual starting reorientation :term:`t4file` before running ``imgreg_4dfp``.
+..                 3. **If unmasked:** Pass explicit brain mask files for ``<target_mask>`` and ``<source_mask>`` instead of ``none``.
+..                 4. **If same modality with soft edges:** Add Bit :bdg-light:`256` to enable Direct Intensity Matching (e.g., use **Mode 2307** instead of **Mode 2051**).
             
