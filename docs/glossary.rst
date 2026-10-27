@@ -6,7 +6,7 @@ Glossary
 .. glossary::
    :sorted:
 
-   t4 File
+   t4file
       A plain text file containing a :math:`4 \times 4` coordinate transformation matrix used across the 4dfp software suite. It defines spatial affine or rigid alignments (translation, rotation, scale, shear) between coordinate spaces.
 
    4dfp
@@ -30,7 +30,7 @@ Glossary
    DICOM Part 10
       Section 10 of the NEMA DICOM standard (PS 3.10) that defines how DICOM files are saved on disk. Each file starts with a 128-byte preamble, followed by the 4-character code ``DICM`` and standard data tags.
 
-   Eta Alignment Score
+   eta Alignment Score
       A similarity metric that quantifies how well two image volumes align in space. The score can be evaluated using two primary approaches depending on the registration method:
 
       * **Spatial Gradient Alignment:** (:ref:`imgreg_4dfp <imgreg_4dfp>` Mode: 256 **OFF**) Compares where tissue boundaries and structural edges occur across both images. Because it focuses on directional contours rather than raw brightness, it effectively lines up scans with different image contrasts (such as aligning a functional fMRI scan to a structural T1 scan).
@@ -42,9 +42,6 @@ Glossary
 
    Hessian Matrix
       A square matrix of second-order partial derivatives of a scalar-valued cost function. In 4dfp registration, inversion of the :math:`6 \times 6` or :math:`12 \times 12` Hessian matrix enables fast sub-voxel convergence via Newton-Raphson optimization.
-
-   Intensity Correlation
-      An image alignment similarity metric that computes normalized cross-correlation based on raw voxel brightness values across two image volumes.
 
    <dicom_directory>.studies.txt
       A text summary file created by 4dfp DICOM sorting scripts (like :ref:`dcm_sort`). It lists every scan series in an MRI session across four space-separated columns:
@@ -63,8 +60,17 @@ Glossary
    Newton-Raphson Optimization
       A second-order iterative numerical optimization algorithm that uses the gradient and Hessian matrix of the objective function to rapidly converge on optimal spatial registration parameters.
 
+   Pearson Intensity Correlation
+      An image alignment similarity metric that computes normalized cross-correlation (Pearson correlation) based on raw voxel brightness values across two image volumes.
+
+   Pitch
+      Spatial rotation around the Left–Right axis (:math:`X`-axis). In subject head motion, this corresponds to a forward or backward "nodding" movement in the sagittal plane.
+
    Rigid Transformation
       A 6-degree-of-freedom (6-DOF) spatial transformation limited to 3D translation (:math:`X, Y, Z`) and rotation (pitch, roll, yaw), preserving all inter-voxel distances and image geometry without scaling or deformation.
+
+   Roll
+      Spatial rotation around the Anterior–Posterior axis (:math:`Y`-axis). In subject head motion, this corresponds to a side-to-side "rolling" or tilting movement (ear toward shoulder) in the coronal plane.
 
    Siemens .IMA
       A file extension used by Siemens MRI scanners. These are standard DICOM files or raw headers saved with a Siemens-specific extension.
@@ -74,3 +80,6 @@ Glossary
 
    Symbolic Link
       A shortcut file that points directly to another file or folder on your computer without copying the original data.
+
+   Yaw
+      Spatial rotation around the Superior–Inferior axis (:math:`Z`-axis). In subject head motion, this corresponds to a turning or "squirming" movement (shaking the head side-to-side) in the axial plane. This represents the single in-plane rotational degree of freedom during 2D axial image registration.
