@@ -578,6 +578,12 @@ p.rubric {
     line-height: 1.25;
 }
 
+readthedocs-addons-tooltip,
+.readthedocs-addons-tooltip-wrapper,
+[data-addons-tooltip] {
+    transition-delay: 0.5s !important;
+}
+
 @media screen and (max-width: 768px) {
 
     .wy-nav-top {
