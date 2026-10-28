@@ -29,7 +29,7 @@ Spatial Registration & Transforms
       :link-type: doc
       :class-card: nav-card
 
-      Calculate 2D or 3D linear spatial registration between source and target scans to output t4 transformation matrices.
+      Calculate 2D or 3D affine registration between source and target scans to output t4 transformation matrices.
 
    .. grid-item-card:: 🖼️ t4img_4dfp
       :link: t4img_4dfp
