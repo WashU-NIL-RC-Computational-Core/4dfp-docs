@@ -47,7 +47,7 @@ Contents
    tools/img_segmentation_and_gfc/*
    tools/interconvert_formats/*
    tools/rearrange_voxels/*
-   tools/spacial_registration_and_transforms/index
+   tools/spatial_registration_and_transforms/index
    tools/spm_stats/*
    tools/threshold_and_mask/*
 

@@ -28,7 +28,7 @@ The calculated alignment parameters are saved as a :math:`4 \times 4` matrix ins
 
 Note that ``imgreg_4dfp`` only calculates this matrix and updates the :term:`t4file`; it does not resample the image data itself. Actual resampling is handled downstream by tools like :ref:`t4imgs_4dfp` or :ref:`t4img_4dfp`.
 
-Separating matrix estimation from resampling prevents cumulative resolution loss caused by repeatedly filling gaps. Sequential alignments (e.g., motion correction, coregistration, and atlas normalization) can be combined into a single matrix and applied in one final resampling pass.
+Separating matrix estimation from resampling prevents cumulative resolution loss from interpolation. Sequential alignments (e.g., motion correction, coregistration, and atlas normalization) can be combined into a single matrix and applied in one final resampling pass.
 
 .. important::
    `imgreg_4dfp` assumes whatever is provided as the <t4file> parameter **should be a t4file**. If the file exists but is not a :term:`t4file`, **imgreg_4dfp will overwrite this file** and turn it into a :term:`t4file`. 
@@ -45,8 +45,8 @@ Mode selection is equivalent to setting command-line flags in Linux tools (analo
    :octicon:`number;1em;sd-text-info` **Example: Mode 4099 (Coarse 3D Position Search)**
 
    * :bdg-primary:`1` Enable Alignment Calculation
-   * :bdg-secondary:`2` 3D Alignment (X, Y, Z, pitch, roll, yaw)
-   * :bdg-warning:`4096` Coarse Grid Shift Search
+   * :bdg-info:`2` 3D Alignment (X, Y, Z, pitch, roll, yaw)
+   * :bdg-dark:`4096` Coarse Grid Shift Search
 
    .. math::
 
@@ -65,46 +65,51 @@ Usage
    * - Bit
      - Name
      - Description
-   * - ``1``
+   * - :bdg-primary:`1`
      - Enable Alignment
-     - **ON:** Computes spatial updates and modifies the :term:`t4file` matrix.
+     - **ENABLED:** Computes spatial updates and modifies the :term:`t4file` matrix.
 
-       **OFF:** Evaluates the :term:`objective function <eta Alignment Score>` η without updating the :term:`t4file`.
-   * - ``2``
+       **DISABLED:** Evaluates the :term:`objective function <eta Alignment Score>` η without updating the :term:`t4file`.
+   * - :bdg-info:`2`
      - 3D Rigid-Body 6-DOF Alignment
-     - **ON:** 3D registration (X, Y, Z translation + :term:`Nod`,  :term:`Roll`,  :term:`Squirm`).
+     - **ENABLED:** 3D registration (X, Y, Z translation + :term:`Nod`,  :term:`Roll`,  :term:`Squirm`).
 
-       **OFF:** 2D in-plane registration (X, Y translation + :term:`Squirm`).
-   * - ``4``
+       **DISABLED:** 2D in-plane registration (X, Y translation + :term:`Squirm`).
+   * - :bdg-info:`4`
      - 12-DOF Affine Alignment
-     - **ON:** Enables :term:`Affine Transformation` (adds scaling and shearing).
-
-       **OFF:** Enforces :term:`Rigid Transformation` (preserves shape and size).
-   * - ``8``
+     - **ENABLED:** Allows stretching and shearing to align overall image shape and angles.
+   * - :bdg-info:`8`
      - Independent Voxel Scaling
-     - **ON:** Allows independent scaling factors along X, Y, and Z axes.
-
-       **OFF:** Enforces uniform scaling across all directions.
-   * - ``256``
+     - **ENABLED:** Allows scaling along the main axes to correct voxel size differences **without shearing**.
+   * - :bdg-warning:`16`
+     - Lock X-Axis Scaling
+     - **ENABLED:** Blocks scaling adjustments along the X axis.
+   * - :bdg-warning:`32`
+     - Lock Y-Axis Scaling
+     - **ENABLED:** Blocks scaling adjustments along the Y axis.
+   * - :bdg-warning:`64`
+     - Lock Z-Axis Scaling
+     - **ENABLED:** Blocks scaling adjustments along the Z axis.
+   * - :bdg-success:`256`
      - Pearson Intensity Correlation
-     - **ON:** Uses :term:`Pearson Intensity Correlation` for same-contrast scans.
+     - **ENABLED:** Uses :term:`Pearson Intensity Correlation` for same-contrast scans.
 
-       **OFF:** Uses :term:`Spatial Gradient Alignment` for cross-contrast scans. [1]_
-   * - ``512``
+       **DISABLED:** Uses :term:`Spatial Gradient Alignment` for cross-contrast scans. [1]_
+   * - :bdg-danger:`512`
      - Superfine Precision Step
-     - **ENABLE:** High-precision 2.5 mm sampling steps for final tuning.
-   * - ``1024``
+     - **ENABLED:** High-precision 2.5 mm sampling steps for final tuning.
+   * - :bdg-danger:`1024`
      - Fast Coarse Step
-     - **ENABLE:** Wide 12.0 mm sampling steps for rapid initial local search.
-   * - ``2048``
+     - **ENABLED:** Wide 12.0 mm sampling steps for rapid initial local search.
+   * - :bdg-danger:`2048`
      - Standard Fine Step
-     - **ENABLE:** Standard 5.0 mm sampling steps for local optimization.
-   * - ``4096``
+     - **ENABLED:** Standard 5.0 mm sampling steps for local optimization.
+   * - :bdg-dark:`4096`
      - Grid Search Translation
-     - **ENABLE:** Global 7.5mm translation grid search for initial positioning.
-   * - ``8192``
+     - **ENABLED:** Global 7.5mm translation grid search for initial positioning.
+   * - :bdg-danger:`8192`
      - Hessian Newton-Raphson
-     - **ENABLE:** :term:`Hessian Matrix` inversion (:term:`Newton-Raphson Optimization`).
+     - **ENABLED:** :term:`Hessian Matrix` inversion (:term:`Newton-Raphson Optimization`).
 
 .. important::
    **Physical Units (mm) vs. Voxels:**
@@ -117,22 +122,22 @@ When multiple flags are set in a single mode integer, ``imgreg_4dfp`` resolves c
 .. grid:: 1 1 2 2
    :gutter: 3
 
-   .. grid-item-card:: Grid Search Rules (:bdg-warning:`4096`)
+   .. grid-item-card:: Grid Search Rules (:bdg-dark:`4096`)
       :class-header: sd-bg-warning-subtle sd-font-weight-bold
 
       :octicon:`alert;1em;sd-text-warning` **Standalone Engine Pass**
 
       **Compatible Modes**
       
-      * :bdg-light:`1` to modify the :term:`t4file`.
-      * :bdg-light:`2` to choose 2D or 3D registration.
-      * :bdg-info:`256` for :term:`Pearson Intensity Correlation` or :term:`Spatial Gradient Alignment`
+      * :bdg-primary:`1` to modify the :term:`t4file`.
+      * :bdg-info:`2` to choose 2D or 3D registration.
+      * :bdg-success:`256` for :term:`Pearson Intensity Correlation` or :term:`Spatial Gradient Alignment`.
 
       **Incompatible Modes**
 
-      * Overrides :bdg-info:`1024`, :bdg-info:`2048`, and :bdg-info:`512`.
-      * Ignores :bdg-dark:`8192`.
-      * Does not perform Affine (:bdg-light:`4`) or Scaling (:bdg-light:`8`) transformations.
+      * Overrides :bdg-danger:`1024`, :bdg-danger:`2048`, and :bdg-danger:`512`.
+      * Ignores :bdg-danger:`8192`.
+      * Does not perform Affine (:bdg-info:`4`) or Scaling (:bdg-info:`8`) transformations.
 
    .. grid-item-card:: Step-Size Resolution Order
       :class-header: sd-bg-light sd-font-weight-bold
@@ -143,25 +148,26 @@ When multiple flags are set in a single mode integer, ``imgreg_4dfp`` resolves c
 
       **Standard Optimization Mode:**
 
-      1. :bdg-info:`2048` **Fine (5.0 mm)** *(Overrides Fast & Superfine)*
-      2. :bdg-info:`1024` **Fast (12.0 mm)** *(Overrides Superfine)*
-      3. :bdg-info:`512` **Superfine (2.5 mm)**
+      1. :bdg-danger:`2048` **Fine (5.0 mm)** *(Overrides Fast & Superfine)*
+      2. :bdg-danger:`1024` **Fast (12.0 mm)** *(Overrides Superfine)*
+      3. :bdg-danger:`512` **Superfine (2.5 mm)**
       4. *Default:* Dynamic step (11.0 mm → 5.0 mm)
 
       **Hessian Mode (8192):**
 
-      1. :bdg-info:`512` **Superfine (2.5 mm)** *(Overrides Fine)*
-      2. :bdg-info:`2048` **Fine (5.0 mm)** *(Recommended pairing)*
-      3. *Ignored:* :bdg-info:`1024` **Fast (12.0 mm)**
+      1. :bdg-danger:`512` **Superfine (2.5 mm)** *(Overrides Fine)*
+      2. :bdg-danger:`2048` **Fine (5.0 mm)** *(Recommended pairing)*
+      3. *Ignored:* :bdg-danger:`1024` **Fast (12.0 mm)**
       4. *Default:* Fixed 7.5 mm step
 
 
 .. rubric:: Evaluating Alignment Quality: The eta Score (η)
 
-At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective Function` to report an :term:`eta alignment score<eta Alignment Score>` (:math:`\eta`). The resulting score is normalized between :math:`0.0` (no structural overlap) and :math:`1.0` (identical alignment).
+At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective Function` to report an :term:`eta alignment score<eta Alignment Score>` (:math:`\eta`). The resulting score is normalized between :math:`0.0` (no overlap) and :math:`1.0` (identical alignment).
 
 * **Inter- vs. Intra-Modal Expectations ("Common Mode"):**
-  Enabling Bit :bdg-info:`256` engages **"common mode"**, which uses :term:`Pearson Intensity Correlation` for same-contrast (intra-modal) scans. Common mode matches raw voxel intensities directly, yielding higher baseline :math:`\eta` scores. Leaving Bit :bdg-info:`256` OFF uses Spatial Gradient Alignment along tissue edges for cross-contrast (inter-modal) scans, which yields lower baseline scores because it compares directional edge vectors rather than raw contrast.
+  Enabling Bit :bdg-success:`256` engages **"common mode"**, which uses :term:`Pearson Intensity Correlation` for same-contrast (intra-modal) scans. Common mode matches raw voxel intensities directly. 
+  Leaving Bit :bdg-success:`256` OFF uses Spatial Gradient Alignment along tissue edges for cross-contrast (inter-modal) scans, it compares directional edge vectors rather than raw contrast.
 
 * **Interpreting Score Deltas (Δη):**
   Track the change in score (:math:`\Delta\eta`) between consecutive runs:
@@ -179,7 +185,7 @@ At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective
 
 .. tip::
    **Evaluate Quality Without Modifying Files:**
-   To check the current objective function score (:math:`\eta`) without altering your existing :term:`t4file`, turn off Bit ``1`` (for example, run mode ``0`` or ``2``).
+   To check the current objective function score (:math:`\eta`) without altering your existing :term:`t4file`, turn off Bit :bdg-primary:`1`.
    
 .. rubric:: Common Multi-Pass Sequences
 
@@ -287,7 +293,7 @@ Examples
                 * **t4file:** ``SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4``
                 * **Initial Score:** η = 0.38 (Unregistered baseline)
 
-          .. figure:: /_static/tools/spacial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_source_data.png
+          .. figure:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_source_data.png
             :alt: Unaligned source image
             :align: center 
             :width: 80%
@@ -318,13 +324,13 @@ Examples
 
                 .. grid-item-card:: 🧠 Transformed Images
 
-                  .. image:: /_static/tools/spacial_registration_and_transforms/imgreg_4dfp/case1/cmd1/imgreg_c1_cmd1_output.png
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd1/imgreg_c1_cmd1_output.png
                       :alt: 10243 output
                       :align: center
 
                 .. grid-item-card:: 📄 t4file
 
-                  .. image:: /_static/tools/spacial_registration_and_transforms/imgreg_4dfp/case1/cmd1/imgreg_c1_cmd1_t4file.png
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd1/imgreg_c1_cmd1_t4file.png
                       :alt: 10243 t4file output
                       :align: center
 
@@ -353,13 +359,13 @@ Examples
 
                 .. grid-item-card:: 🧠 Transformed Images
 
-                  .. image:: /_static/tools/spacial_registration_and_transforms/imgreg_4dfp/case1/cmd2/imgreg_c1_cmd2_output.png
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd2/imgreg_c1_cmd2_output.png
                       :alt: 10243 output
                       :align: center
 
                 .. grid-item-card:: 📄 t4file
 
-                  .. image:: /_static/tools/spacial_registration_and_transforms/imgreg_4dfp/case1/cmd2/imgreg_c1_cmd2_t4file.png
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd2/imgreg_c1_cmd2_t4file.png
                       :alt: 10243 t4file output
                       :align: center
 
@@ -389,13 +395,13 @@ Examples
 
                 .. grid-item-card:: 🧠 Transformed Images
 
-                  .. image:: /_static/tools/spacial_registration_and_transforms/imgreg_4dfp/case1/cmd3/imgreg_c1_cmd3_output.png
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd3/imgreg_c1_cmd3_output.png
                       :alt: 10243 output
                       :align: center
 
                 .. grid-item-card:: 📄 t4file
 
-                  .. image:: /_static/tools/spacial_registration_and_transforms/imgreg_4dfp/case1/cmd3/imgreg_c1_cmd3_t4file.png
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd3/imgreg_c1_cmd3_t4file.png
                       :alt: 10243 t4file output
                       :align: center
 
@@ -424,13 +430,13 @@ Examples
 
                 .. grid-item-card:: 🧠 Transformed Images
 
-                  .. image:: /_static/tools/spacial_registration_and_transforms/imgreg_4dfp/case1/cmd4/imgreg_c1_cmd4_output.png
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd4/imgreg_c1_cmd4_output.png
                       :alt: 10243 output
                       :align: center
 
                 .. grid-item-card:: 📄 t4file
 
-                  .. image:: /_static/tools/spacial_registration_and_transforms/imgreg_4dfp/case1/cmd4/imgreg_c1_cmd4_t4file.png
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd4/imgreg_c1_cmd4_t4file.png
                       :alt: 10243 t4file output
                       :align: center
 
