@@ -636,8 +636,18 @@ dl.simple>dt {
     margin-bottom: 8px !important;
 }
 
-/* Outer Code Block Container (Single Outer Border & Radius) */
-.tooltip-content div[class*='highlight'] {
+/* 1. Global Reset: Strip borders, backgrounds, and shadows from ALL nested code block layers */
+.tooltip-content div[class*='highlight'],
+.tooltip-content div[class*='highlight'] div,
+.tooltip-content div[class*='highlight'] pre {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* 2. Outer Container: Apply a single border & background to the top-level wrapper */
+.tooltip-content div.highlight-text,
+.tooltip-content>dl>dd>div[class*='highlight'] {
     background-color: #f8f9fa !important;
     border: 1px solid #e1e4e5 !important;
     border-radius: 6px !important;
@@ -647,19 +657,8 @@ dl.simple>dt {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Inner Wrapper Reset (Removes middle border) */
-.tooltip-content div[class*='highlight'] div {
-    border: none !important;
-    background: transparent !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* Inner Pre Element Reset (Removes inner border & handles line wrapping) */
+/* 3. Pre Text Element: Formatting and text wrapping without borders */
 .tooltip-content div[class*='highlight'] pre {
-    border: none !important;
-    border-radius: 0 !important;
-    background: transparent !important;
     color: #24292e !important;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
     font-size: 0.8125rem !important;
@@ -669,25 +668,11 @@ dl.simple>dt {
     white-space: pre-wrap !important;
     /* Forces command line wrapping */
     word-break: break-word !important;
-    /* Prevents text overflow */
+    /* Prevents container overflow */
     overflow-x: auto !important;
 }
 
 /* Inline Code Snippets inside Tooltip (KEEP THIS) */
-.tooltip-content code,
-.tooltip-content tt.literal,
-.tooltip-content code.literal {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
-    background-color: #f1f3f5 !important;
-    color: #212529 !important;
-    border: 1px solid #e9ecef !important;
-    border-radius: 4px !important;
-    padding: 2px 5px !important;
-    font-size: 0.8125rem !important;
-    white-space: break-spaces !important;
-}
-
-/* Inline Code Snippets inside Tooltip */
 .tooltip-content code,
 .tooltip-content tt.literal,
 .tooltip-content code.literal {
