@@ -584,6 +584,18 @@ readthedocs-addons-tooltip,
     transition-delay: 0.5s !important;
 }
 
+dl.glossary>dt,
+dl.simple>dt {
+    font-weight: bold !important;
+    font-size: 1.05em;
+    color: #1a202c;
+}
+
+readthedocs-linkpreview dt,
+readthedocs-linkpreview [slot="title"] {
+    font-weight: bold !important;
+}
+
 @media screen and (max-width: 768px) {
 
     .wy-nav-top {

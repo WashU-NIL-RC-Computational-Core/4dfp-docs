@@ -76,7 +76,7 @@ Usage
 
        **DISABLED:** 2D in-plane registration (X, Y translation + :term:`Squirm`).
    * - :bdg-info:`4`
-     - 12-DOF Affine Alignment
+     - Affine Shearing & Stretch
      - **ENABLED:** Allows stretching and shearing to align overall image shape and angles.
    * - :bdg-info:`8`
      - Independent Voxel Scaling
@@ -115,51 +115,110 @@ Usage
    **Physical Units (mm) vs. Voxels:**
    All spatial translations, grid search steps (e.g., 7.5 mm), and sampling step sizes (e.g., 12.0 mm, 5.0 mm, 2.5 mm) are specified in **physical distance (mm)**, not in voxels.
 
-.. rubric:: Engine Rules & Step-Size Precedence
+.. rubric:: Advanced Strategy & Optimization Choices
 
-When multiple flags are set in a single mode integer, ``imgreg_4dfp`` resolves conflicts according to fixed engine rules:
+.. dropdown:: Optimization Rules & Step-Size Precedence
+   :animate: fade-in
+   :icon: arrow-switch
 
-.. grid:: 1 1 2 2
-   :gutter: 3
+   When multiple flags are set in a single mode integer, ``imgreg_4dfp`` resolves conflicts according to fixed optimization rules:
 
-   .. grid-item-card:: Grid Search Rules (:bdg-dark:`4096`)
-      :class-header: sd-bg-warning-subtle sd-font-weight-bold
+   .. grid:: 1 1 2 2
+      :gutter: 3
 
-      :octicon:`alert;1em;sd-text-warning` **Standalone Engine Pass**
+      .. grid-item-card:: Grid Search Rules (:bdg-dark:`4096`)
+         :class-header: sd-bg-warning-subtle sd-font-weight-bold
 
-      **Compatible Modes**
+         :octicon:`alert;1em;sd-text-warning` **Standalone Search Pass**
+
+         **Compatible Modes**
+         
+         * :bdg-primary:`1` to modify the :term:`t4file`.
+         * :bdg-info:`2` to choose 2D or 3D registration.
+         * :bdg-success:`256` for :term:`Pearson Intensity Correlation` or :term:`Spatial Gradient Alignment`.
+
+         **Incompatible Modes**
+
+         * Overrides :bdg-danger:`1024`, :bdg-danger:`2048`, and :bdg-danger:`512`.
+         * Ignores :bdg-danger:`8192`.
+         * Does not perform Affine (:bdg-info:`4`) or Scaling (:bdg-info:`8`) transformations.
+
+      .. grid-item-card:: Step-Size Resolution Order
+         :class-header: sd-bg-light sd-font-weight-bold
+
+         :octicon:`arrow-switch;1em;sd-text-primary` **Precedence Order**
+
+         If multiple step size flags are combined, priority is evaluated in this order:
+
+         **Standard Optimization Mode:**
+
+         1. :bdg-danger:`2048` **Fine (5.0 mm)** *(Overrides Fast & Superfine)*.
+         2. :bdg-danger:`1024` **Fast (12.0 mm)** *(Overrides Superfine)*.
+         3. :bdg-danger:`512` **Superfine (2.5 mm)**.
+         4. *Default:* Dynamic step (11.0 mm → 5.0 mm).
+
+         **Hessian Mode (8192):**
+
+         1. :bdg-danger:`512` **Superfine (2.5 mm)** *(Overrides Fine)*.
+         2. :bdg-danger:`2048` **Fine (5.0 mm)** *(Recommended pairing)*.
+         3. *Ignored:* :bdg-danger:`1024` **Fast (12.0 mm)**.
+         4. *Default:* Fixed 7.5 mm step.
+
+
+.. dropdown:: Transformation Models: Affine Shearing & Stretch :bdg-info:`4` vs. Voxel Scaling :bdg-info:`8`
+   :animate: fade-in
+   :icon: iterations
+
+   When non-rigid spatial adjustments are needed beyond basic 6-DOF (or 3-DOF in 2D) rigid-body registration, ``imgreg_4dfp`` provides two distinct transformation models:
+
+   .. grid:: 1 1 2 2
+      :gutter: 3
+
+      .. grid-item-card:: :bdg-info:`4`: Affine Shearing & Stretch
+         :class-header: sd-bg-info-subtle sd-font-weight-bold
+
+         * **Degrees of Freedom:** 12 in 3D (6 in 2D).
+         * **Behavior:** Allows images to stretch along any axis **and shear angles** (non-orthogonal warping).
+         * **Primary Use Case:** Uncorrected spatial skew/gantry distortions.
+
+      .. grid-item-card:: :bdg-info:`8`: Independent Voxel Scaling
+         :class-header: sd-bg-success-subtle sd-font-weight-bold
+
+         * **Degrees of Freedom:** Up to 9 in 3D (up to 5 in 2D).
+         * **Behavior:** Adjusts voxel dimension ratios along X, Y, and Z **without skewing image angles**.
+         * **Primary Use Case:** Correcting uneven voxel sizes (like thick slice gaps) or minor scanner size rounding differences.
+
+   .. note::
+      **Dependencies & Precedence:**
+
+      **Axis Lock Dependency (Bits 16, 32, 64):** Axis locking flags **only modify Bit 8 scaling**. They have no effect during standard rigid-body alignment and are ignored by Bit :bdg-info:`4`.
       
-      * :bdg-primary:`1` to modify the :term:`t4file`.
-      * :bdg-info:`2` to choose 2D or 3D registration.
-      * :bdg-success:`256` for :term:`Pearson Intensity Correlation` or :term:`Spatial Gradient Alignment`.
+      **Precedence:** If Bit :bdg-info:`4` and Bit :bdg-info:`8` are set together, Bit :bdg-info:`4` supersedes Bit :bdg-info:`8`.
 
-      **Incompatible Modes**
+.. dropdown:: Role of Spatial Masks (<target_mask> and <source_mask>)
+   :animate: fade-in
+   :icon: file-binary
 
-      * Overrides :bdg-danger:`1024`, :bdg-danger:`2048`, and :bdg-danger:`512`.
-      * Ignores :bdg-danger:`8192`.
-      * Does not perform Affine (:bdg-info:`4`) or Scaling (:bdg-info:`8`) transformations.
+   Masks are 3D binary volume files (or the keyword ``none``) that define which voxels are evaluated by the registration objective function. 
 
-   .. grid-item-card:: Step-Size Resolution Order
+   Inside ``imgreg_4dfp``, alignment is computed **strictly on the intersection** of both volumes. A voxel is evaluated only if it falls inside valid tissue boundaries on both images simultaneously.
+
+   .. card:: Mask Usage Guidelines
       :class-header: sd-bg-light sd-font-weight-bold
 
-      :octicon:`arrow-switch;1em;sd-text-primary` **Precedence Order**
+      :octicon:`check-circle;1em;sd-text-success` **Typical Scenarios for Applying Masks**
 
-      If multiple step size flags are combined, priority is evaluated in this order:
+      * Shape & Scale Transformations (:bdg-info:`4` & :bdg-info:`8`).
+      * High-Precision Hessian Fine-Tuning (:bdg-danger:`8192`).
+      * Pathology & Artifact Exclusion.
 
-      **Standard Optimization Mode:**
+      :octicon:`x-circle;1em;sd-text-danger` **Typical Scenarios for Omitting Masks (Passing ``none``)**
 
-      1. :bdg-danger:`2048` **Fine (5.0 mm)** *(Overrides Fast & Superfine)*
-      2. :bdg-danger:`1024` **Fast (12.0 mm)** *(Overrides Superfine)*
-      3. :bdg-danger:`512` **Superfine (2.5 mm)**
-      4. *Default:* Dynamic step (11.0 mm → 5.0 mm)
+      * Large Initial Position Offsets.
+      * Global Coarse Searches (:bdg-dark:`4096`).
 
-      **Hessian Mode (8192):**
-
-      1. :bdg-danger:`512` **Superfine (2.5 mm)** *(Overrides Fine)*
-      2. :bdg-danger:`2048` **Fine (5.0 mm)** *(Recommended pairing)*
-      3. *Ignored:* :bdg-danger:`1024` **Fast (12.0 mm)**
-      4. *Default:* Fixed 7.5 mm step
-
+   .. tip::
+      Pass the keyword ``none`` for either argument if you do not have a mask file or want to evaluate the entire image matrix. Passing ``none`` is similar to using a mask with every coordinate "on".
 
 .. rubric:: Evaluating Alignment Quality: The eta Score (η)
 
@@ -172,13 +231,22 @@ At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective
 * **Interpreting Score Deltas (Δη):**
   Track the change in score (:math:`\Delta\eta`) between consecutive runs:
   
-  * :math:`\Delta\eta > 0`: The solver is actively improving alignment. Continue optimizing at the current resolution.
+  * :math:`\Delta\eta > 0`: The optimization function is actively improving alignment. Continue optimizing at the current resolution.
   * :math:`\Delta\eta \approx 0.00`: The current pass has plateaued. 
 
 * **The Decision Rule: Advance vs. Finish:**
 
-  * **Advance:** If :math:`\Delta\eta \approx 0.00` on an intermediate mode (e.g., Coarse or Fast), switch your mode to a finer step size or solver.
+  * **Advance:** If :math:`\Delta\eta \approx 0.00` on an intermediate mode (e.g., Coarse or Fast), switch your mode to a finer step size or optimization function.
   * **Finish:** If :math:`\Delta\eta \approx 0.00` on your final target mode (e.g., ``2051`` or ``10243``), parameter optimization is complete.
+
+**Fine-Tuning Polish: Engaging Bit 8192 (Hessian Optimization):**
+  When standard step searches plateau, you can activate Bit :bdg-danger:`8192` for maximum precision.
+
+* **Why Use It:** Standard passes adjust one parameter at a time. Bit ``8192`` computes the full :term:`Hessian Matrix` to optimize all parameters simultaneously, accounting for parameter interference by solving transformations jointly (e.g., balancing pitch rotation and z-translation together).
+  
+  * **Controlling Search Granularity:** By default, Bit ``8192`` evaluates derivative gradients on a 7.5 mm grid. Adding bit :bdg-info:`2048` (Fine) tightens spatial sampling to :math:`5.0 mm`. Bit :bdg-info:`512` (Superfine) pushes it to :math:`2.5 mm`, enabling sub-voxel precision on fine anatomical boundaries.
+  
+  * **When to Choose It:** Bit ``8192`` is typically used as a final pass once coarse/intermediate alignment is already close to the solution. Running it on unaligned images will cause matrix divergence or solvers to fail.
 
 * **Visual Verification (The Gold Standard):**
   Never rely on the :math:`\eta` score alone. Always visually inspect the final fit by resampling the source image onto target space (using :ref:`t4img_4dfp`) and utilizing a visualizer tool (like FSLeyes) to overlay anatomical contours.
@@ -266,10 +334,10 @@ Examples
 
         In standard processing pipelines, registration is performed progressively by looping over a sequence of refining modes: ``4099`` → ``4099`` → ``1027`` → ``2051`` → ``2051`` → ``10243``.
 
-        * **4099** (``1 + 2 + 4096``): Coarse 3D translational search (7.5 mm grid steps). Run twice to guarantee convergence.
-        * **1027** (``1 + 2 + 1024``): Fast 3D local optimization (12.0 mm sampling steps).
-        * **2051** (``1 + 2 + 2048``): Standard fine 3D local optimization (5.0 mm sampling steps). Run twice to refine parameters.
-        * **10243** (``1 + 2 + 2048 + 8192``): Fine 3D Newton-Raphson optimization using Hessian matrix inversion.
+        * **4099** (``1 + 2 + 4096``): Grid Search Translation (7.5 mm grid steps). Run twice to guarantee convergence.
+        * **1027** (``1 + 2 + 1024``): Fast Coarse Step (12.0 mm sampling steps).
+        * **2051** (``1 + 2 + 2048``): Standard Fine Step (5.0 mm sampling steps). Run twice to refine parameters.
+        * **10243** (``1 + 2 + 2048 + 8192``): Hessian Newton-Raphson + Standard Fine Step.
 
         .. card:: 📥 Input Data Overview
           :class-card: sd-bg-light sd-border-1 mb-3
@@ -303,7 +371,7 @@ Examples
           .. tab-item:: Coarse Search (Mode 4099)
               :sync: pass-4099
 
-              **Engine:** Brute-force grid search translation | **Step Size:** Fixed 7.5 mm grid | **Bits:** ``1 + 2 + 4096``
+              **Optimization Function:** Brute-force grid search translation | **Step Size:** Fixed 7.5 mm grid | **Bits:** ``1 + 2 + 4096``
 
               **Purpose:** Recovers large initial translational offsets between the target and source images before local optimization begins.
 
@@ -317,7 +385,7 @@ Examples
 
               * Executes a 3D translation grid search across X, Y, and Z axes.
               * Updates translational parameters in :term:`t4file` while leaving rotational parameters unchanged.
-              * Bypasses step size flags and Hessian solver logic entirely.
+              * Bypasses step size flags and Hessian optimization logic entirely.
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -339,7 +407,7 @@ Examples
           .. tab-item:: Fast Local Pass (Mode 1027)
               :sync: pass-1027
 
-              **Engine:** Local optimization | **Step Size:** 12.0 mm (Fast) | **Bits:** ``1 + 2 + 1024``
+              **Optimization Function:** Local optimization | **Step Size:** 12.0 mm (Fast) | **Bits:** ``1 + 2 + 1024``
 
               **Purpose:** Establishes initial 6-DOF (translation + rotation) local spatial alignment across a broad search radius.
 
@@ -350,7 +418,7 @@ Examples
 
               **What Happens Under the Hood:**
 
-              * Switches execution to the local gradient optimization engine.
+              * Switches execution to the local gradient optimization function.
               * Begins evaluating 3D rotations alongside translations using a wide 12.0 mm step size.
               * Rapidly brings major anatomical landmarks into approximate orientation.
 
@@ -374,7 +442,7 @@ Examples
           .. tab-item:: Fine Local Alignment (Mode 2051)
               :sync: pass-2051
 
-              **Engine:** Local optimization | **Step Size:** 5.0 mm (Fine) | **Bits:** ``1 + 2 + 2048``
+              **Optimization Function:** Local optimization | **Step Size:** 5.0 mm (Fine) | **Bits:** ``1 + 2 + 2048``
 
               **Purpose:** Performs main sub-voxel registration, narrowing step sizes to refine spatial parameters.
 
@@ -388,7 +456,7 @@ Examples
 
               * Overrides Fast step size and restricts parameter adjustments to 5.0 mm increments.
               * Fine-tunes slice-by-slice overlap and corrects residual rotational angles.
-              * Prepares matrix parameters for final second-order solver convergence.
+              * Prepares matrix parameters for final second-order optimization function convergence.
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -410,7 +478,7 @@ Examples
           .. tab-item:: Hessian Polishing (Mode 10243)
               :sync: pass-10243
 
-              **Engine:** ``fimgreg_`` + Newton-Raphson | **Step Size:** 5.0 mm (Fine) | **Bits:** ``1 + 2 + 2048 + 8192``
+              **Optimization Function:** ``fimgreg_`` + Newton-Raphson | **Step Size:** 5.0 mm (Fine) | **Bits:** ``1 + 2 + 2048 + 8192``
 
               **Purpose:** Executes second-order Hessian matrix optimization for final high-precision parameter convergence.
 
@@ -421,7 +489,7 @@ Examples
 
               **What Happens Under the Hood:**
 
-              * Activates the Newton-Raphson solver (:bdg-dark:`8192`) using the 5.0 mm step size (:bdg-info:`2048`).
+              * Activates the Newton-Raphson optimization function (:bdg-dark:`8192`) using the 5.0 mm step size (:bdg-info:`2048`).
               * Computes second-order derivatives to find the exact peak of the cost function surface.
               * Writes out the final fully-converged :math:`4 \times 4` transformation matrix to :term:`t4file`.
 
@@ -595,7 +663,7 @@ Examples
           .. tab-item:: ⚠️ Alignment Score Plateaus Low
             :class-label: tab-error
 
-            **Cause:** The optimization engine converged locally, but spatial overlap failed to achieve a high correlation score. This occurs when structural or parameter mismatches prevent the local search engine from finding global convergence.
+            **Cause:** The optimization function converged locally, but spatial overlap failed to achieve a high correlation score. This occurs when structural or parameter mismatches prevent the local search optimization function from finding global convergence.
 
             **Observed Behavior:**
 
