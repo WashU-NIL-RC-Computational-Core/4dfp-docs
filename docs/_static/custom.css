@@ -585,6 +585,101 @@ dl.simple>dt {
     color: #1a202c;
 }
 
+/* ==========================================================================
+   Read the Docs Link Preview / Tooltip Styling (.tooltip-content)
+   ========================================================================== */
+
+/* Main Popover Card Box */
+.tooltip-content {
+    font-family: ivystyle-sans, sans-serif !important;
+    font-size: 0.875rem !important;
+    color: #212529 !important;
+    padding: 14px 18px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #e1e4e5 !important;
+    border-top: 3px solid #BA0C2F !important;
+    /* Brand Crimson Accent */
+    border-radius: 6px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    max-width: 420px !important;
+}
+
+/* Term Title (<dt>) Inside Tooltip */
+.tooltip-content dt {
+    font-family: ivystyle-sans, sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 1.05rem !important;
+    color: #BA0C2F !important;
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 4px !important;
+    border-bottom: 1px solid #e9ecef !important;
+    letter-spacing: -0.01em;
+}
+
+/* Hide the permalink anchor icon inside the tooltip title */
+.tooltip-content dt a.headerlink {
+    display: none !important;
+}
+
+/* Definition Description (<dd>) & Paragraphs */
+.tooltip-content dd {
+    margin-left: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.tooltip-content p {
+    font-family: ivystyle-sans, sans-serif !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    color: #212529 !important;
+    margin-bottom: 8px !important;
+}
+
+/* Code Blocks (<pre> and highlight containers inside tooltip) */
+.tooltip-content div[class*='highlight'],
+.tooltip-content pre {
+    background-color: #f8f9fa !important;
+    color: #24292e !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.45 !important;
+    padding: 10px 12px !important;
+    border: 1px solid #e1e4e5 !important;
+    border-radius: 6px !important;
+    margin: 10px 0 0 0 !important;
+    white-space: pre-wrap !important;
+    /* Forces code lines to wrap */
+    word-break: break-word !important;
+    /* Prevents text overflow */
+    overflow-x: auto !important;
+}
+
+/* Inline Code Snippets inside Tooltip */
+.tooltip-content code,
+.tooltip-content tt.literal,
+.tooltip-content code.literal {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    background-color: #f1f3f5 !important;
+    color: #212529 !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 4px !important;
+    padding: 2px 5px !important;
+    font-size: 0.8125rem !important;
+    white-space: break-spaces !important;
+}
+
+/* Links inside Tooltip Body */
+.tooltip-content a {
+    color: #BA0C2F !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+}
+
+.tooltip-content a:hover {
+    text-decoration: underline !important;
+}
+
 @media screen and (max-width: 768px) {
 
     .wy-nav-top {
