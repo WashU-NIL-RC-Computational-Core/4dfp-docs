@@ -451,14 +451,14 @@ samp,
 }
 
 .card-help {
-    position: relative !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    vertical-align: middle !important;
-    margin-left: 0.35em !important;
-    margin-right: 0.15em !important;
-    cursor: pointer !important;
-    outline: none !important;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin-left: 0.35em;
+    margin-right: 0.15em;
+    cursor: pointer;
+    outline: none;
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -467,8 +467,9 @@ samp,
     position: absolute;
     bottom: 135%;
     left: 50%;
-    width: max-content;
-    max-width: 280px;
+    width: 280px;
+    max-width: calc(100vw - 32px);
+    height: auto;
     padding: 8px 12px;
     background-color: #1e293b;
     color: #ffffff;
@@ -476,10 +477,9 @@ samp,
     font-weight: 400;
     line-height: 1.4;
     text-align: left;
-    white-space: normal;
+    white-space: pre-line;
     border-radius: 6px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25);
-
     opacity: 0;
     visibility: hidden;
     transform: translateX(-50%) translateY(4px);
@@ -585,11 +585,6 @@ dl.simple>dt {
     color: #1a202c;
 }
 
-/* ==========================================================================
-   Read the Docs Link Preview / Tooltip Styling (.tooltip-content)
-   ========================================================================== */
-
-/* Main Popover Card Box */
 .tooltip-content {
     font-family: ivystyle-sans, sans-serif !important;
     font-size: 0.875rem !important;
@@ -598,13 +593,11 @@ dl.simple>dt {
     background-color: #ffffff !important;
     border: 1px solid #e1e4e5 !important;
     border-top: 3px solid #BA0C2F !important;
-    /* Brand Crimson Accent */
     border-radius: 6px !important;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
     max-width: 420px !important;
 }
 
-/* Term Title (<dt>) Inside Tooltip */
 .tooltip-content dt {
     font-family: ivystyle-sans, sans-serif !important;
     font-weight: 700 !important;
@@ -617,12 +610,10 @@ dl.simple>dt {
     letter-spacing: -0.01em;
 }
 
-/* Hide the permalink anchor icon inside the tooltip title */
 .tooltip-content dt a.headerlink {
     display: none !important;
 }
 
-/* Definition Description (<dd>) & Paragraphs */
 .tooltip-content dd {
     margin-left: 0 !important;
     margin-bottom: 0 !important;
@@ -636,7 +627,6 @@ dl.simple>dt {
     margin-bottom: 8px !important;
 }
 
-/* 1. Global Reset: Strip borders, backgrounds, and shadows from ALL nested code block layers */
 .tooltip-content div[class*='highlight'],
 .tooltip-content div[class*='highlight'] div,
 .tooltip-content div[class*='highlight'] pre {
@@ -645,7 +635,6 @@ dl.simple>dt {
     box-shadow: none !important;
 }
 
-/* 2. Outer Container: Apply a single border & background to the top-level wrapper */
 .tooltip-content div.highlight-text,
 .tooltip-content>dl>dd>div[class*='highlight'] {
     background-color: #f8f9fa !important;
@@ -657,7 +646,6 @@ dl.simple>dt {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
 
-/* 3. Pre Text Element: Formatting and text wrapping without borders */
 .tooltip-content div[class*='highlight'] pre {
     color: #24292e !important;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
@@ -666,13 +654,10 @@ dl.simple>dt {
     padding: 10px 12px !important;
     margin: 0 !important;
     white-space: pre-wrap !important;
-    /* Forces command line wrapping */
     word-break: break-word !important;
-    /* Prevents container overflow */
     overflow-x: auto !important;
 }
 
-/* Inline Code Snippets inside Tooltip (KEEP THIS) */
 .tooltip-content code,
 .tooltip-content tt.literal,
 .tooltip-content code.literal {
@@ -686,7 +671,6 @@ dl.simple>dt {
     white-space: break-spaces !important;
 }
 
-/* Links inside Tooltip Body */
 .tooltip-content a {
     color: #BA0C2F !important;
     text-decoration: none !important;

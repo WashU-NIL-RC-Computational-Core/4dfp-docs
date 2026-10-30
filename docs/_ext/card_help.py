@@ -3,11 +3,6 @@ from docutils import nodes
 from sphinx.addnodes import pending_xref
 
 def card_help_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
-    """
-    Custom Sphinx role for info help tooltips.
-    - Usage 1 (Glossary Link Preview): :card-help:`term:<dicom_directory>.studies.txt`
-    - Usage 2 (Custom CSS Tooltip): :card-help:`Hover text goes here`
-    """
     svg_icon = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24" '
         'fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" '
@@ -20,7 +15,6 @@ def card_help_role(name, rawtext, text, lineno, inliner, options={}, content=[])
 
     if text.startswith('term:'):
         term_name = text[5:].strip()
-        
         svg_html = f'<span class="card-help" aria-label="Help Information">{svg_icon}</span>'
         raw_node = nodes.raw('', svg_html, format='html')
 
@@ -35,7 +29,9 @@ def card_help_role(name, rawtext, text, lineno, inliner, options={}, content=[])
         ref_node += raw_node
         return [ref_node], []
 
-    escaped_text = html.escape(text)
+    formatted_text = text.replace(' | ', '\n').replace('|', '\n')
+    escaped_text = html.escape(formatted_text)
+
     svg_html = (
         f'<span class="card-help" data-tooltip="{escaped_text}" tabindex="0" role="button" aria-label="Help Information">'
         f'{svg_icon}</span>'

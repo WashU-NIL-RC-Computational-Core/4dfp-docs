@@ -226,7 +226,7 @@ At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective
 
 * **Inter- vs. Intra-Modal Expectations ("Common Mode"):**
   Enabling Bit :bdg-success:`256` engages **"common mode"**, which uses :term:`Pearson Intensity Correlation` for same-contrast (intra-modal) scans. Common mode matches raw voxel intensities directly. 
-  Leaving Bit :bdg-success:`256` OFF uses Spatial Gradient Alignment along tissue edges for cross-contrast (inter-modal) scans, it compares directional edge vectors rather than raw contrast.
+  Leaving Bit :bdg-success:`256` DISABLED uses Spatial Gradient Alignment along tissue edges for cross-contrast (inter-modal) scans, it compares directional edge vectors rather than raw contrast.
 
 * **Interpreting Score Deltas (Δη):**
   Track the change in score (:math:`\Delta\eta`) between consecutive runs:
@@ -253,7 +253,7 @@ At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective
 
 .. tip::
    **Evaluate Quality Without Modifying Files:**
-   To check the current objective function score (:math:`\eta`) without altering your existing :term:`t4file`, turn off Bit :bdg-primary:`1`.
+   To check the current objective function score (:math:`\eta`) without altering your existing :term:`t4file`, disable Bit :bdg-primary:`1`.
    
 .. rubric:: Common Multi-Pass Sequences
 
@@ -332,15 +332,20 @@ Examples
 
     .. tab-item:: 📁 Case 1: T2w to T1
 
-        In standard processing pipelines, registration is performed progressively by looping over a sequence of refining modes: ``4099`` → ``4099`` → ``1027`` → ``2051`` → ``2051`` → ``10243``.
+        In standard processing pipelines, registration is performed progressively by looping over a sequence of refining modes, e.g. ``4099`` → ``4099`` → ``1027`` → ``2051`` → ``2051`` → ``10243``.
 
-        * **4099** (``1 + 2 + 4096``): Grid Search Translation (7.5 mm grid steps). Run twice to guarantee convergence.
-        * **1027** (``1 + 2 + 1024``): Fast Coarse Step (12.0 mm sampling steps).
-        * **2051** (``1 + 2 + 2048``): Standard Fine Step (5.0 mm sampling steps). Run twice to refine parameters.
-        * **10243** (``1 + 2 + 2048 + 8192``): Hessian Newton-Raphson + Standard Fine Step.
+        * **4099** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`): Grid Search Translation (7.5 mm grid steps). Run twice to guarantee convergence.
+        * **1027** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024`): Fast Coarse Step (12.0 mm sampling steps).
+        * **2051** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`): Standard Fine Step (5.0 mm sampling steps). Run twice to refine parameters.
+        * **10243** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-danger:`8192`): Hessian Newton-Raphson + Standard Fine Step.
 
         .. card:: 📥 Input Data Overview
           :class-card: sd-bg-light sd-border-1 mb-3
+
+          .. div:: card-help-top-right
+
+            :card-help:`Image Generation Steps: | 1. imgreg_4dfp updates matrix (.t4) | 2. t4img_4dfp resamples source to target space | 3. fsleyes render overlays T1 (hot) & source (cool, 50% opacity)`
+
 
           .. grid:: 1 2 2 2
               :gutter: 3
@@ -371,26 +376,33 @@ Examples
           .. tab-item:: Coarse Search (Mode 4099)
               :sync: pass-4099
 
-              **Optimization Function:** Brute-force grid search translation | **Step Size:** Fixed 7.5 mm grid | **Bits:** ``1 + 2 + 4096``
-
-              **Purpose:** Recovers large initial translational offsets between the target and source images before local optimization begins.
+              **Optimization Function:** Grid Search Translation | **Step Size:** Fixed 7.5 mm grid | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`
 
               .. code-block:: bash
 
-                # Pass 1 & 2: Run twice to recover large spatial shifts
+                # Pass 1 & 2
                 imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 4099
                 imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 4099
 
               **What Happens Under the Hood:**
 
-              * Executes a 3D translation grid search across X, Y, and Z axes.
+              * Executes a broad 3D (:bdg-info:`2`) translation grid search across X, Y, and Z axes.
+              * Omits spatial masks (passing ``none``) to prevent mask clipping during initial wide translations.
               * Updates translational parameters in :term:`t4file` while leaving rotational parameters unchanged.
-              * Bypasses step size flags and Hessian optimization logic entirely.
+              * Uses :term:`Spatial Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
+
+              **Output:**
+              
+              η = 0.38
 
               .. grid:: 1 2 2 2
                 :gutter: 2
 
                 .. grid-item-card:: 🧠 Transformed Images
+
+                  .. div:: card-help-top-right
+
+                    :card-help:`Image Generation Steps: | 1. imgreg_4dfp updates matrix (.t4) | 2. t4img_4dfp resamples source to target space | 3. fsleyes render overlays T1 (hot) & source (cool, 50% opacity)`
 
                   .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd1/imgreg_c1_cmd1_output.png
                       :alt: 10243 output
@@ -402,25 +414,21 @@ Examples
                       :alt: 10243 t4file output
                       :align: center
 
-              **Mode 4099 Output (η = 0.38):** Coarse translation grid search aligns center-of-mass positions between source and target volumes.
-
           .. tab-item:: Fast Local Pass (Mode 1027)
               :sync: pass-1027
 
-              **Optimization Function:** Local optimization | **Step Size:** 12.0 mm (Fast) | **Bits:** ``1 + 2 + 1024``
-
-              **Purpose:** Establishes initial 6-DOF (translation + rotation) local spatial alignment across a broad search radius.
+              **Optimization Function:** Fast Coarse Step | **Step Size:** 12.0 mm (Fast) | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024`
 
               .. code-block:: bash
 
-                # Pass 3: Rapid local adjustment
+                # Pass 3
                 imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 1027
 
               **What Happens Under the Hood:**
 
-              * Switches execution to the local gradient optimization function.
-              * Begins evaluating 3D rotations alongside translations using a wide 12.0 mm step size.
-              * Rapidly brings major anatomical landmarks into approximate orientation.
+              * Switches execution from global grid searching to local gradient-driven optimization.
+              * Employs a wide 12.0 mm sampling step size for rapid, large-scale rotational convergence.
+              * Uses :term:`Spatial Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -437,26 +445,25 @@ Examples
                       :alt: 10243 t4file output
                       :align: center
 
-              **Mode 1027 Output (η = 0.44):** Initial 6-DOF orientation aligns pitch, roll, and yaw angles across wide sampling steps.
+              **η = 0.44**
 
           .. tab-item:: Fine Local Alignment (Mode 2051)
               :sync: pass-2051
 
-              **Optimization Function:** Local optimization | **Step Size:** 5.0 mm (Fine) | **Bits:** ``1 + 2 + 2048``
-
-              **Purpose:** Performs main sub-voxel registration, narrowing step sizes to refine spatial parameters.
+              **Optimization Function:** Standard Fine Step | **Step Size:** 5.0 mm (Fine) | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`
 
               .. code-block:: bash
 
-                # Pass 4 & 5: Run twice for standard sub-voxel convergence
+                # Pass 4 & 5
                 imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 2051
                 imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 2051
 
               **What Happens Under the Hood:**
 
-              * Overrides Fast step size and restricts parameter adjustments to 5.0 mm increments.
-              * Fine-tunes slice-by-slice overlap and corrects residual rotational angles.
-              * Prepares matrix parameters for final second-order optimization function convergence.
+              * Narrows sampling step size from 12.0 mm to 5.0 mm for fine-grained local gradient evaluation.
+              * Introduces the target brain mask (``SUBJ_MSC01_func01_mpr_brain_mask``) to restrict voxel evaluation to brain tissue.
+              * Executes two sequential passes to achieve full parameter stability across all 6 rigid-body DOF.
+              * Uses :term:`Spatial Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -473,25 +480,24 @@ Examples
                       :alt: 10243 t4file output
                       :align: center
 
-              **Mode 2051 Output (η = 0.46):** Fine local optimization achieves high structural agreement along cortical boundaries.
+              **η = 0.46**
 
           .. tab-item:: Hessian Polishing (Mode 10243)
               :sync: pass-10243
 
-              **Optimization Function:** ``fimgreg_`` + Newton-Raphson | **Step Size:** 5.0 mm (Fine) | **Bits:** ``1 + 2 + 2048 + 8192``
-
-              **Purpose:** Executes second-order Hessian matrix optimization for final high-precision parameter convergence.
+              **Optimization Function:** Standard Fine Step + Hessian Newton-Raphson | **Step Size:** 5.0 mm (Fine) | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-danger:`8192`
 
               .. code-block:: bash
 
-                # Pass 6: Final 2nd-order Newton-Raphson polishing
+                # Pass 6
                 imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 10243
 
               **What Happens Under the Hood:**
 
-              * Activates the Newton-Raphson optimization function (:bdg-dark:`8192`) using the 5.0 mm step size (:bdg-info:`2048`).
-              * Computes second-order derivatives to find the exact peak of the cost function surface.
-              * Writes out the final fully-converged :math:`4 \times 4` transformation matrix to :term:`t4file`.
+              * Activates the Newton-Raphson optimization function (:bdg-danger:`8192`) using a fixed 5.0 mm step size (:bdg-info:`2048`).
+              * Computes the :term:`Hessian Matrix` of partial second derivatives to map the curvature of the objective function landscape.
+              * Restricts objective evaluation strictly to valid brain tissue using the target brain mask (``SUBJ_MSC01_func01_mpr_brain_mask``).
+              * Writes the final, fully converged :math:`4 \times 4` rigid transformation matrix to the output :term:`t4file`.
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -508,7 +514,7 @@ Examples
                       :alt: 10243 t4file output
                       :align: center
 
-              **Mode 10243 Output (η = 0.47):** Final Hessian matrix Newton-Raphson polishing yields full convergence.
+              **η = 0.47**
 
 
     .. tab-item:: ⚠️ Common Errors
@@ -649,7 +655,7 @@ Examples
             .. code-block:: text
 
                 image alignment mode     0 decimal        0 hex
-                transform update disabled (mode 1 bit off)
+                transform update disabled (mode 1 bit disabled)
 
             .. image:: /_static/tools/imgreg_4dfp/errors/disabled_mode_zero.png
                 :alt: Terminal output showing transform update disabled due to mode 0
