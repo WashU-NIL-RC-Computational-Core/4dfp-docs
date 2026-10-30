@@ -636,23 +636,55 @@ dl.simple>dt {
     margin-bottom: 8px !important;
 }
 
-/* Code Blocks (<pre> and highlight containers inside tooltip) */
-.tooltip-content div[class*='highlight'],
-.tooltip-content pre {
+/* Outer Code Block Container (Single Outer Border & Radius) */
+.tooltip-content div[class*='highlight'] {
     background-color: #f8f9fa !important;
+    border: 1px solid #e1e4e5 !important;
+    border-radius: 6px !important;
+    margin: 10px 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Inner Wrapper Reset (Removes middle border) */
+.tooltip-content div[class*='highlight'] div {
+    border: none !important;
+    background: transparent !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Inner Pre Element Reset (Removes inner border & handles line wrapping) */
+.tooltip-content div[class*='highlight'] pre {
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
     color: #24292e !important;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
     font-size: 0.8125rem !important;
     line-height: 1.45 !important;
     padding: 10px 12px !important;
-    border: 1px solid #e1e4e5 !important;
-    border-radius: 6px !important;
-    margin: 10px 0 0 0 !important;
+    margin: 0 !important;
     white-space: pre-wrap !important;
-    /* Forces code lines to wrap */
+    /* Forces command line wrapping */
     word-break: break-word !important;
     /* Prevents text overflow */
     overflow-x: auto !important;
+}
+
+/* Inline Code Snippets inside Tooltip (KEEP THIS) */
+.tooltip-content code,
+.tooltip-content tt.literal,
+.tooltip-content code.literal {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    background-color: #f1f3f5 !important;
+    color: #212529 !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 4px !important;
+    padding: 2px 5px !important;
+    font-size: 0.8125rem !important;
+    white-space: break-spaces !important;
 }
 
 /* Inline Code Snippets inside Tooltip */
