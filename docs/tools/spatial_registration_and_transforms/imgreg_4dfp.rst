@@ -199,7 +199,7 @@ Usage
    :animate: fade-in
    :icon: file-binary
 
-   Masks are 3D binary volume files (or the keyword ``none``) that define which voxels are evaluated by the registration objective function. 
+   Masks are binary volume files (or the keyword ``none``) that define which voxels are evaluated by the registration objective function.
 
    Inside ``imgreg_4dfp``, alignment is computed **strictly on the intersection** of both volumes. A voxel is evaluated only if it falls inside valid tissue boundaries on both images simultaneously.
 
