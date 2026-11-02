@@ -381,8 +381,8 @@ Examples
               .. code-block:: bash
 
                 # Pass 1 & 2
-                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 4099
-                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 4099
+                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 4099
+                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 4099
 
               **What Happens Under the Hood:**
 
@@ -422,7 +422,7 @@ Examples
               .. code-block:: bash
 
                 # Pass 3
-                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 1027
+                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 1027
 
               **What Happens Under the Hood:**
 
@@ -455,8 +455,8 @@ Examples
               .. code-block:: bash
 
                 # Pass 4 & 5
-                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 2051
-                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 2051
 
               **What Happens Under the Hood:**
 
@@ -490,7 +490,7 @@ Examples
               .. code-block:: bash
 
                 # Pass 6
-                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_PRISMA_TRIO_PIB_NL_MNI152_T1_3mm_t4 10243
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 10243
 
               **What Happens Under the Hood:**
 
@@ -522,34 +522,6 @@ Examples
 
       .. tab-set::
 
-          .. tab-item:: ❌ Insufficient Arguments (Missing Parameters)
-            :class-label: tab-error
-
-            **Cause:** Running ``imgreg_4dfp`` without specifying all 6 required positional arguments: ``<target_img>``, ``<target_mask>``, ``<source_img>``, ``<source_mask>``, ``<t4file>``, and ``<mode>``.
-
-            **Command Attempt:**
-
-            .. code-block:: bash
-
-                imgreg_4dfp
-
-            **Observed Behavior:**
-
-            The program prints standard usage instructions and terminates without performing any image registration or modifying matrix files.
-
-            .. code-block:: text
-
-                Usage: imgreg_4dfp <target> <tmask> <source> <smask> <t4file> <mode>
-
-            .. image:: /_static/tools/imgreg_4dfp/errors/insufficient_args.png
-                :alt: Terminal output showing usage syntax due to missing arguments
-                :align: center
-
-            .. admonition:: Resolution
-                :class: warning
-
-                Ensure all 6 positional arguments are supplied in order. If masks are not needed, pass ``none`` for ``<target_mask>`` and ``<source_mask>``.
-
           .. tab-item:: ❌ Non-Existent Target or Source Image
             :class-label: tab-error
 
@@ -559,7 +531,7 @@ Examples
 
             .. code-block:: bash
 
-                imgreg_4dfp missing_target none source_frame none transform_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 2051
 
             **Observed Behavior:**
 
@@ -567,10 +539,10 @@ Examples
 
             .. code-block:: text
 
-                GetIFH: error opening missing_target.4dfp.ifh
-                imgreg_4dfp error: read error on target image
+                Getifh: SUBJ_MSC01_func01_mpr.4dfp.ifh read error, imgfile='SUBJ_MSC01_func01_mpr.4dfp.img'
+                get_4dfp_dimoe: SUBJ_MSC01_func01_mpr.4dfp.img read error
 
-            .. image:: /_static/tools/imgreg_4dfp/errors/missing_image_file.png
+            .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/errors/imgreg_missing_ifh.png
                 :alt: Terminal output showing file opening error for missing image
                 :align: center
 
@@ -579,144 +551,46 @@ Examples
 
                 Verify that both the ``.4dfp.img`` binary file and ``.4dfp.ifh`` header file exist in the working path. Do not include the ``.4dfp.img`` extension in the command line argument; supply only the root file name.
 
-          .. tab-item:: ❌ Missing or Malformed t4file
+          .. tab-item:: ❌ Malformed t4file
             :class-label: tab-error
 
-            **Cause:** Passing a path to a :term:`t4file` that does not exist, or specifying a corrupted text file that cannot be parsed into a valid :math:`4 \times 4` transformation matrix.
+            **Cause:** Passing a path to a :term:`t4file` that cannot be parsed into a valid :math:`4 \times 4` transformation matrix.
 
             **Command Attempt:**
 
             .. code-block:: bash
 
-                imgreg_4dfp target_frame none source_frame none missing_matrix_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 2051
 
             **Observed Behavior:**
 
-            The tool attempts to load the transformation matrix and throws an I/O error when reading matrix parameters, exiting before registration optimization starts.
+            The tool attempts to load the transformation matrix and throws an I/O error.
 
             .. code-block:: text
 
-                rft4: error reading missing_matrix_t4
-                imgreg_4dfp: t4 matrix read error
-
-            .. image:: /_static/tools/imgreg_4dfp/errors/missing_t4_file.png
-                :alt: Terminal output displaying t4 matrix read error
-                :align: center
-
-            .. admonition:: Resolution
-                :class: warning
-
-                If starting a registration sequence from scratch, initialize a new identity matrix using ``t4_null transform_t4`` prior to calling ``imgreg_4dfp``.
-
-          .. tab-item:: ❌ 2D Slice Dimension Mismatch with 3D Mode Flag
-            :class-label: tab-error
-
-            **Cause:** Setting 3D Mode (:bdg-secondary:`2`) when attempting to align single-slice 2D planar images (:math:`NZ < 2`).
-
-            **Command Attempt:**
-
-            .. code-block:: bash
-
-                imgreg_4dfp target_2d_slice none source_2d_slice none transform_t4 2051
-
-            **Observed Behavior:**
-
-            The program detects :math:`NZ < 2` in the image volume header, automatically strips Bit ``2`` from the mode bitmask to prevent invalid 3D spatial operations, and outputs a warning before proceeding in 2D mode.
-
-            .. code-block:: text
-
-                nz < 2: disabling 3D alignment mode
-                image alignment mode  2049 decimal     0801 hex
-
-            .. image:: /_static/tools/imgreg_4dfp/errors/dimension_mismatch.png
-                :alt: Terminal output showing automatic disabling of 3D mode for 2D slice
-                :align: center
-
-            .. admonition:: Resolution
-                :class: warning
-
-                For single-slice 2D images, explicitly omit Bit ``2`` from the ``<mode>`` integer (e.g., use **Mode 2049** instead of **2051**) to prevent unintended parameter overrides.
-
-          .. tab-item:: ❌ Alignment Disabled (Mode Flag Missing Bit 1)
-            :class-label: tab-error
-
-            **Cause:** Passing a mode integer where the Enable Alignment master switch (:bdg-primary:`1`) is not set (e.g., Mode ``0`` or Mode ``2050``).
-
-            **Command Attempt:**
-
-            .. code-block:: bash
-
-                imgreg_4dfp target_frame none source_frame none transform_t4 0
-
-            **Observed Behavior:**
-
-            The subroutine initializes, computes the initial overlap score (:term:`eta Alignment Score`), and immediately returns without updating parameter arrays or modifying the output :term:`t4file`.
-
-            .. code-block:: text
-
-                image alignment mode     0 decimal        0 hex
-                transform update disabled (mode 1 bit disabled)
-
-            .. image:: /_static/tools/imgreg_4dfp/errors/disabled_mode_zero.png
-                :alt: Terminal output showing transform update disabled due to mode 0
-                :align: center
-
-            .. admonition:: Resolution
-                :class: warning
-
-                Always ensure Bit ``1`` is added to your mode integer whenever parameter calculation and matrix updating are required.
-
-          .. tab-item:: ⚠️ Alignment Score Plateaus Low
-            :class-label: tab-error
-
-            **Cause:** The optimization function converged locally, but spatial overlap failed to achieve a high correlation score. This occurs when structural or parameter mismatches prevent the local search optimization function from finding global convergence.
-
-            **Observed Behavior:**
-
-            Subsequent optimization passes (``2051``, ``10243``) exit normally, but the printed correlation score (η) stays trapped with a low score.
-
-            .. code-block:: text
-
-                mode 2051:  eta,q 0.2941    0.8120
-                mode 10243: eta,q 0.2941    0.8210  (plateaued)
+                At line 110 of file /home/rd521/space_freesurfer/build/docker_ubuntu20/trunk/rd521-7.4.0/talairach_avi/t4_sub.f (unit = 8, file = 'SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4')
+                Fortran runtime error: End of file
 
             .. grid:: 1 2 2 2
                 :gutter: 2
 
-                .. grid-item-card:: 🛑 Gross Rotation / Axis Flip
-                  :class-card: sd-bg-light sd-border-1
+                .. grid-item-card:: ❌ Error Output
 
-                  Coarse mode (``4099``) only searches translation. If images are rotated > 20° or mirrored, translation alone cannot fix alignment.
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/errors/imgreg_malformed_t4_output.png
+                      :alt: imgreg malformed t4 file
+                      :align: center
 
-                .. grid-item-card:: 🛑 Unmasked Neck / Skull Noise
-                  :class-card: sd-bg-light sd-border-1
+                .. grid-item-card:: 📄 Malformed t4file
 
-                  Passing ``none`` for masks forces evaluation of non-brain tissue, neck muscle, and FOV cutoffs, capping max η.
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/errors/imgreg_malformed_t4_file.png
+                      :alt: imgreg malformed t4 output
+                      :align: center
 
-                .. grid-item-card:: 🛑 Sub-Optimal Similarity Metric
-                  :class-card: sd-bg-light sd-border-1
-
-                  Default mode aligns image edges. Cross-modality or low-contrast images may require Direct Intensity Matching (:bdg-light:`256`).
-
-                .. grid-item-card:: 🛑 Incorrect Header Center
-                  :class-card: sd-bg-light sd-border-1
-
-                  Mismatched origins in the ``.ifh`` header (``center`` field) place the initial 7.5 mm grid search outside the brain volume.
-
-            .. admonition:: Diagnostic & Resolution Protocol
+            .. admonition:: Resolution
                 :class: warning
 
-                1. **Visually inspect current alignment:** Resample the source image using your current t4file file and overlay it on the target:
-                  
-                  .. code-block:: bash
-
-                      t4img_4dfp t4file source_frame source_aligned -Otarget_space
-
-                2. **If rotated or flipped:** Use ``flip_4dfp`` or apply a manual starting reorientation :term:`t4file` before running ``imgreg_4dfp``.
-                3. **If unmasked:** Pass explicit brain mask files for ``<target_mask>`` and ``<source_mask>`` instead of ``none``.
-                4. **If same modality with soft edges:** Add Bit :bdg-light:`256` to enable Direct Intensity Matching (e.g., use **Mode 2307** instead of **Mode 2051**).
+                If starting a registration sequence from scratch, initialize a new identity matrix using :ref:`t4_null` prior to calling ``imgreg_4dfp``.
             
-
 .. rubric:: References
 
 .. [1] Rowland, D. J., Garbow, J. R., Laforest, R., & Snyder, A. Z. (2005). `Registration of [18F]FDG microPET and small-animal MRI <https://www.sciencedirect.com/science/article/pii/S0969805105001253>`_. *Nuclear Medicine and Biology*, 32(7), 663–670.
