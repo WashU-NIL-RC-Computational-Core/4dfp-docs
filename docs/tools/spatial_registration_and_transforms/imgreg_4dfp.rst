@@ -758,9 +758,9 @@ Examples
 
         In standard processing pipelines, registration between BOLD and T1w is performed progressively by looping over a list of refining modes, e.g. ``4099`` → ``4099`` → ``3075`` → ``2051`` → ``2051``.
 
-        * **4099** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`): Grid Search Translation (7.5 mm translation steps, 9.0 mm voxel grid). Run twice to guarantee initial overlap.
-        * **3075** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024` + :bdg-danger:`2048`): Fast Search / Fine Grid (1.2× parameter step radius, 5.0 mm voxel grid).
-        * **2051** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`): Fine Grid / Standard Search (dynamic 0.8× → 0.4× parameter step radius, 5.0 mm voxel grid). Run twice to reach final convergence.
+        * **4099** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`): Grid Search Translation (7.5 mm grid steps). Run twice to guarantee initial overlap.
+        * **3075** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024` + :bdg-danger:`2048`): Fast Search / Fine Grid (1.2x parameter step radius, 5.0 mm voxel grid).
+        * **2051** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`): Standard Fine Step (5.0 mm sampling steps). Run twice to reach final convergence.
 
         .. card:: 📥 Input Data Overview
           :class-card: sd-bg-light sd-border-1 mb-3
