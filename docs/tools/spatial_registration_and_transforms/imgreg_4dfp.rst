@@ -118,68 +118,77 @@ Usage
 .. rubric:: Advanced Strategy & Optimization Choices
 
 .. dropdown:: Optimization Rules & Step-Size Precedence
-   :animate: fade-in
-   :icon: arrow-switch
+  :animate: fade-in
+  :icon: arrow-switch
 
-   When multiple flags are set in a single mode integer, ``imgreg_4dfp`` configures two independent variables: **Spatial Grid Sampling Interval** (voxel resolution in mm) and **Parameter Search Radius** (step size multiplier).
+   Mode integers in ``imgreg_4dfp`` combine bitwise flags to control registration behavior across three main operational modes: **Grid Search Translation**, **Standard Mode**, and **Hessian Newton-Raphson Optimization**.
 
-   .. grid:: 1 1 1 1
-      :gutter: 3
+  .. grid:: 1 1 1 1
+    :gutter: 3
 
-      .. grid-item-card:: Grid Search Mode (:bdg-dark:`4096`)
-         :class-header: sd-bg-warning-subtle sd-font-weight-bold
+    .. grid-item-card:: Grid Search Mode (:bdg-dark:`4096`)
+      :class-header: sd-bg-warning-subtle sd-font-weight-bold
 
-         :octicon:`alert;1em;sd-text-warning` **Standalone Search Pass**
+      :octicon:`alert;1em;sd-text-warning` **Standalone Search Pass**
 
-         **Compatible Modes**
-         
-         * :bdg-primary:`1` to modify the :term:`t4file`.
-         * :bdg-info:`2` to choose 2D or 3D registration.
-         * :bdg-success:`256` for :term:`Pearson Intensity Correlation` or :term:`Vector Gradient Alignment`.
+      **Compatible Modes**
+      
+      * :bdg-primary:`1` to modify the :term:`t4file`.
+      * :bdg-info:`2` to choose 2D or 3D registration.
+      * :bdg-success:`256` for :term:`Pearson Intensity Correlation` or :term:`Vector Gradient Alignment`.
 
-         **Incompatible Modes**
+      **Incompatible Modes**
 
-         * Overrides :bdg-danger:`512`, :bdg-danger:`1024`, and :bdg-danger:`2048`.
-         * Ignores :bdg-secondary:`8192`.
-         * Does not perform Affine (:bdg-info:`4`) or Scaling (:bdg-info:`8`) transformations.
+      * Overrides :bdg-danger:`512`, :bdg-danger:`1024`, and :bdg-danger:`2048`.
+      * Ignores :bdg-secondary:`8192`.
+      * Does not perform Affine (:bdg-info:`4`) or Scaling (:bdg-info:`8`) transformations.
 
-      .. grid-item-card:: Standard Mode (Non-Hessian)
-         :class-header: sd-bg-light sd-font-weight-bold
+    .. grid-item-card:: Standard Mode (Non-Hessian)
+      :class-header: sd-bg-light sd-font-weight-bold
 
-         :octicon:`arrow-switch;1em;sd-text-primary` **Iterative Step Search**
+      :octicon:`arrow-switch;1em;sd-text-primary` **Iterative Step Search**
 
-         **Parameter Search Step Size**
+      **Parameter Search Step Size**
 
-         * :bdg-danger:`1024` **Fast:** Fixed wide (**1.2x** multiplier).
-         * :bdg-danger:`512` **Superfine:** Fixed tight (**0.5x** multiplier).
-         * *Default:* Dynamic (**0.8x → 0.4x**, expanding up to **1.1x** if steps overshoot).
-         * *Note:* Bit :bdg-danger:`2048` does not affect search step size.
+      * :bdg-danger:`1024` **Fast:** Fixed wide (**1.2x** multiplier).
+      * :bdg-danger:`512` **Superfine:** Fixed narrow (**0.5x** multiplier).
+      * *Default:* Dynamic (**0.8x → 0.4x**, expanding up to **1.1x** if steps overshoot).
+      * *Note:* Bit :bdg-danger:`2048` does not affect search step size.
 
-         **Spatial Voxel Sampling Grid**
+      **Spatial Voxel Sampling Grid**
 
-         * :bdg-danger:`2048` **Fine:** Fixed **5.0 mm** grid (*overrides Fast & default*).
-         * :bdg-danger:`1024` **Fast:** Coarse **12.0 mm** grid.
-         * :bdg-danger:`512` **Superfine:** Dense **2.5 mm** grid.
-         * *Default:* Dynamic **9.0 mm → 5.0 mm** grid (coarsening up to **12.0 mm** if steps overshoot).
+      * :bdg-danger:`2048` **Fine:** Fixed **5.0 mm** grid (*overrides Fast & default*).
+      * :bdg-danger:`1024` **Fast:** Coarse **12.0 mm** grid.
+      * :bdg-danger:`512` **Superfine:** Dense **2.5 mm** grid.
+      * *Default:* Dynamic **9.0 mm → 5.0 mm** grid (coarsening up to **12.0 mm** if steps overshoot).
 
-      .. grid-item-card:: Hessian Mode (:bdg-secondary:`8192`)
-         :class-header: sd-bg-light sd-font-weight-bold
+    .. grid-item-card:: Hessian Mode (:bdg-secondary:`8192`)
+      :class-header: sd-bg-light sd-font-weight-bold
 
-         :octicon:`graph;1em;sd-text-primary` **Joint Parameter Optimization**
+      :octicon:`graph;1em;sd-text-primary` **Joint Parameter Optimization**
 
-         **Parameter Search Step Size**
+      **Parameter Search Step Size**
 
-         * :bdg-danger:`512` **Superfine:** Tightened to **0.5x** multiplier.
-         * *Default:* Fixed **1.0x** multiplier.
-         * *Note:* Bit :bdg-danger:`2048` does not affect search step size.
+      * :bdg-danger:`512` **Superfine:** Tightened to **0.5x** multiplier.
+      * *Default:* Fixed **1.0x** multiplier.
+      * *Note:* Bit :bdg-danger:`2048` does not affect search step size.
 
-         **Spatial Voxel Sampling Grid**
+      **Spatial Voxel Sampling Grid**
 
-         * :bdg-danger:`512` **Superfine:** Dense **2.5 mm** grid (*overrides Fine & default*).
-         * :bdg-danger:`2048` **Fine:** Tight **5.0 mm** grid.
-         * *Default:* Medium **7.5 mm** grid.
+      * :bdg-danger:`512` **Superfine:** Dense **2.5 mm** grid (*overrides Fine & default*).
+      * :bdg-danger:`2048` **Fine:** Tight **5.0 mm** grid.
+      * *Default:* Medium **7.5 mm** grid.
 
-         *Ignored:* :bdg-danger:`1024` **Fast (12.0 mm)**.
+      *Ignored:* :bdg-danger:`1024` **Fast (12.0 mm)**.
+
+  .. note::
+
+    When multiple flags are set in a single mode integer, ``imgreg_4dfp`` configures two independent variables:
+
+    * **Voxel Grid Size:** The voxel grid sampling resolution in millimeters (e.g., 12.0 mm coarse vs. 5.0 mm fine grid).
+    * **Parameter Step Scale:** The parameter step size multiplier (e.g., 1.2x wide search vs. 0.5x narrow search).
+
+    **Important:** Always review the bitwise precedence order to confirm the exact **Voxel Grid Size** and **Parameter Step Scale** resulting from combined mode flags.
 
 .. dropdown:: Transformation Models: Affine Shearing & Stretch :bdg-info:`4` vs. Axis-Aligned Stretch & Shrink :bdg-info:`8`
    :animate: fade-in
