@@ -839,4 +839,12 @@ dl.simple>dt {
         max-width: min(240px, 70vw);
         font-size: 0.78rem;
     }
+
+    .rst-content table.docutils {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        white-space: normal;
+    }
 }
