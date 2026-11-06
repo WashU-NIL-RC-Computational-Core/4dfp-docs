@@ -250,7 +250,7 @@ Usage
 
 .. rubric:: Evaluating Alignment Quality: The eta Score (η)
 
-At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective Function` to report an :term:`eta alignment score<eta Alignment Score>` (:math:`\eta`). The resulting score is normalized between :math:`0.0` (no overlap) and :math:`1.0` (identical alignment).
+At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective Function` to report an :term:`eta alignment score<eta Alignment Score>` (η). The resulting score is normalized between 0.0 (no overlap) and 1.0 (identical alignment).
 
 * **Inter- vs. Intra-Modal Expectations ("Common Mode"):**
   Enabling Bit :bdg-success:`256` engages **"common mode"**, which uses :term:`Pearson Intensity Correlation` for same-contrast (intra-modal) scans. Common mode matches raw voxel intensities directly. 
@@ -272,16 +272,16 @@ At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective
 
 * **Why Use It:** Standard passes adjust one parameter at a time. Bit :bdg-secondary:`8192` computes the full :term:`Hessian Matrix` to optimize all parameters simultaneously, accounting for parameter interference by solving transformations jointly (e.g., balancing pitch rotation and z-translation together).
   
-  * **Controlling Search Granularity:** By default, Bit :bdg-secondary:`8192` evaluates derivative gradients on a 7.5 mm grid. Adding bit :bdg-info:`2048` (Fine) tightens spatial sampling to :math:`5.0 mm`. Bit :bdg-info:`512` (Superfine) pushes it to :math:`2.5 mm`, enabling sub-voxel precision on fine anatomical boundaries.
+  * **Controlling Search Granularity:** By default, Bit :bdg-secondary:`8192` evaluates derivative gradients on a 7.5 mm grid. Adding bit :bdg-info:`2048` (Fine) tightens spatial sampling to 5.0 mm. Bit :bdg-info:`512` (Superfine) pushes it to 2.5 mm, enabling sub-voxel precision on fine anatomical boundaries.
   
   * **When to Choose It:** Bit :bdg-secondary:`8192` is typically used as a final pass once coarse/intermediate alignment is already close to the solution. Running it on unaligned images will cause matrix divergence or solvers to fail.
 
 * **Visual Verification (The Gold Standard):**
-  Never rely on the :math:`\eta` score alone. Always visually inspect the final fit by resampling the source image onto target space (using :ref:`t4img_4dfp`) and utilizing a visualizer tool (like FSLeyes) to overlay anatomical contours.
+  Never rely on the η score alone. Always visually inspect the final fit by resampling the source image onto target space (using :ref:`t4img_4dfp`) and utilizing a visualizer tool (like FSLeyes) to overlay anatomical contours.
 
 .. tip::
    **Evaluate Quality Without Modifying Files:**
-   To check the current objective function score (:math:`\eta`) without altering your existing :term:`t4file`, disable Bit :bdg-primary:`1`.
+   To check the current objective function score (η) without altering your existing :term:`t4file`, disable Bit :bdg-primary:`1`.
    
 .. rubric:: Common Multi-Pass Algorithms
 
