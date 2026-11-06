@@ -79,7 +79,7 @@ Usage
      - Affine Shearing & Stretch
      - **ENABLED:** Allows stretching and shearing to align overall image shape and angles.
    * - :bdg-info:`8`
-     - Independent Voxel Scaling
+     - Axis-Aligned Stretch & Shrink
      - **ENABLED:** Allows scaling along the main axes to correct voxel size differences **without shearing**.
    * - :bdg-warning:`16`
      - Lock X-Axis Scaling
@@ -94,20 +94,20 @@ Usage
      - Pearson Intensity Correlation
      - **ENABLED:** Uses :term:`Pearson Intensity Correlation` for same-contrast scans.
 
-       **DISABLED:** Uses :term:`Spatial Gradient Alignment` for cross-contrast scans. [1]_
+       **DISABLED:** Uses :term:`Vector Gradient Alignment` for cross-contrast scans. [1]_
    * - :bdg-danger:`512`
      - Superfine Precision Step
-     - **ENABLED:** High-precision 2.5 mm sampling steps for final tuning.
+     - **ENABLED:** Dense 2.5 mm voxel sampling grid with a tight (0.5x) parameter search step.
    * - :bdg-danger:`1024`
      - Fast Coarse Step
-     - **ENABLED:** Wide 12.0 mm sampling steps for rapid initial local search.
+     - **ENABLED:** Coarse 12.0 mm voxel sampling grid with a wide (1.2x) parameter search step.
    * - :bdg-danger:`2048`
      - Standard Fine Step
-     - **ENABLED:** Standard 5.0 mm sampling steps for local optimization.
+     - **ENABLED:** Locks voxel sampling to a fixed 5.0 mm grid without altering the parameter search step.
    * - :bdg-dark:`4096`
      - Grid Search Translation
      - **ENABLED:** Global 7.5mm translation grid search for initial positioning.
-   * - :bdg-danger:`8192`
+   * - :bdg-secondary:`8192`
      - Hessian Newton-Raphson
      - **ENABLED:** :term:`Hessian Matrix` inversion (:term:`Newton-Raphson Optimization`).
 
@@ -121,12 +121,12 @@ Usage
    :animate: fade-in
    :icon: arrow-switch
 
-   When multiple flags are set in a single mode integer, ``imgreg_4dfp`` resolves conflicts according to fixed optimization rules:
+   When multiple flags are set in a single mode integer, ``imgreg_4dfp`` configures two independent variables: **Spatial Grid Sampling Interval** (voxel resolution in mm) and **Parameter Search Radius** (step size multiplier).
 
-   .. grid:: 1 1 2 2
+   .. grid:: 1 1 1 1
       :gutter: 3
 
-      .. grid-item-card:: Grid Search Rules (:bdg-dark:`4096`)
+      .. grid-item-card:: Grid Search Mode (:bdg-dark:`4096`)
          :class-header: sd-bg-warning-subtle sd-font-weight-bold
 
          :octicon:`alert;1em;sd-text-warning` **Standalone Search Pass**
@@ -135,37 +135,53 @@ Usage
          
          * :bdg-primary:`1` to modify the :term:`t4file`.
          * :bdg-info:`2` to choose 2D or 3D registration.
-         * :bdg-success:`256` for :term:`Pearson Intensity Correlation` or :term:`Spatial Gradient Alignment`.
+         * :bdg-success:`256` for :term:`Pearson Intensity Correlation` or :term:`Vector Gradient Alignment`.
 
          **Incompatible Modes**
 
-         * Overrides :bdg-danger:`1024`, :bdg-danger:`2048`, and :bdg-danger:`512`.
-         * Ignores :bdg-danger:`8192`.
+         * Overrides :bdg-danger:`512`, :bdg-danger:`1024`, and :bdg-danger:`2048`.
+         * Ignores :bdg-secondary:`8192`.
          * Does not perform Affine (:bdg-info:`4`) or Scaling (:bdg-info:`8`) transformations.
 
-      .. grid-item-card:: Step-Size Resolution Order
+      .. grid-item-card:: Standard Mode (Non-Hessian)
          :class-header: sd-bg-light sd-font-weight-bold
 
-         :octicon:`arrow-switch;1em;sd-text-primary` **Precedence Order**
+         :octicon:`arrow-switch;1em;sd-text-primary` **Iterative Step Search**
 
-         If multiple step size flags are combined, priority is evaluated in this order:
+         **Parameter Search Step Size**
 
-         **Standard Optimization Mode:**
+         * :bdg-danger:`1024` **Fast:** Fixed wide (**1.2x** multiplier).
+         * :bdg-danger:`512` **Superfine:** Fixed tight (**0.5x** multiplier).
+         * *Default:* Dynamic (**0.8x → 0.4x**, expanding up to **1.1x** if steps overshoot).
+         * *Note:* Bit :bdg-danger:`2048` does not affect search step size.
 
-         1. :bdg-danger:`2048` **Fine (5.0 mm)** *(Overrides Fast & Superfine)*.
-         2. :bdg-danger:`1024` **Fast (12.0 mm)** *(Overrides Superfine)*.
-         3. :bdg-danger:`512` **Superfine (2.5 mm)**.
-         4. *Default:* Dynamic step (11.0 mm → 5.0 mm).
+         **Spatial Voxel Sampling Grid**
 
-         **Hessian Mode (8192):**
+         * :bdg-danger:`2048` **Fine:** Fixed **5.0 mm** grid (*overrides Fast & default*).
+         * :bdg-danger:`1024` **Fast:** Coarse **12.0 mm** grid.
+         * :bdg-danger:`512` **Superfine:** Dense **2.5 mm** grid.
+         * *Default:* Dynamic **9.0 mm → 5.0 mm** grid (coarsening up to **12.0 mm** if steps overshoot).
 
-         1. :bdg-danger:`512` **Superfine (2.5 mm)** *(Overrides Fine)*.
-         2. :bdg-danger:`2048` **Fine (5.0 mm)** *(Recommended pairing)*.
-         3. *Ignored:* :bdg-danger:`1024` **Fast (12.0 mm)**.
-         4. *Default:* Fixed 7.5 mm step.
+      .. grid-item-card:: Hessian Mode (:bdg-secondary:`8192`)
+         :class-header: sd-bg-light sd-font-weight-bold
 
+         :octicon:`graph;1em;sd-text-primary` **Joint Parameter Optimization**
 
-.. dropdown:: Transformation Models: Affine Shearing & Stretch :bdg-info:`4` vs. Voxel Scaling :bdg-info:`8`
+         **Parameter Search Step Size**
+
+         * :bdg-danger:`512` **Superfine:** Tightened to **0.5x** multiplier.
+         * *Default:* Fixed **1.0x** multiplier.
+         * *Note:* Bit :bdg-danger:`2048` does not affect search step size.
+
+         **Spatial Voxel Sampling Grid**
+
+         * :bdg-danger:`512` **Superfine:** Dense **2.5 mm** grid (*overrides Fine & default*).
+         * :bdg-danger:`2048` **Fine:** Tight **5.0 mm** grid.
+         * *Default:* Medium **7.5 mm** grid.
+
+         *Ignored:* :bdg-danger:`1024` **Fast (12.0 mm)**.
+
+.. dropdown:: Transformation Models: Affine Shearing & Stretch :bdg-info:`4` vs. Axis-Aligned Stretch & Shrink :bdg-info:`8`
    :animate: fade-in
    :icon: iterations
 
@@ -181,11 +197,11 @@ Usage
          * **Behavior:** Allows images to stretch along any axis **and shear angles** (non-orthogonal warping).
          * **Primary Use Case:** Uncorrected spatial skew/gantry distortions.
 
-      .. grid-item-card:: :bdg-info:`8`: Independent Voxel Scaling
+      .. grid-item-card:: :bdg-info:`8`: Axis-Aligned Stretch & Shrink
          :class-header: sd-bg-success-subtle sd-font-weight-bold
 
          * **Degrees of Freedom:** Up to 9 in 3D (up to 5 in 2D).
-         * **Behavior:** Adjusts voxel dimension ratios along X, Y, and Z **without skewing image angles**.
+         * **Behavior:** Stretches or shrinks dimensions independently along X, Y, and Z **without skewing image angles**.
          * **Primary Use Case:** Correcting uneven voxel sizes (like thick slice gaps) or minor scanner size rounding differences.
 
    .. note::
@@ -199,7 +215,7 @@ Usage
    :animate: fade-in
    :icon: file-binary
 
-   Masks are binary volume files (or the keyword ``none``) that define which voxels are evaluated by the registration objective function.
+   Masks are spatial volume files (or the keyword ``none``) that define which voxels are evaluated by the registration objective function. While masks function conceptually as binary region selectors, input files do not necessarily need to be binary images. ``imgreg_4dfp`` treats any positive intensity value as an active mask voxel (effectively treating non-zero values as 1).
 
    Inside ``imgreg_4dfp``, alignment is computed **strictly on the intersection** of both volumes. A voxel is evaluated only if it falls inside valid tissue boundaries on both images simultaneously.
 
@@ -208,14 +224,17 @@ Usage
 
       :octicon:`check-circle;1em;sd-text-success` **Typical Scenarios for Applying Masks**
 
-      * Shape & Scale Transformations (:bdg-info:`4` & :bdg-info:`8`).
-      * High-Precision Hessian Fine-Tuning (:bdg-danger:`8192`).
+      * Shape & Stretch/Shrink Transformations (:bdg-info:`4` & :bdg-info:`8`).
+      * High-Precision Hessian Fine-Tuning (:bdg-secondary:`8192`).
       * Pathology & Artifact Exclusion.
 
       :octicon:`x-circle;1em;sd-text-danger` **Typical Scenarios for Omitting Masks (Passing ``none``)**
 
       * Large Initial Position Offsets.
       * Global Coarse Searches (:bdg-dark:`4096`).
+
+      .. note::
+         **Target vs. Source Masking Priority:** Masking the **target** volume usually provides the greatest benefit. Because the target image sets the stationary sampling grid, a target mask can restrict the objective function evaluation to valid brain tissue.
 
    .. tip::
       Pass the keyword ``none`` for either argument if you do not have a mask file or want to evaluate the entire image matrix. Passing ``none`` is similar to using a mask with every coordinate "on".
@@ -226,7 +245,7 @@ At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective
 
 * **Inter- vs. Intra-Modal Expectations ("Common Mode"):**
   Enabling Bit :bdg-success:`256` engages **"common mode"**, which uses :term:`Pearson Intensity Correlation` for same-contrast (intra-modal) scans. Common mode matches raw voxel intensities directly. 
-  Leaving Bit :bdg-success:`256` DISABLED uses Spatial Gradient Alignment along tissue edges for cross-contrast (inter-modal) scans, it compares directional edge vectors rather than raw contrast.
+  Leaving Bit :bdg-success:`256` DISABLED uses :term:`Vector Gradient Alignment` along tissue edges for cross-contrast (inter-modal) scans, it compares directional edge vectors rather than raw contrast.
 
 * **Interpreting Score Deltas (Δη):**
   Track the change in score (:math:`\Delta\eta`) between consecutive runs:
@@ -240,13 +259,13 @@ At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective
   * **Finish:** If :math:`\Delta\eta \approx 0.00` on your final target mode (e.g., ``2051`` or ``10243``), parameter optimization is complete.
 
 **Fine-Tuning Polish: Engaging Bit 8192 (Hessian Optimization):**
-  When standard step searches plateau, you can activate Bit :bdg-danger:`8192` for maximum precision.
+  When standard step searches plateau, you can activate Bit :bdg-secondary:`8192` for maximum precision.
 
-* **Why Use It:** Standard passes adjust one parameter at a time. Bit ``8192`` computes the full :term:`Hessian Matrix` to optimize all parameters simultaneously, accounting for parameter interference by solving transformations jointly (e.g., balancing pitch rotation and z-translation together).
+* **Why Use It:** Standard passes adjust one parameter at a time. Bit :bdg-secondary:`8192` computes the full :term:`Hessian Matrix` to optimize all parameters simultaneously, accounting for parameter interference by solving transformations jointly (e.g., balancing pitch rotation and z-translation together).
   
-  * **Controlling Search Granularity:** By default, Bit ``8192`` evaluates derivative gradients on a 7.5 mm grid. Adding bit :bdg-info:`2048` (Fine) tightens spatial sampling to :math:`5.0 mm`. Bit :bdg-info:`512` (Superfine) pushes it to :math:`2.5 mm`, enabling sub-voxel precision on fine anatomical boundaries.
+  * **Controlling Search Granularity:** By default, Bit :bdg-secondary:`8192` evaluates derivative gradients on a 7.5 mm grid. Adding bit :bdg-info:`2048` (Fine) tightens spatial sampling to :math:`5.0 mm`. Bit :bdg-info:`512` (Superfine) pushes it to :math:`2.5 mm`, enabling sub-voxel precision on fine anatomical boundaries.
   
-  * **When to Choose It:** Bit ``8192`` is typically used as a final pass once coarse/intermediate alignment is already close to the solution. Running it on unaligned images will cause matrix divergence or solvers to fail.
+  * **When to Choose It:** Bit :bdg-secondary:`8192` is typically used as a final pass once coarse/intermediate alignment is already close to the solution. Running it on unaligned images will cause matrix divergence or solvers to fail.
 
 * **Visual Verification (The Gold Standard):**
   Never rely on the :math:`\eta` score alone. Always visually inspect the final fit by resampling the source image onto target space (using :ref:`t4img_4dfp`) and utilizing a visualizer tool (like FSLeyes) to overlay anatomical contours.
@@ -255,7 +274,7 @@ At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective
    **Evaluate Quality Without Modifying Files:**
    To check the current objective function score (:math:`\eta`) without altering your existing :term:`t4file`, disable Bit :bdg-primary:`1`.
    
-.. rubric:: Common Multi-Pass Sequences
+.. rubric:: Common Multi-Pass Algorithms
 
 Image registration relies on multi-pass workflows executed through external loops. 
 Because ``imgreg_4dfp`` executes only a single pass per command and updates the transformation matrix in place, each run uses the output :term:`t4file` from the previous pass as its new starting baseline.
@@ -265,11 +284,11 @@ Initial coarse passes evaluate broad spatial steps to move scans into the correc
 
 Repeating identical modes in succession allows solvers to re-center sampling grids around the updated matrix baseline and continue optimizing toward true convergence.
 
-*The C code below illustrates a few registration sequences. Actual script implementations may differ in exact syntax.*
+*The C Shell code below illustrates a few registration sequences. Actual script implementations may differ in exact syntax.*
 
 .. tab-set::
 
-   .. tab-item:: T1 to Atlas
+   .. tab-item:: T2w to T1w
 
       .. card::
          :class-header: sd-bg-light sd-font-weight-bold
@@ -279,13 +298,14 @@ Repeating identical modes in succession allows solvers to re-center sampling gri
          .. code-block:: csh
 
             @ j = 1
-            set mode = (4099 4099 3075 2051 2051)
-            while ( $j <= $#mode )
-                imgreg_4dfp <target_frame> <target_mask> <source_frame> <source_mask> <t4file> $mode[$j]
+            set masks = (none none none <target_mask> <target_mask> <target_mask>)
+            set modes = (4099 4099 3075 2051 2051 10243)
+            while ( $j <= $#modes )
+                imgreg_4dfp <target_frame> $masks[$j] <source_frame> <source_mask> <t4file> $modes[$j]
                 @ j++
             end
 
-   .. tab-item:: T2w to Atlas
+   .. tab-item:: BOLD to T2w
 
       .. card::
          :class-header: sd-bg-light sd-font-weight-bold
@@ -295,13 +315,14 @@ Repeating identical modes in succession allows solvers to re-center sampling gri
          .. code-block:: csh
 
             @ j = 1
-            set mode = (4099 1027 2051 2051 10243)
-            while ( $j <= $#mode )
-                imgreg_4dfp <target_frame> <target_mask> <source_frame> <source_mask> <t4file> $mode[$j]
+            set masks = (none none <target_mask> <target_mask> <target_mask>)
+            set modes = (4099 1027 2051 2051 10243)
+            while ( $j <= $#modes )
+                imgreg_4dfp <target_frame> <target_mask> <source_frame> masks[$j] <t4file> $modes[$j]
                 @ j++
             end
 
-   .. tab-item:: T2w to T1
+   .. tab-item:: BOLD to T1w
 
       .. card::
          :class-header: sd-bg-light sd-font-weight-bold
@@ -311,10 +332,10 @@ Repeating identical modes in succession allows solvers to re-center sampling gri
          .. code-block:: csh
 
             @ j = 1
-            set msk = (none none none <target_mask> <target_mask> <target_mask>)
-            set mode = (4099 4099 1027 2051 2051 10243)
-            while ( $j <= $#mode )
-                imgreg_4dfp <target_frame> $msk[$j] <source_frame> <source_mask> <t4file> $mode[$j]
+            set masks = (none none <target_mask> <target_mask> <target_mask>)
+            set modes = (4099 4099 3075 2051 2051)
+            while ( $j <= $#modes )
+                imgreg_4dfp <target_frame> <target_mask> <source_frame> masks[$j] <t4file> $modes[$j]
                 @ j++
             end
 
@@ -332,44 +353,57 @@ Examples
 
     .. tab-item:: 📁 Case 1: T2w to T1
 
-        In standard processing pipelines, registration is performed progressively by looping over a sequence of refining modes, e.g. ``4099`` → ``4099`` → ``1027`` → ``2051`` → ``2051`` → ``10243``.
+        In standard processing pipelines, registration between T2w and T1w is performed progressively by looping over a list of refining modes, e.g. ``4099`` → ``4099`` → ``1027`` → ``2051`` → ``2051`` → ``10243``.
 
-        * **4099** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`): Grid Search Translation (7.5 mm grid steps). Run twice to guarantee convergence.
+        * **4099** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`): Grid Search Translation (7.5 mm grid steps). Run twice to guarantee initial overlap.
         * **1027** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024`): Fast Coarse Step (12.0 mm sampling steps).
         * **2051** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`): Standard Fine Step (5.0 mm sampling steps). Run twice to refine parameters.
-        * **10243** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-danger:`8192`): Hessian Newton-Raphson + Standard Fine Step.
+        * **10243** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-secondary:`8192`): Hessian Newton-Raphson + Standard Fine Step.
 
         .. card:: 📥 Input Data Overview
           :class-card: sd-bg-light sd-border-1 mb-3
 
           .. div:: card-help-top-right
 
-            :card-help:`Image Generation Steps: | 1. imgreg_4dfp updates matrix (.t4) | 2. t4img_4dfp resamples source to target space | 3. fsleyes render overlays T1 (hot) & source (cool, 50% opacity)`
-
+            :card-help:`Image Generation Steps: | 1. Initialize (t4_null) & solve transform matrix (imgreg_4dfp) | 2. Resample image & mask to target space (t4img_4dfp) | 3. Skull-strip resampled volume (maskimg_4dfp) | 4. Render target & masked source overlay (fsleyes)`
 
           .. grid:: 1 2 2 2
               :gutter: 3
 
-              .. grid-item::
+              .. grid-item-card:: 🎯 Target (Reference) Image: T1w
+                 :class-header: sd-bg-light sd-font-weight-bold
 
-                **Target (Reference) Image:**
+                 * **Root Name:** ``SUBJ_MSC01_func01_mpr``
+                 * **Mask:** ``SUBJ_MSC01_func01_mpr_brain_mask``
 
-                * **Root Name:** ``SUBJ_MSC01_func01_mpr``
-                * **Mask:** ``SUBJ_MSC01_func01_mpr_brain_mask``
+                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_t1_source_data.png
+                    :alt: T1 Target Image
+                    :align: center
+                    :width: 100%
 
-              .. grid-item::
+              .. grid-item-card:: 📦 Source (Moving) Image: T2w
+                 :class-header: sd-bg-light sd-font-weight-bold
 
-                **Source (Moving) Image:**
+                 * **Root Name:** ``SUBJ_MSC01_func01_t2w``
+                 * **Mask:** ``SUBJ_MSC01_func01_t2w_brain_mask``
+                 * **t4file:** ``SUBJ_MSC01_func01_t2w_to_SUBJ_MSC01_func01_mpr_t4``
+                 * **Initial Score:** η = 0.38 (Unregistered baseline)
 
-                * **Root Name:** ``SUBJ_MSC01_func01_t2w``
-                * **Mask:** ``none``
-                * **t4file:** ``SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4``
-                * **Initial Score:** η = 0.38 (Unregistered baseline)
+                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_t2_source_data.png
+                    :alt: T2w Source Image
+                    :align: center
+                    :width: 100%
 
-          .. figure:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_source_data.png
-            :alt: Unaligned source image
-            :align: center 
-            :width: 80%
+          .. grid:: 1 1 1 1
+              :gutter: 3
+
+              .. grid-item-card:: 🔀 Initial Overlay (Unregistered Baseline)
+                 :class-header: sd-bg-light sd-font-weight-bold
+
+                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_combined_source_data.png
+                    :alt: Unaligned combined source image overlay
+                    :align: center
+                    :width: 85%
 
         .. tab-set::
 
@@ -381,15 +415,15 @@ Examples
               .. code-block:: bash
 
                 # Pass 1 & 2
-                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 4099
-                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 4099
+                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_t2w_to_SUBJ_MSC01_func01_mpr_t4 4099
+                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_t2w_to_SUBJ_MSC01_func01_mpr_t4 4099
 
               **What Happens Under the Hood:**
 
               * Executes a broad 3D (:bdg-info:`2`) translation grid search across X, Y, and Z axes.
               * Omits spatial masks (passing ``none``) to prevent mask clipping during initial wide translations.
               * Updates translational parameters in :term:`t4file` while leaving rotational parameters unchanged.
-              * Uses :term:`Spatial Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
+              * Uses :term:`Vector Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
 
               **Output:**
               
@@ -402,16 +436,16 @@ Examples
 
                   .. div:: card-help-top-right
 
-                    :card-help:`Image Generation Steps: | 1. imgreg_4dfp updates matrix (.t4) | 2. t4img_4dfp resamples source to target space | 3. fsleyes render overlays T1 (hot) & source (cool, 50% opacity)`
+                    :card-help:`Image Generation Steps: | 1. Initialize (t4_null) & solve transform matrix (imgreg_4dfp) | 2. Resample image & mask to target space (t4img_4dfp) | 3. Skull-strip resampled volume (maskimg_4dfp) | 4. Render target & masked source overlay (fsleyes)`
 
                   .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd1/imgreg_c1_cmd1_output.png
-                      :alt: 10243 output
+                      :alt: 4099 output
                       :align: center
 
                 .. grid-item-card:: 📄 t4file
 
                   .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd1/imgreg_c1_cmd1_t4file.png
-                      :alt: 10243 t4file output
+                      :alt: 4099 t4file output
                       :align: center
 
           .. tab-item:: Fast Local Pass (Mode 1027)
@@ -422,13 +456,13 @@ Examples
               .. code-block:: bash
 
                 # Pass 3
-                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 1027
+                imgreg_4dfp SUBJ_MSC01_func01_mpr none SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_t2w_to_SUBJ_MSC01_func01_mpr_t4 1027
 
               **What Happens Under the Hood:**
 
               * Switches execution from global grid searching to local gradient-driven optimization.
               * Employs a wide 12.0 mm sampling step size for rapid, large-scale rotational convergence.
-              * Uses :term:`Spatial Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
+              * Uses :term:`Vector Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -436,13 +470,13 @@ Examples
                 .. grid-item-card:: 🧠 Transformed Images
 
                   .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd2/imgreg_c1_cmd2_output.png
-                      :alt: 10243 output
+                      :alt: 1027 output
                       :align: center
 
                 .. grid-item-card:: 📄 t4file
 
                   .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd2/imgreg_c1_cmd2_t4file.png
-                      :alt: 10243 t4file output
+                      :alt: 1027 t4file output
                       :align: center
 
               **η = 0.44**
@@ -455,15 +489,15 @@ Examples
               .. code-block:: bash
 
                 # Pass 4 & 5
-                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 2051
-                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_t2w_to_SUBJ_MSC01_func01_mpr_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_t2w_to_SUBJ_MSC01_func01_mpr_t4 2051
 
               **What Happens Under the Hood:**
 
               * Narrows sampling step size from 12.0 mm to 5.0 mm for fine-grained local gradient evaluation.
               * Introduces the target brain mask (``SUBJ_MSC01_func01_mpr_brain_mask``) to restrict voxel evaluation to brain tissue.
               * Executes two sequential passes to achieve full parameter stability across all 6 rigid-body DOF.
-              * Uses :term:`Spatial Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
+              * Uses :term:`Vector Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -471,13 +505,13 @@ Examples
                 .. grid-item-card:: 🧠 Transformed Images
 
                   .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd3/imgreg_c1_cmd3_output.png
-                      :alt: 10243 output
+                      :alt: 2051 output
                       :align: center
 
                 .. grid-item-card:: 📄 t4file
 
                   .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd3/imgreg_c1_cmd3_t4file.png
-                      :alt: 10243 t4file output
+                      :alt: 2051 t4file output
                       :align: center
 
               **η = 0.46**
@@ -485,16 +519,16 @@ Examples
           .. tab-item:: Hessian Polishing (Mode 10243)
               :sync: pass-10243
 
-              **Optimization Function:** Standard Fine Step + Hessian Newton-Raphson | **Step Size:** 5.0 mm (Fine) | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-danger:`8192`
+              **Optimization Function:** Standard Fine Step + Hessian Newton-Raphson | **Step Size:** 5.0 mm (Fine) | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-secondary:`8192`
 
               .. code-block:: bash
 
                 # Pass 6
-                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_mpr_to_SUBJ_MSC01_func01_t2w_t4 10243
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_t2w none SUBJ_MSC01_func01_t2w_to_SUBJ_MSC01_func01_mpr_t4 10243
 
               **What Happens Under the Hood:**
 
-              * Activates the Newton-Raphson optimization function (:bdg-danger:`8192`) using a fixed 5.0 mm step size (:bdg-info:`2048`).
+              * Activates the Newton-Raphson optimization function (:bdg-secondary:`8192`) using a fixed 5.0 mm step size (:bdg-info:`2048`).
               * Computes the :term:`Hessian Matrix` of partial second derivatives to map the curvature of the objective function landscape.
               * Restricts objective evaluation strictly to valid brain tissue using the target brain mask (``SUBJ_MSC01_func01_mpr_brain_mask``).
               * Writes the final, fully converged :math:`4 \times 4` rigid transformation matrix to the output :term:`t4file`.
@@ -515,6 +549,391 @@ Examples
                       :align: center
 
               **η = 0.47**
+
+    .. tab-item:: 📁 Case 2: BOLD to T2w
+
+        In standard processing pipelines, registration between BOLD and T2w is performed progressively by looping over a list of refining modes, e.g. ``4099`` → ``1027`` → ``2051`` → ``2051`` → ``10243``.
+
+        * **4099** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`): Grid Search Translation (7.5 mm grid steps).
+        * **1027** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024`): Fast Coarse Step (12.0 mm sampling steps).
+        * **2051** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`): Standard Fine Step (5.0 mm sampling steps). Run twice to refine parameters.
+        * **10243** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-secondary:`8192`): Hessian Newton-Raphson + Standard Fine Step.
+
+        .. card:: 📥 Input Data Overview
+          :class-card: sd-bg-light sd-border-1 mb-3
+
+          .. div:: card-help-top-right
+
+            :card-help:`Image Generation Steps: | 1. Initialize (t4_null) & solve transform matrix (imgreg_4dfp) | 2. Resample image & mask to target space (t4img_4dfp) | 3. Skull-strip resampled volume (maskimg_4dfp) | 4. Render target & masked source overlay (fsleyes)`
+
+          .. grid:: 1 2 2 2
+              :gutter: 3
+
+              .. grid-item-card:: 🎯 Target (Reference) Image: T2w
+                 :class-header: sd-bg-light sd-font-weight-bold
+
+                 * **Root Name:** ``SUBJ_MSC01_func01_t2w``
+                 * **Mask:** ``SUBJ_MSC01_func01_t2w_brain_mask``
+
+                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_t2_source_data.png
+                    :alt: T2 Target Image
+                    :align: center
+                    :width: 100%
+
+              .. grid-item-card:: 📦 Source (Moving) Image: BOLD EPI
+                 :class-header: sd-bg-light sd-font-weight-bold
+
+                 * **Root Name:** ``SUBJ_MSC01_func01_anat_Grp1``
+                 * **Mask:** ``SUBJ_MSC01_func01_anat_Grp1_brain_mask``
+                 * **t4file:** ``SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4``
+                 * **Initial Score:** η = 0.21 (Unregistered baseline)
+
+                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_anat_source_data.png
+                    :alt: BOLD Source Image
+                    :align: center
+                    :width: 100%
+
+          .. grid:: 1 1 1 1
+              :gutter: 3
+
+              .. grid-item-card:: 🔀 Initial Overlay (Unregistered Baseline)
+                 :class-header: sd-bg-light sd-font-weight-bold
+
+                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_combined_source_data.png
+                    :alt: Unaligned combined source image overlay
+                    :align: center
+                    :width: 85%
+
+        .. tab-set::
+
+          .. tab-item:: Coarse Search (Mode 4099)
+              :sync: pass-4099
+
+              **Optimization Function:** Grid Search Translation | **Step Size:** Fixed 7.5 mm grid | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`
+
+              .. code-block:: bash
+
+                # Pass 1
+                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1 none SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4 4099
+
+              **What Happens Under the Hood:**
+
+              * Executes a broad 3D (:bdg-info:`2`) translation grid search across X, Y, and Z axes.
+              * Omits spatial masks (passing ``none``) to prevent mask clipping during initial wide translations.
+              * Updates translational parameters in :term:`t4file` while leaving rotational parameters unchanged.
+              * Uses :term:`Vector Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
+
+              **Output:**
+              
+              η = 0.29
+
+              .. grid:: 1 2 2 2
+                :gutter: 2
+
+                .. grid-item-card:: 🧠 Transformed Images
+
+                  .. div:: card-help-top-right
+
+                    :card-help:`Image Generation Steps: | 1. Initialize (t4_null) & solve transform matrix (imgreg_4dfp) | 2. Resample image & mask to target space (t4img_4dfp) | 3. Skull-strip resampled volume (maskimg_4dfp) | 4. Render target & masked source overlay (fsleyes)`
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/cmd1/imgreg_c2_cmd1_output.png
+                      :alt: 4099 output
+                      :align: center
+
+                .. grid-item-card:: 📄 t4file
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/cmd1/imgreg_c2_cmd1_t4file.png
+                      :alt: 4099 t4file output
+                      :align: center
+
+          .. tab-item:: Fast Local Pass (Mode 1027)
+              :sync: pass-1027
+
+              **Optimization Function:** Fast Coarse Step | **Step Size:** 12.0 mm (Fast) | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024`
+
+              .. code-block:: bash
+
+                # Pass 2
+                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1 none SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4 1027
+
+              **What Happens Under the Hood:**
+
+              * Switches execution from global grid searching to local gradient-driven optimization.
+              * Employs a wide 12.0 mm sampling step size for rapid, large-scale rotational convergence.
+              * Uses :term:`Vector Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
+
+              **Output:**
+
+              η = 0.33
+
+              .. grid:: 1 2 2 2
+                :gutter: 2
+
+                .. grid-item-card:: 🧠 Transformed Images
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/cmd2/imgreg_c2_cmd2_output.png
+                      :alt: 1027 output
+                      :align: center
+
+                .. grid-item-card:: 📄 t4file
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/cmd2/imgreg_c2_cmd2_t4file.png
+                      :alt: 1027 t4file output
+                      :align: center
+
+          .. tab-item:: Fine Local Alignment (Mode 2051)
+              :sync: pass-2051
+
+              **Optimization Function:** Standard Fine Step | **Step Size:** 5.0 mm (Fine) | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`
+
+              .. code-block:: bash
+
+                # Pass 3 & 4
+                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4 2051
+
+              **What Happens Under the Hood:**
+
+              * Narrows sampling step size from 12.0 mm to 5.0 mm for fine-grained local gradient evaluation.
+              * Introduces the target brain mask (``SUBJ_MSC01_func01_anat_Grp1_brain_mask``) to restrict voxel evaluation to brain tissue.
+              * Executes two sequential passes to achieve full parameter stability across all 6 rigid-body DOF.
+              * Uses :term:`Vector Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
+
+              **Output:**
+
+              η = 0.37
+
+              .. grid:: 1 2 2 2
+                :gutter: 2
+
+                .. grid-item-card:: 🧠 Transformed Images
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/cmd3/imgreg_c2_cmd3_output.png
+                      :alt: 2051 output
+                      :align: center
+
+                .. grid-item-card:: 📄 t4file
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/cmd3/imgreg_c2_cmd3_t4file.png
+                      :alt: 2051 t4file output
+                      :align: center
+
+          .. tab-item:: Hessian Polishing (Mode 10243)
+              :sync: pass-10243
+
+              **Optimization Function:** Standard Fine Step + Hessian Newton-Raphson | **Step Size:** 5.0 mm (Fine) | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-secondary:`8192`
+
+              .. code-block:: bash
+
+                # Pass 5
+                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4 10243
+
+              **What Happens Under the Hood:**
+
+              * Activates the Newton-Raphson optimization function (:bdg-secondary:`8192`) using a fixed 5.0 mm step size (:bdg-info:`2048`).
+              * Computes the :term:`Hessian Matrix` of partial second derivatives to map the curvature of the objective function landscape.
+              * Restricts objective evaluation strictly to valid brain tissue using the target brain mask (``SUBJ_MSC01_func01_t2w_brain_mask``).
+              * Writes the final, fully converged :math:`4 \times 4` rigid transformation matrix to the output :term:`t4file`.
+
+              **Output:**
+
+              η = 0.37
+
+              .. grid:: 1 2 2 2
+                :gutter: 2
+
+                .. grid-item-card:: 🧠 Transformed Images
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/cmd4/imgreg_c2_cmd4_output.png
+                      :alt: 10243 output
+                      :align: center
+
+                .. grid-item-card:: 📄 t4file
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/cmd4/imgreg_c2_cmd4_t4file.png
+                      :alt: 10243 t4file output
+                      :align: center
+
+    .. tab-item:: 📁 Case 3: BOLD to T1w
+
+        In standard processing pipelines, registration between BOLD and T1w is performed progressively by looping over a list of refining modes, e.g. ``4099`` → ``4099`` → ``3075`` → ``2051`` → ``2051``.
+
+        * **4099** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`): Grid Search Translation (7.5 mm translation steps, 9.0 mm voxel grid). Run twice to guarantee initial overlap.
+        * **3075** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024` + :bdg-danger:`2048`): Fast Search / Fine Grid (1.2× parameter step radius, 5.0 mm voxel grid).
+        * **2051** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`): Fine Grid / Standard Search (dynamic 0.8× → 0.4× parameter step radius, 5.0 mm voxel grid). Run twice to reach final convergence.
+
+        .. card:: 📥 Input Data Overview
+          :class-card: sd-bg-light sd-border-1 mb-3
+
+          .. div:: card-help-top-right
+
+            :card-help:`Image Generation Steps: | 1. Initialize (t4_null) & solve transform matrix (imgreg_4dfp) | 2. Resample image & mask to target space (t4img_4dfp) | 3. Skull-strip resampled volume (maskimg_4dfp) | 4. Render target & masked source overlay (fsleyes)`
+
+
+          .. grid:: 1 2 2 2
+              :gutter: 3
+
+              .. grid-item-card:: 🎯 Target (Reference) Image: T1w
+                 :class-header: sd-bg-light sd-font-weight-bold
+
+                 * **Root Name:** ``SUBJ_MSC01_func01_mpr``
+                 * **Mask:** ``SUBJ_MSC01_func01_mpr_brain_mask``
+
+                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case3/imgreg_c3_t1_source_data.png
+                    :alt: T1 Target Image
+                    :align: center
+                    :width: 100%
+
+              .. grid-item-card:: 📦 Source (Moving) Image: BOLD EPI
+                 :class-header: sd-bg-light sd-font-weight-bold
+
+                 * **Root Name:** ``SUBJ_MSC01_func01_anat_Grp1``
+                 * **Mask:** ``SUBJ_MSC01_func01_anat_Grp1_brain_mask``
+                 * **t4file:** ``SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4``
+                 * **Initial Score:** η = 0.21 (Unregistered baseline)
+
+                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case3/imgreg_c3_anat_source_data.png
+                    :alt: BOLD Source Image
+                    :align: center
+                    :width: 100%
+
+          .. grid:: 1 1 1 1
+              :gutter: 3
+
+              .. grid-item-card:: 🔀 Initial Overlay (Unregistered Baseline)
+                :class-header: sd-bg-light sd-font-weight-bold
+
+                .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case3/imgreg_c3_combined_source_data.png
+                    :alt: Unaligned combined source image overlay
+                    :align: center
+                    :width: 85%
+
+        .. tab-set::
+
+          .. tab-item:: Coarse Search (Mode 4099)
+              :sync: pass-4099
+
+              **Optimization Function:** Grid Search Translation | **Step Size:** Fixed 7.5 mm grid | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`
+
+              .. code-block:: bash
+
+                # Pass 1 & 2
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1 none SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4 4099
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1 none SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4 4099
+
+              **What Happens Under the Hood:**
+
+              * Executes a broad 3D (:bdg-info:`2`) translation grid search across X, Y, and Z axes.
+              * Omits spatial masks (passing ``none``) to prevent mask clipping during initial wide translations.
+              * Updates translational parameters in :term:`t4file` while leaving rotational parameters unchanged.
+              * Uses :term:`Vector Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
+
+              **Output:**
+              
+              η = 0.29
+
+              .. grid:: 1 2 2 2
+                :gutter: 2
+
+                .. grid-item-card:: 🧠 Transformed Images
+
+                  .. div:: card-help-top-right
+
+                    :card-help:`Image Generation Steps: | 1. Initialize (t4_null) & solve transform matrix (imgreg_4dfp) | 2. Resample image & mask to target space (t4img_4dfp) | 3. Skull-strip resampled volume (maskimg_4dfp) | 4. Render target & masked source overlay (fsleyes)`
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd1/imgreg_c1_cmd1_output.png
+                      :alt: 4099 output
+                      :align: center
+
+                .. grid-item-card:: 📄 t4file
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd1/imgreg_c1_cmd1_t4file.png
+                      :alt: 4099 t4file output
+                      :align: center
+
+          .. tab-item:: Fast Local Pass (Mode 3075)
+              :sync: pass-3075
+
+              **Optimization Function:** Fast Search / Fine Grid | **Step Size:** 1.2x parameter step / 5.0 mm voxel grid | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024` + :bdg-danger:`2048`
+
+              .. code-block:: bash
+
+                # Pass 3
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4 3075
+
+              **What Happens Under the Hood:**
+
+              * Switches execution from global grid searching to local parabolic gradient optimization across all 6 rigid-body degrees of freedom.
+              * Combines a wide parameter search radius (1.2x multiplier via Bit :bdg-danger:`1024`) for broad rotational capture with a tight 5.0 mm spatial sampling grid (via Bit :bdg-danger:`2048`).
+              * Introduces the source brain mask (``SUBJ_MSC01_func01_anat_Grp1_brain_mask``) now that initial translation is established.
+              * Uses :term:`Vector Gradient Alignment` (Bit :bdg-success:`256` DISABLED).
+
+              **Output:**
+
+              η = 0.31
+
+              .. grid:: 1 2 2 2
+                :gutter: 2
+
+                .. grid-item-card:: 🧠 Transformed Images
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd2/imgreg_c1_cmd2_output.png
+                      :alt: 3075 output
+                      :align: center
+
+                .. grid-item-card:: 📄 t4file
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd2/imgreg_c1_cmd2_t4file.png
+                      :alt: 3075 t4file output
+                      :align: center
+
+          .. tab-item:: Fine Local Alignment (Mode 2051)
+              :sync: pass-2051
+
+              **Optimization Function:** Standard Fine Step | **Step Size:** 5.0 mm voxel grid | **Bits:** :bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`
+
+              .. code-block:: bash
+
+                # Pass 4 & 5
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4 2051
+
+
+              **What Happens Under the Hood:**
+
+              * Drops Bit :bdg-danger:`1024` to transition from a wide search radius (1.2x) to a narrowing dynamic search step (0.8x → 0.4x) while maintaining the 5.0 mm spatial sampling grid.
+              * Refines rigid-body alignment around the local minimum identified during Pass 3.
+              * Executes two sequential passes to guarantee parameter stability and complete convergence (:math:`\Delta\eta \approx 0.00`).
+              * Uses :term:`Vector Gradient Alignment` (Bit :bdg-success:`256` DISABLED).
+
+              **Output:**
+
+              η = 0.32
+
+              .. grid:: 1 2 2 2
+                :gutter: 2
+
+                .. grid-item-card:: 🧠 Transformed Images
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd3/imgreg_c1_cmd3_output.png
+                      :alt: 2051 output
+                      :align: center
+
+                .. grid-item-card:: 📄 t4file
+
+                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/cmd3/imgreg_c1_cmd3_t4file.png
+                      :alt: 2051 t4file output
+                      :align: center
+
+
+        .. card:: ⚠️ Cross-Modal Optimization Caveat (Mode 2051 vs 3075)
+          :class-card: sd-bg-warning-subtle sd-border-1 mb-3 mt-3
+
+          **Why Mode 2051 may appear slightly shifted compared to Mode 3075:**
+
+          * **Flipped Image Contrast ("Fake Traps"):** In cross-modal registration (**T2* BOLD** to **T1w**), ``imgreg_4dfp`` aligns images by matching edge directions. Because these modalities have inverted tissue contrasts, this alignment process creates artificial "false traps" (local cost minima in η) along brain and skull boundaries.
+          * **Big Leaps vs. Small Steps:** Mode ``3075`` uses a wide **1.2x** search step that leaps over small local cost ripples. Mode ``2051`` narrows the search step (**0.8x → 0.4x**), which can cause the optimizer to settle into a nearby false local minimum along non-brain or dura boundaries.
+          * **Recommended Alternative:** To avoid cross-modal gradient traps, use an intermediate T2w scan (**Case 2: BOLD → T2w → T1w**).
 
 
     .. tab-item:: ⚠️ Common Errors
@@ -589,7 +1008,7 @@ Examples
             .. admonition:: Resolution
                 :class: warning
 
-                If starting a registration sequence from scratch, initialize a new identity matrix using :ref:`t4_null` prior to calling ``imgreg_4dfp``.
+                If starting a registration from scratch, initialize a new identity matrix using :ref:`t4_null` prior to calling ``imgreg_4dfp``.
             
 .. rubric:: References
 

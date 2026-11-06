@@ -48,7 +48,7 @@ Glossary
 
       * Pearson Intensity Correlation (:ref:`imgreg_4dfp <imgreg_4dfp>` Mode: 256 ON): Measures how closely raw pixel brightness matches across both images. Ideal for same-contrast scans where corresponding brain structures share the exact same brightness levels.
 
-      * Spatial Gradient Alignment (:ref:`imgreg_4dfp <imgreg_4dfp>` Mode: 256 OFF): Measures how well tissue boundaries and structural edges line up. Ideal for cross-contrast scans.
+      * Vector Gradient Alignment (:ref:`imgreg_4dfp <imgreg_4dfp>` Mode: 256 OFF): Measures how well tissue boundaries and structural edges line up. Ideal for cross-contrast scans.
 
    Explicit Little-Endian
       The standard byte order used by modern PCs (x86/x64). It stores the smallest (least significant) byte first and explicitly includes a 2-character Value Representation (VR) tag that names the data type for each item.
@@ -93,7 +93,7 @@ Glossary
    Siemens .IMA
       A file extension used by Siemens MRI scanners. These are standard DICOM files or raw headers saved with a Siemens-specific extension.
 
-   Spatial Gradient Alignment
+   Vector Gradient Alignment
       An image alignment similarity metric that compares directional brightness gradients (∇ I) along tissue boundaries and anatomical edges, making it resistant to contrast differences between scan types.
 
    Squirm
