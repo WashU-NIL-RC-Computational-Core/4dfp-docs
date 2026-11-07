@@ -108,7 +108,7 @@ Usage
      - Grid Search Translation
      - **ENABLED:** Global 7.5mm translation grid search for initial positioning.
    * - :bdg-secondary:`8192`
-     - Hessian Newton-Raphson
+     - Hessian Newton-Raphson Optimization
      - **ENABLED:** :term:`Hessian Matrix` inversion (:term:`Newton-Raphson Optimization`).
 
 .. important::
@@ -143,7 +143,7 @@ Usage
       * Ignores :bdg-secondary:`8192`.
       * Does not perform Affine (:bdg-info:`4`) or Scaling (:bdg-info:`8`) transformations.
 
-    .. grid-item-card:: Standard Mode (Non-Hessian)
+    .. grid-item-card:: Standard Optimization (Non-Hessian)
       :class-header: sd-bg-light sd-font-weight-bold
 
       :octicon:`arrow-switch;1em;sd-text-primary` **Iterative Step Search**
@@ -162,7 +162,7 @@ Usage
       * :bdg-danger:`512` **Superfine:** Dense **2.5 mm** grid.
       * *Default:* Dynamic **9.0 mm → 5.0 mm** grid (coarsening up to **12.0 mm** if steps overshoot).
 
-    .. grid-item-card:: Hessian Mode (:bdg-secondary:`8192`)
+    .. grid-item-card:: Hessian Newton-Raphson Optimization (:bdg-secondary:`8192`)
       :class-header: sd-bg-light sd-font-weight-bold
 
       :octicon:`graph;1em;sd-text-primary` **Joint Parameter Optimization**
@@ -250,19 +250,29 @@ Usage
 
 .. rubric:: Evaluating Alignment Quality: The eta Score (η)
 
-At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective Function` to report an :term:`eta alignment score<eta Alignment Score>` (η). The resulting score is normalized between 0.0 (no overlap) and 1.0 (identical alignment).
+At the end of each pass, ``imgreg_4dfp`` evaluates its internal :term:`Objective Function` to report an :term:`eta alignment score<eta Alignment Score>` (η).
 
-* **Inter- vs. Intra-Modal Expectations ("Common Mode"):**
-  Enabling Bit :bdg-success:`256` engages **"common mode"**, which uses :term:`Pearson Intensity Correlation` for same-contrast (intra-modal) scans. Common mode matches raw voxel intensities directly. 
-  Leaving Bit :bdg-success:`256` DISABLED uses :term:`Vector Gradient Alignment` along tissue edges for cross-contrast (inter-modal) scans, it compares directional edge vectors rather than raw contrast.
+**Inter- vs. Intra-Modal Expectations ("Common Mode"):**
 
-* **Interpreting Score Deltas (Δη):**
+  * **Bit 256 ON (Common Mode):** Uses :term:`Pearson Intensity Correlation` for same-contrast (intra-modal) scans to match raw voxel intensities. Enabling Bit :bdg-success:`256` also calculates ``q``, the relative scan brightness multiplier (:math:`\bar{I}_{\text{target}} / \bar{I}_{\text{source}}`).
+  * **Bit 256 OFF (Default):** Uses :term:`Vector Gradient Alignment` along tissue edges for cross-contrast (inter-modal) scans. It compares directional edge vectors rather than raw contrast, and ``q`` remains ``0.0000``.
+
+**Output Formats across Pass Types:**
+
+  * **Standard Optimization Passes (Modes** :bdg-danger:`512`, :bdg-danger:`1024`, :bdg-danger:`2048`, :bdg-secondary:`8192` **or Default):** Results are printed as summary lines formatted as ``eta,q [eta] [q]`` (e.g., ``eta,q 0.32523 0.00000``). The normalized score (:math:`\eta \in [0.0, 1.0]`) is reported first, followed by the intensity scale ratio (``q``).
+  * **Grid Search Translation (Bit** :bdg-dark:`4096` **):** Evaluates a coarse translation grid. Candidates are output as 5-column table rows, where the volume-weighted score (:math:`\eta_{\text{search}} = \eta \times N_{\text{voxels}}`) appears in the **4th column** and ``q`` appears in the **5th column** (e.g., ``7.5000   37.5000   45.0000  1096.0754   0.0000``).
+
+.. warning::
+   **Do not compare η scores between Bit 256 ON vs. OFF, or when using Bit 4096.**
+   Toggling Bit 256 switches the underlying optimization metric, while Bit 4096 scales scores by volume overlap.
+   
+**Interpreting Score Deltas (Δη):**
   Track the change in score (:math:`\Delta\eta`) between consecutive runs:
   
   * :math:`\Delta\eta > 0`: The optimization function is actively improving alignment. Continue optimizing at the current resolution.
   * :math:`\Delta\eta \approx 0.00`: The current pass has plateaued. 
 
-* **The Decision Rule: Advance vs. Finish:**
+**The Decision Rule: Advance vs. Finish:**
 
   * **Advance:** If :math:`\Delta\eta \approx 0.00` on an intermediate mode (e.g., Coarse or Fast), switch your mode to a finer step size or optimization function.
   * **Finish:** If :math:`\Delta\eta \approx 0.00` on your final target mode (e.g., ``2051`` or ``10243``), parameter optimization is complete.
@@ -396,7 +406,6 @@ Examples
                  * **Root Name:** ``SUBJ_MSC01_func01_t2w``
                  * **Mask:** ``SUBJ_MSC01_func01_t2w_brain_mask``
                  * **t4file:** ``SUBJ_MSC01_func01_t2w_to_SUBJ_MSC01_func01_mpr_t4``
-                 * **Initial Score:** η = 0.38 (Unregistered baseline)
 
                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_t2_source_data.png
                     :alt: T2w Source Image
@@ -436,7 +445,7 @@ Examples
 
               **Output:**
               
-              η = 0.38
+              η = 3576.5610
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -595,7 +604,6 @@ Examples
                  * **Root Name:** ``SUBJ_MSC01_func01_anat_Grp1``
                  * **Mask:** ``SUBJ_MSC01_func01_anat_Grp1_brain_mask``
                  * **t4file:** ``SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4``
-                 * **Initial Score:** η = 0.21 (Unregistered baseline)
 
                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_anat_source_data.png
                     :alt: BOLD Source Image
@@ -634,7 +642,7 @@ Examples
 
               **Output:**
               
-              η = 0.29
+              η = 1190.5834
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -799,7 +807,6 @@ Examples
                  * **Root Name:** ``SUBJ_MSC01_func01_anat_Grp1``
                  * **Mask:** ``SUBJ_MSC01_func01_anat_Grp1_brain_mask``
                  * **t4file:** ``SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4``
-                 * **Initial Score:** η = 0.21 (Unregistered baseline)
 
                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case3/imgreg_c3_anat_source_data.png
                     :alt: BOLD Source Image
@@ -839,7 +846,7 @@ Examples
 
               **Output:**
               
-              η = 0.29
+              η = 1006.6152
 
               .. grid:: 1 2 2 2
                 :gutter: 2
