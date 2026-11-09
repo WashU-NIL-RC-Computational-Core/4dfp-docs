@@ -43,7 +43,7 @@ Spatial Registration & Transforms
       :link-type: doc
       :class-card: nav-card
 
-      Apply t4 transformation matrices to a list of 4dfp images to resample and average them into a target coordinate space.
+      Resample, align, and weighted-average single or stacked 4dfp image volumes into target atlas spaces using 3D affine transformation matrices.
 
    .. grid-item-card:: 📊 wrpsmg_4dfp
       :link: wrpsmg_4dfp
