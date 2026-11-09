@@ -183,12 +183,12 @@ Usage
 
   .. note::
 
-    When multiple flags are set in a single mode integer, ``imgreg_4dfp`` configures two independent variables:
+    When multiple bits are enabled in a single mode integer, ``imgreg_4dfp`` configures two independent variables:
 
     * **Voxel Grid Size:** The voxel grid sampling resolution in millimeters (e.g., 12.0 mm coarse vs. 5.0 mm fine grid).
     * **Parameter Step Scale:** The parameter step size multiplier (e.g., 1.2x wide search vs. 0.5x narrow search).
 
-    **Important:** Always review the bitwise precedence order to confirm the exact **Voxel Grid Size** and **Parameter Step Scale** resulting from combined mode flags.
+    **Important:** Review the bitwise precedence order to confirm the exact **Voxel Grid Size** and **Parameter Step Scale** resulting from combined mode bits.
 
 .. dropdown:: Transformation Models: Affine Shearing & Stretch :bdg-info:`4` vs. Axis-Aligned Stretch & Shrink :bdg-info:`8`
    :animate: fade-in
