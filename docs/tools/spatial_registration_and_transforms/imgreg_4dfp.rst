@@ -445,7 +445,7 @@ Examples
 
               **Output:**
               
-              η = 3576.5610
+              η = 2008.55
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -497,7 +497,7 @@ Examples
                       :alt: 1027 t4file output
                       :align: center
 
-              **η = 0.44**
+              **η = 0.37**
 
           .. tab-item:: Fine Local Alignment (Mode 2051)
               :sync: pass-2051
@@ -532,7 +532,7 @@ Examples
                       :alt: 2051 t4file output
                       :align: center
 
-              **η = 0.46**
+              **η = 0.43**
 
           .. tab-item:: Hessian Polishing (Mode 10243)
               :sync: pass-10243
@@ -566,7 +566,18 @@ Examples
                       :alt: 10243 t4file output
                       :align: center
 
-              **η = 0.47**
+              **η = 0.43**
+
+      .. dropdown:: 🎞️ Click to view progressive registration animation (All Passes)
+        :animate: fade-in
+        :class-container: mt-3 mb-3
+
+        **Animation Sequence:** :bdg-secondary:`Baseline` → :bdg-dark:`4099` (×2) → :bdg-danger:`1027` → :bdg-danger:`2051` (×2) → :bdg-secondary:`10243`
+
+        .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_output.gif
+            :alt: Case 1 progressive registration animation across all modes
+            :align: center
+            :width: 85%
 
     .. tab-item:: 📁 Case 2: BOLD to T2w
 
@@ -601,9 +612,9 @@ Examples
               .. grid-item-card:: 📦 Source (Moving) Image: BOLD EPI
                  :class-header: sd-bg-light sd-font-weight-bold
 
-                 * **Root Name:** ``SUBJ_MSC01_func01_anat_Grp1``
-                 * **Mask:** ``SUBJ_MSC01_func01_anat_Grp1_brain_mask``
-                 * **t4file:** ``SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4``
+                 * **Root Name:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp``
+                 * **Mask:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask``
+                 * **t4file:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_t2w_t4``
 
                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_anat_source_data.png
                     :alt: BOLD Source Image
@@ -631,7 +642,7 @@ Examples
               .. code-block:: bash
 
                 # Pass 1
-                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1 none SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4 4099
+                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp none SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_t2w_t4 4099
 
               **What Happens Under the Hood:**
 
@@ -642,7 +653,7 @@ Examples
 
               **Output:**
               
-              η = 1190.5834
+              η = 656.12
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -671,7 +682,7 @@ Examples
               .. code-block:: bash
 
                 # Pass 2
-                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1 none SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4 1027
+                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp none SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_t2w_t4 1027
 
               **What Happens Under the Hood:**
 
@@ -681,7 +692,7 @@ Examples
 
               **Output:**
 
-              η = 0.33
+              η = 0.38
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -706,19 +717,19 @@ Examples
               .. code-block:: bash
 
                 # Pass 3 & 4
-                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4 2051
-                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_t2w_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_t2w_t4 2051
 
               **What Happens Under the Hood:**
 
               * Narrows sampling step size from 12.0 mm to 5.0 mm for fine-grained local gradient evaluation.
-              * Introduces the target brain mask (``SUBJ_MSC01_func01_anat_Grp1_brain_mask``) to restrict voxel evaluation to brain tissue.
+              * Introduces the target brain mask (``SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask``) to restrict voxel evaluation to brain tissue.
               * Executes two sequential passes to achieve full parameter stability across all 6 rigid-body DOF.
               * Uses :term:`Vector Gradient Alignment` (Bit :bdg-success:`256` DISABLED)
 
               **Output:**
 
-              η = 0.37
+              η = 0.38
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -743,7 +754,7 @@ Examples
               .. code-block:: bash
 
                 # Pass 5
-                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_t2w_t4 10243
+                imgreg_4dfp SUBJ_MSC01_func01_t2w SUBJ_MSC01_func01_t2w_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_t2w_t4 10243
 
               **What Happens Under the Hood:**
 
@@ -754,7 +765,7 @@ Examples
 
               **Output:**
 
-              η = 0.37
+              η = 0.38
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -770,6 +781,17 @@ Examples
                   .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/cmd4/imgreg_c2_cmd4_t4file.png
                       :alt: 10243 t4file output
                       :align: center
+
+      .. dropdown:: 🎞️ Click to view progressive registration animation (All Passes)
+        :animate: fade-in
+        :class-container: mt-3 mb-3
+
+          **Animation Sequence:** :bdg-secondary:`Baseline` → :bdg-dark:`4099` → :bdg-danger:`1027` → :bdg-danger:`2051` (×2) → :bdg-secondary:`10243`
+
+          .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_output.gif
+              :alt: Case 2 progressive registration animation across all modes
+              :align: center
+              :width: 85%
 
     .. tab-item:: 📁 Case 3: BOLD to T1w
 
@@ -804,9 +826,9 @@ Examples
               .. grid-item-card:: 📦 Source (Moving) Image: BOLD EPI
                  :class-header: sd-bg-light sd-font-weight-bold
 
-                 * **Root Name:** ``SUBJ_MSC01_func01_anat_Grp1``
-                 * **Mask:** ``SUBJ_MSC01_func01_anat_Grp1_brain_mask``
-                 * **t4file:** ``SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4``
+                 * **Root Name:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp``
+                 * **Mask:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask``
+                 * **t4file:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_mpr_t4``
 
                  .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case3/imgreg_c3_anat_source_data.png
                     :alt: BOLD Source Image
@@ -834,8 +856,8 @@ Examples
               .. code-block:: bash
 
                 # Pass 1 & 2
-                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1 none SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4 4099
-                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1 none SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4 4099
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp none SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_mpr_t4 4099
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp none SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_mpr_t4 4099
 
               **What Happens Under the Hood:**
 
@@ -846,7 +868,7 @@ Examples
 
               **Output:**
               
-              η = 1006.6152
+              η = 527.85
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -875,13 +897,13 @@ Examples
               .. code-block:: bash
 
                 # Pass 3
-                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4 3075
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_mpr_t4 3075
 
               **What Happens Under the Hood:**
 
               * Switches execution from global grid searching to local parabolic gradient optimization across all 6 rigid-body degrees of freedom.
               * Combines a wide parameter search radius (1.2x multiplier via Bit :bdg-danger:`1024`) for broad rotational capture with a tight 5.0 mm spatial sampling grid (via Bit :bdg-danger:`2048`).
-              * Introduces the source brain mask (``SUBJ_MSC01_func01_anat_Grp1_brain_mask``) now that initial translation is established.
+              * Introduces the source brain mask (``SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask``) now that initial translation is established.
               * Uses :term:`Vector Gradient Alignment` (Bit :bdg-success:`256` DISABLED).
 
               **Output:**
@@ -911,8 +933,8 @@ Examples
               .. code-block:: bash
 
                 # Pass 4 & 5
-                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4 2051
-                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1 SUBJ_MSC01_func01_anat_Grp1_brain_mask SUBJ_MSC01_func01_anat_Grp1_to_SUBJ_MSC01_func01_mpr_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_mpr_t4 2051
+                imgreg_4dfp SUBJ_MSC01_func01_mpr SUBJ_MSC01_func01_mpr_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_mpr_t4 2051
 
 
               **What Happens Under the Hood:**
@@ -941,16 +963,16 @@ Examples
                       :alt: 2051 t4file output
                       :align: center
 
+        .. dropdown:: 🎞️ Click to view progressive registration animation (All Passes)
+          :animate: fade-in
+          :class-container: mt-3 mb-3
 
-        .. card:: ⚠️ Cross-Modal Optimization Caveat (Mode 2051 vs 3075)
-          :class-card: sd-bg-warning-subtle sd-border-1 mb-3 mt-3
+          **Animation Sequence:** :bdg-secondary:`Baseline` → :bdg-dark:`4099` (×2) → :bdg-danger:`3075` → :bdg-danger:`2051` (×2)
 
-          **Why Mode 2051 may appear slightly shifted compared to Mode 3075:**
-
-          * **Flipped Image Contrast ("Fake Traps"):** In cross-modal registration (**T2* BOLD** to **T1w**), ``imgreg_4dfp`` aligns images by matching edge directions. Because these modalities have inverted tissue contrasts, this alignment process creates artificial "false traps" (local cost minima in η) along brain and skull boundaries.
-          * **Big Leaps vs. Small Steps:** Mode ``3075`` uses a wide **1.2x** search step that leaps over small local cost ripples. Mode ``2051`` narrows the search step (**0.8x → 0.4x**), which can cause the optimizer to settle into a nearby false local minimum along non-brain or dura boundaries.
-          * **Recommended Alternative:** To avoid cross-modal gradient traps, use an intermediate T2w scan (**Case 2: BOLD → T2w → T1w**).
-
+          .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case3/imgreg_c3_output.gif
+              :alt: Case 3 progressive registration animation across all modes
+              :align: center
+              :width: 85%
 
     .. tab-item:: ⚠️ Common Errors
       :class-label: tab-error
