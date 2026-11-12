@@ -6,13 +6,13 @@ DICOM Utilities
    :maxdepth: 1
    :hidden:
 
-   DICOM Data Dump File <dcm_dump_file>
+   dcm_dump_file <dcm_dump_file>
 
 
 .. grid:: 1 2 2 2
    :gutter: 3
 
-   .. grid-item-card:: 📋 DICOM Data Dump File
+   .. grid-item-card:: 📋 dcm_dump_file
       :link: dcm_dump_file
       :link-type: doc
       :class-card: nav-card

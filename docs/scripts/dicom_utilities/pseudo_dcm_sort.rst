@@ -23,7 +23,7 @@ This script uses :ref:`dcm_dump_file` to read the following DICOM header fields:
 * **ID Series Description** (series label)
 * **REL Series Number** (scan sequence order number used to name the ``study<N>`` folders)
 
-This script generates :term:`\<dicom_directory\>.studies.txt` which uses the REL Series Number, ACQ Sequence Name, and ID Series Description.
+This script generates :term:`<dicom_directory>.studies.txt` which uses the REL Series Number, ACQ Sequence Name, and ID Series Description.
 
 .. important::
    * Top-level subdirectories inside ``<DICOM_directory>`` must use numeric names (such as ``001``, ``002``).
@@ -217,7 +217,7 @@ Examples
 
                      .. div:: card-help-top-right
 
-                        :card-help:`term:\<dicom_directory\>.studies.txt`
+                        :card-help:`term:<dicom_directory>.studies.txt`
 
                     .. image:: /_static/scripts/dicom_utilities/pseudo_dcm_sort/case2/cmd1/pds_c2_cmd1_studies_txt.png
                         :alt: Contents of DICOM.studies.txt

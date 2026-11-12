@@ -451,14 +451,14 @@ samp,
 }
 
 .card-help {
-    position: relative !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    vertical-align: middle !important;
-    margin-left: 0.35em !important;
-    margin-right: 0.15em !important;
-    cursor: pointer !important;
-    outline: none !important;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin-left: 0.35em;
+    margin-right: 0.15em;
+    cursor: pointer;
+    outline: none;
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -467,8 +467,9 @@ samp,
     position: absolute;
     bottom: 135%;
     left: 50%;
-    width: max-content;
-    max-width: 280px;
+    width: 280px;
+    max-width: calc(100vw - 32px);
+    height: auto;
     padding: 8px 12px;
     background-color: #1e293b;
     color: #ffffff;
@@ -476,10 +477,9 @@ samp,
     font-weight: 400;
     line-height: 1.4;
     text-align: left;
-    white-space: normal;
+    white-space: pre-line;
     border-radius: 6px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25);
-
     opacity: 0;
     visibility: hidden;
     transform: translateX(-50%) translateY(4px);
@@ -565,6 +565,120 @@ mark.custom-search-highlight {
 span.highlighted {
     background-color: transparent !important;
     color: inherit !important;
+}
+
+p.rubric {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #212529;
+    margin-top: 2.25rem;
+    margin-bottom: 0.85rem;
+    padding-left: 0.75rem;
+    border-left: 4px solid #BA0C2F;
+    line-height: 1.25;
+}
+
+dl.glossary>dt,
+dl.simple>dt {
+    font-weight: bold !important;
+    font-size: 1.05em;
+    color: #1a202c;
+}
+
+.tooltip-content {
+    font-family: ivystyle-sans, sans-serif !important;
+    font-size: 0.875rem !important;
+    color: #212529 !important;
+    padding: 14px 18px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #e1e4e5 !important;
+    border-top: 3px solid #BA0C2F !important;
+    border-radius: 6px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    max-width: 420px !important;
+}
+
+.tooltip-content dt {
+    font-family: ivystyle-sans, sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 1.05rem !important;
+    color: #BA0C2F !important;
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 4px !important;
+    border-bottom: 1px solid #e9ecef !important;
+    letter-spacing: -0.01em;
+}
+
+.tooltip-content dt a.headerlink {
+    display: none !important;
+}
+
+.tooltip-content dd {
+    margin-left: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.tooltip-content p {
+    font-family: ivystyle-sans, sans-serif !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    color: #212529 !important;
+    margin-bottom: 8px !important;
+}
+
+.tooltip-content div[class*='highlight'],
+.tooltip-content div[class*='highlight'] div,
+.tooltip-content div[class*='highlight'] pre {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.tooltip-content div.highlight-text,
+.tooltip-content>dl>dd>div[class*='highlight'] {
+    background-color: #f8f9fa !important;
+    border: 1px solid #e1e4e5 !important;
+    border-radius: 6px !important;
+    margin: 10px 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.tooltip-content div[class*='highlight'] pre {
+    color: #24292e !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.45 !important;
+    padding: 10px 12px !important;
+    margin: 0 !important;
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-x: auto !important;
+}
+
+.tooltip-content code,
+.tooltip-content tt.literal,
+.tooltip-content code.literal {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    background-color: #f1f3f5 !important;
+    color: #212529 !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 4px !important;
+    padding: 2px 5px !important;
+    font-size: 0.8125rem !important;
+    white-space: break-spaces !important;
+}
+
+.tooltip-content a {
+    color: #BA0C2F !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+}
+
+.tooltip-content a:hover {
+    text-decoration: underline !important;
 }
 
 @media screen and (max-width: 768px) {
@@ -725,4 +839,65 @@ span.highlighted {
         max-width: min(240px, 70vw);
         font-size: 0.78rem;
     }
+
+    .rst-content table.docutils,
+    .rst-content table.docutils tbody,
+    .rst-content table.docutils tr,
+    .rst-content table.docutils td {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .rst-content table.docutils thead {
+        display: none !important;
+    }
+
+    .rst-content table.docutils tr {
+        margin-bottom: 1rem;
+        padding: 14px 16px;
+        background-color: #ffffff !important;
+        border: 1px solid #e1e4e5 !important;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .rst-content table.docutils td {
+        border: none !important;
+        padding: 4px 0 !important;
+    }
+
+    .rst-content table.docutils td,
+    .rst-content table.docutils tr:nth-child(even) td,
+    .rst-content table.docutils tr:hover td {
+        background-color: transparent !important;
+        background: none !important;
+    }
+
+    .rst-content table.docutils td:nth-child(1) {
+        display: inline-block !important;
+        width: auto !important;
+        margin-right: 6px;
+    }
+
+    .rst-content table.docutils td:nth-child(2):not(:last-child) {
+        display: inline-block !important;
+        width: auto !important;
+        font-weight: 700;
+        color: #212529;
+        margin-top: 0;
+        padding-top: 4px !important;
+        border-top: none !important;
+    }
+
+    .rst-content table.docutils td:nth-child(3),
+    .rst-content table.docutils td:nth-child(2):last-child {
+        display: block !important;
+        width: 100% !important;
+        margin-top: 8px;
+        padding-top: 8px !important;
+        border-top: 1px solid #e9ecef !important;
+        font-weight: 400;
+    }
+
 }

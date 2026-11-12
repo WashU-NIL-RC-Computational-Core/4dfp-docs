@@ -29,7 +29,7 @@ This script uses :ref:`dcm_dump_file` to extract the following DICOM header fiel
 * **PAT Patient Name** (used when filtering with the ``-p`` option)
 * **REL Series Number** (scan sequence order number also used to name the ``study<N>`` folders)
 
-This script generates :term:`\<dicom_directory\>.studies.txt` which uses the REL Series Number, ACQ Sequence Name, and ID Series Description.
+This script generates :term:`<dicom_directory>.studies.txt` which uses the REL Series Number, ACQ Sequence Name, and ID Series Description.
 
 .. important::
    * ``dcm_sort`` deletes existing single-study subdirectories (like ``study1``) in the current folder before sorting.
@@ -198,7 +198,7 @@ Examples
 
                 .. div:: card-help-top-right
 
-                  :card-help:`term:\<dicom_directory\>.studies.txt`
+                  :card-help:`term:<dicom_directory>.studies.txt`
 
                 .. image:: /_static/scripts/dicom_utilities/dcm_sort/case1/cmd3/dicom_studies_txt.png
                     :alt: Contents of DICOM.studies.txt
