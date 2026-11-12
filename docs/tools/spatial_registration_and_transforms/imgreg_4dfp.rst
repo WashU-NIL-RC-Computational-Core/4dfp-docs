@@ -372,56 +372,56 @@ Examples
 
     .. tab-item:: 📁 Case 1: T2w to T1
 
-        In standard processing pipelines, registration between T2w and T1w is performed progressively by looping over a list of refining modes, e.g. ``4099`` → ``4099`` → ``1027`` → ``2051`` → ``2051`` → ``10243``.
+      In standard processing pipelines, registration between T2w and T1w is performed progressively by looping over a list of refining modes, e.g. ``4099`` → ``4099`` → ``1027`` → ``2051`` → ``2051`` → ``10243``.
 
-        * **4099** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`): Grid Search Translation (7.5 mm grid steps). Run twice to guarantee initial overlap.
-        * **1027** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024`): Fast Coarse Step (12.0 mm sampling steps).
-        * **2051** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`): Standard Fine Step (5.0 mm sampling steps). Run twice to refine parameters.
-        * **10243** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-secondary:`8192`): Hessian Newton-Raphson + Standard Fine Step.
+      * **4099** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`): Grid Search Translation (7.5 mm grid steps). Run twice to guarantee initial overlap.
+      * **1027** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024`): Fast Coarse Step (12.0 mm sampling steps).
+      * **2051** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`): Standard Fine Step (5.0 mm sampling steps). Run twice to refine parameters.
+      * **10243** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-secondary:`8192`): Hessian Newton-Raphson + Standard Fine Step.
 
-        .. card:: 📥 Input Data Overview
-          :class-card: sd-bg-light sd-border-1 mb-3
+      .. card:: 📥 Input Data Overview
+        :class-card: sd-bg-light sd-border-1 mb-3
 
-          .. div:: card-help-top-right
+        .. div:: card-help-top-right
 
-            :card-help:`Image Generation Steps: | 1. Initialize (t4_null) & solve transform matrix (imgreg_4dfp) | 2. Resample image & mask to target space (t4img_4dfp) | 3. Skull-strip resampled volume (maskimg_4dfp) | 4. Render target & masked source overlay (fsleyes)`
+          :card-help:`Image Generation Steps: | 1. Initialize (t4_null) & solve transform matrix (imgreg_4dfp) | 2. Resample image & mask to target space (t4img_4dfp) | 3. Skull-strip resampled volume (maskimg_4dfp) | 4. Render target & masked source overlay (fsleyes)`
 
-          .. grid:: 1 2 2 2
-              :gutter: 3
+        .. grid:: 1 2 2 2
+            :gutter: 3
 
-              .. grid-item-card:: 🎯 Target (Reference) Image: T1w
-                 :class-header: sd-bg-light sd-font-weight-bold
+            .. grid-item-card:: 🎯 Target (Reference) Image: T1w
+                :class-header: sd-bg-light sd-font-weight-bold
 
-                 * **Root Name:** ``SUBJ_MSC01_func01_mpr``
-                 * **Mask:** ``SUBJ_MSC01_func01_mpr_brain_mask``
+                * **Root Name:** ``SUBJ_MSC01_func01_mpr``
+                * **Mask:** ``SUBJ_MSC01_func01_mpr_brain_mask``
 
-                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_t1_source_data.png
-                    :alt: T1 Target Image
-                    :align: center
-                    :width: 100%
+                .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_t1_source_data.png
+                  :alt: T1 Target Image
+                  :align: center
+                  :width: 100%
 
-              .. grid-item-card:: 📦 Source (Moving) Image: T2w
-                 :class-header: sd-bg-light sd-font-weight-bold
+            .. grid-item-card:: 📦 Source (Moving) Image: T2w
+                :class-header: sd-bg-light sd-font-weight-bold
 
-                 * **Root Name:** ``SUBJ_MSC01_func01_t2w``
-                 * **Mask:** ``SUBJ_MSC01_func01_t2w_brain_mask``
-                 * **t4file:** ``SUBJ_MSC01_func01_t2w_to_SUBJ_MSC01_func01_mpr_t4``
+                * **Root Name:** ``SUBJ_MSC01_func01_t2w``
+                * **Mask:** ``SUBJ_MSC01_func01_t2w_brain_mask``
+                * **t4file:** ``SUBJ_MSC01_func01_t2w_to_SUBJ_MSC01_func01_mpr_t4``
 
-                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_t2_source_data.png
-                    :alt: T2w Source Image
-                    :align: center
-                    :width: 100%
+                .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_t2_source_data.png
+                  :alt: T2w Source Image
+                  :align: center
+                  :width: 100%
 
-          .. grid:: 1 1 1 1
-              :gutter: 3
+        .. grid:: 1 1 1 1
+            :gutter: 3
 
-              .. grid-item-card:: 🔀 Initial Overlay (Unregistered Baseline)
-                 :class-header: sd-bg-light sd-font-weight-bold
+            .. grid-item-card:: 🔀 Initial Overlay (Unregistered Baseline)
+                :class-header: sd-bg-light sd-font-weight-bold
 
-                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_combined_source_data.png
-                    :alt: Unaligned combined source image overlay
-                    :align: center
-                    :width: 85%
+                .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_combined_source_data.png
+                  :alt: Unaligned combined source image overlay
+                  :align: center
+                  :width: 85%
 
         .. tab-set::
 
@@ -445,7 +445,7 @@ Examples
 
               **Output:**
               
-              η = 2008.55
+              :math:`\eta \approx 2008.55`
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -497,7 +497,7 @@ Examples
                       :alt: 1027 t4file output
                       :align: center
 
-              **η = 0.37**
+              :math:`\eta \approx 0.37`
 
           .. tab-item:: Fine Local Alignment (Mode 2051)
               :sync: pass-2051
@@ -532,7 +532,7 @@ Examples
                       :alt: 2051 t4file output
                       :align: center
 
-              **η = 0.43**
+              :math:`\eta \approx 0.43`
 
           .. tab-item:: Hessian Polishing (Mode 10243)
               :sync: pass-10243
@@ -566,13 +566,13 @@ Examples
                       :alt: 10243 t4file output
                       :align: center
 
-              **η = 0.43**
+              :math:`\eta \approx 0.43`
 
       .. dropdown:: 🎞️ Click to view progressive registration animation (All Passes)
         :animate: fade-in
         :class-container: mt-3 mb-3
 
-        **Animation Sequence:** :bdg-secondary:`Baseline` → :bdg-dark:`4099` (×2) → :bdg-danger:`1027` → :bdg-danger:`2051` (×2) → :bdg-secondary:`10243`
+        **Animation Sequence:** :bdg-secondary:`Baseline` → :bdg-dark:`4099` (after second run) → :bdg-danger:`1027` → :bdg-danger:`2051` (after second run) → :bdg-secondary:`10243`
 
         .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case1/imgreg_c1_output.gif
             :alt: Case 1 progressive registration animation across all modes
@@ -581,56 +581,56 @@ Examples
 
     .. tab-item:: 📁 Case 2: BOLD to T2w
 
-        In standard processing pipelines, registration between BOLD and T2w is performed progressively by looping over a list of refining modes, e.g. ``4099`` → ``1027`` → ``2051`` → ``2051`` → ``10243``.
+      In standard processing pipelines, registration between BOLD and T2w is performed progressively by looping over a list of refining modes, e.g. ``4099`` → ``1027`` → ``2051`` → ``2051`` → ``10243``.
 
-        * **4099** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`): Grid Search Translation (7.5 mm grid steps).
-        * **1027** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024`): Fast Coarse Step (12.0 mm sampling steps).
-        * **2051** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`): Standard Fine Step (5.0 mm sampling steps). Run twice to refine parameters.
-        * **10243** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-secondary:`8192`): Hessian Newton-Raphson + Standard Fine Step.
+      * **4099** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-dark:`4096`): Grid Search Translation (7.5 mm grid steps).
+      * **1027** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`1024`): Fast Coarse Step (12.0 mm sampling steps).
+      * **2051** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048`): Standard Fine Step (5.0 mm sampling steps). Run twice to refine parameters.
+      * **10243** (:bdg-primary:`1` + :bdg-info:`2` + :bdg-danger:`2048` + :bdg-secondary:`8192`): Hessian Newton-Raphson + Standard Fine Step.
 
-        .. card:: 📥 Input Data Overview
-          :class-card: sd-bg-light sd-border-1 mb-3
+      .. card:: 📥 Input Data Overview
+        :class-card: sd-bg-light sd-border-1 mb-3
 
-          .. div:: card-help-top-right
+        .. div:: card-help-top-right
 
-            :card-help:`Image Generation Steps: | 1. Initialize (t4_null) & solve transform matrix (imgreg_4dfp) | 2. Resample image & mask to target space (t4img_4dfp) | 3. Skull-strip resampled volume (maskimg_4dfp) | 4. Render target & masked source overlay (fsleyes)`
+          :card-help:`Image Generation Steps: | 1. Initialize (t4_null) & solve transform matrix (imgreg_4dfp) | 2. Resample image & mask to target space (t4img_4dfp) | 3. Skull-strip resampled volume (maskimg_4dfp) | 4. Render target & masked source overlay (fsleyes)`
 
-          .. grid:: 1 2 2 2
-              :gutter: 3
+        .. grid:: 1 2 2 2
+            :gutter: 3
 
-              .. grid-item-card:: 🎯 Target (Reference) Image: T2w
-                 :class-header: sd-bg-light sd-font-weight-bold
+            .. grid-item-card:: 🎯 Target (Reference) Image: T2w
+                :class-header: sd-bg-light sd-font-weight-bold
 
-                 * **Root Name:** ``SUBJ_MSC01_func01_t2w``
-                 * **Mask:** ``SUBJ_MSC01_func01_t2w_brain_mask``
+                * **Root Name:** ``SUBJ_MSC01_func01_t2w``
+                * **Mask:** ``SUBJ_MSC01_func01_t2w_brain_mask``
 
-                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_t2_source_data.png
-                    :alt: T2 Target Image
-                    :align: center
-                    :width: 100%
+                .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_t2_source_data.png
+                  :alt: T2 Target Image
+                  :align: center
+                  :width: 100%
 
-              .. grid-item-card:: 📦 Source (Moving) Image: BOLD EPI
-                 :class-header: sd-bg-light sd-font-weight-bold
+            .. grid-item-card:: 📦 Source (Moving) Image: BOLD EPI
+                :class-header: sd-bg-light sd-font-weight-bold
 
-                 * **Root Name:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp``
-                 * **Mask:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask``
-                 * **t4file:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_t2w_t4``
+                * **Root Name:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp``
+                * **Mask:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp_brain_mask``
+                * **t4file:** ``SUBJ_MSC01_func01_anat_Grp1_uwrp_to_SUBJ_MSC01_func01_t2w_t4``
 
-                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_anat_source_data.png
-                    :alt: BOLD Source Image
-                    :align: center
-                    :width: 100%
+                .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_anat_source_data.png
+                  :alt: BOLD Source Image
+                  :align: center
+                  :width: 100%
 
-          .. grid:: 1 1 1 1
-              :gutter: 3
+        .. grid:: 1 1 1 1
+            :gutter: 3
 
-              .. grid-item-card:: 🔀 Initial Overlay (Unregistered Baseline)
-                 :class-header: sd-bg-light sd-font-weight-bold
+            .. grid-item-card:: 🔀 Initial Overlay (Unregistered Baseline)
+                :class-header: sd-bg-light sd-font-weight-bold
 
-                 .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_combined_source_data.png
-                    :alt: Unaligned combined source image overlay
-                    :align: center
-                    :width: 85%
+                .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_combined_source_data.png
+                  :alt: Unaligned combined source image overlay
+                  :align: center
+                  :width: 85%
 
         .. tab-set::
 
@@ -653,7 +653,7 @@ Examples
 
               **Output:**
               
-              η = 656.12
+              :math:`\eta \approx 656.12`
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -692,7 +692,7 @@ Examples
 
               **Output:**
 
-              η = 0.38
+              :math:`\eta \approx 0.38`
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -729,7 +729,7 @@ Examples
 
               **Output:**
 
-              η = 0.38
+              :math:`\eta \approx 0.38`
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -765,7 +765,7 @@ Examples
 
               **Output:**
 
-              η = 0.38
+              :math:`\eta \approx 0.38`
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -786,7 +786,7 @@ Examples
         :animate: fade-in
         :class-container: mt-3 mb-3
 
-          **Animation Sequence:** :bdg-secondary:`Baseline` → :bdg-dark:`4099` → :bdg-danger:`1027` → :bdg-danger:`2051` (×2) → :bdg-secondary:`10243`
+          **Animation Sequence:** :bdg-secondary:`Baseline` → :bdg-dark:`4099` → :bdg-danger:`1027` → :bdg-danger:`2051` (after second run) → :bdg-secondary:`10243`
 
           .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case2/imgreg_c2_output.gif
               :alt: Case 2 progressive registration animation across all modes
@@ -868,7 +868,7 @@ Examples
 
               **Output:**
               
-              η = 527.85
+              :math:`\eta \approx 527.85`
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -908,7 +908,7 @@ Examples
 
               **Output:**
 
-              η = 0.31
+              :math:`\eta \approx 0.31`
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -946,7 +946,7 @@ Examples
 
               **Output:**
 
-              η = 0.32
+              :math:`\eta \approx 0.32`
 
               .. grid:: 1 2 2 2
                 :gutter: 2
@@ -967,7 +967,7 @@ Examples
           :animate: fade-in
           :class-container: mt-3 mb-3
 
-          **Animation Sequence:** :bdg-secondary:`Baseline` → :bdg-dark:`4099` (×2) → :bdg-danger:`3075` → :bdg-danger:`2051` (×2)
+          **Animation Sequence:** :bdg-secondary:`Baseline` → :bdg-dark:`4099` (after second run) → :bdg-danger:`3075` → :bdg-danger:`2051` (after second run)
 
           .. image:: /_static/tools/spatial_registration_and_transforms/imgreg_4dfp/case3/imgreg_c3_output.gif
               :alt: Case 3 progressive registration animation across all modes
