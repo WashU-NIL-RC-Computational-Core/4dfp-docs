@@ -103,3 +103,15 @@ Glossary
    
    Symbolic Link
       A shortcut file that points directly to another file or folder on your computer without copying the original data.
+
+   Cubic Spline Interpolation
+      Maps each target voxel back to the source grid and fits smooth third-order curves across a larger neighborhood of **64 surrounding source voxel centers** (a :math:`4 \times 4 \times 4` block). Evaluating 64 neighbors instead of 8 preserves sharper anatomical tissue boundaries than :term:`Trilinear Interpolation`, at the cost of slower compute time and potential minor intensity overshoot (ringing) near high-contrast edges.
+
+   Little-Endian
+      A byte-ordering convention that stores the least significant byte first in memory. It is the native byte order on modern x86/x64 systems and the standard binary format for current :term:`4dfp` image files (``.4dfp.img``). Contrast with :term:`Big-Endian`.
+
+   Nearest-Neighbor Interpolation
+      Maps each target voxel back to the source grid and copies the exact value of the single closest source voxel center, with no blending or rounding of intensities. Preserves discrete integer ROI labels and binary masks, though resampled edges appear blocky.
+   
+   Trilinear Interpolation
+      Maps each target voxel back to the source grid and calculates a distance-weighted average of the **8 surrounding source voxel centers** (a :math:`2 \times 2 \times 2` neighborhood), giving higher weight to closer voxels. It is fast and strictly bounded (never creates artificial intensity spikes or dips).

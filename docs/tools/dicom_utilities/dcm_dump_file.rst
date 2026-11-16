@@ -7,7 +7,9 @@ DICOM Dump File
 Synopsis
 --------
 
-dcm_dump_file [-b] [-e] [-E] [-f] [-g] [-l] [-L] [-m <mult>] [-t] [-v] [-w <flag>] [-z] <file_or_directory> [<file_or_directory> ...]
+::
+
+   dcm_dump_file [-b] [-e] [-E] [-f] [-g] [-l] [-L] [-m <mult>] [-t] [-v] [-w <flag>] [-z] <file_or_directory> [<file_or_directory> ...]
 
 Description
 -----------

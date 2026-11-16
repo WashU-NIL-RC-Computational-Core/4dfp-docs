@@ -35,7 +35,7 @@ import sys
 # ones.
 sys.path.insert(0, os.path.abspath('_ext'))
 
-extensions = ["sphinx.ext.mathjax", "sphinx_copybutton", "sphinx_sitemap", "sphinxcontrib.lightbox2", "sphinx_design", "myst_parser", "card_help",]
+extensions = ["sphinx.ext.mathjax", "sphinx_copybutton", "sphinx_sitemap", "sphinxcontrib.lightbox2", "sphinxcontrib.mermaid", "sphinx_design", "myst_parser", "card_help",]
 myst_enable_extensions = ["colon_fence"]
 
 html_extra_path = ['_static/google2f78e4b9feaa2279.html']
@@ -215,3 +215,36 @@ texinfo_documents = [
      author, '4dfp', 'One line description of project.',
      'Miscellaneous'),
 ]
+
+_mermaid_theme_vars = {
+    "fontFamily": "ivystyle-sans, sans-serif",
+    "fontSize": "14px",
+    "background": "#ffffff",
+    # Default nodes (neutral card surface)
+    "primaryColor": "#f8f9fa",
+    "primaryBorderColor": "#e1e4e5",
+    "primaryTextColor": "#212529",
+    # Secondary / accent nodes (Teal — matches tip admonition & active tabs)
+    "secondaryColor": "#eef6f7",
+    "secondaryBorderColor": "#007D8A",
+    "secondaryTextColor": "#212529",
+    # Tertiary / brand nodes (Crimson — matches h1/table/important accents)
+    "tertiaryColor": "#fbebee",
+    "tertiaryBorderColor": "#BA0C2F",
+    "tertiaryTextColor": "#212529",
+    # Connectors & subgraphs
+    "lineColor": "#6c757d",
+    "textColor": "#212529",
+    "clusterBkg": "#fafafa",
+    "clusterBorder": "#e1e4e5",
+    # Notes (matches attention admonition)
+    "noteBkgColor": "#fdf6e6",
+    "noteBorderColor": "#F1B434",
+    "noteTextColor": "#212529",
+}
+
+# For sphinxcontrib-mermaid >= 3.0:
+mermaid_config = {
+    "theme": "base",
+    "themeVariables": _mermaid_theme_vars,
+}

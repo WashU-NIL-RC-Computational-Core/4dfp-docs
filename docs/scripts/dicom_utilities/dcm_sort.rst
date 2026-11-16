@@ -10,7 +10,9 @@ DICOM Sort
 Synopsis
 --------
 
-dcm_sort <DICOM_directory> [-d] [-c] [-t] [-i] [-e<ext>] [-r<str>] [-p<str>]
+::
+
+   dcm_sort <DICOM_directory> [-d] [-c] [-t] [-i] [-e<ext>] [-r<str>] [-p<str>]
 
 Description
 -----------

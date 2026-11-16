@@ -7,7 +7,9 @@ Image Registration
 Synopsis
 --------
 
-imgreg_4dfp <target_img> <target_mask> <source_img> <source_mask> <t4file> <mode>
+::
+
+   imgreg_4dfp <target_img> <target_mask> <source_img> <source_mask> <t4file> <mode>
 
 Description
 -----------

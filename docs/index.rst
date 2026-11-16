@@ -66,6 +66,7 @@ Contents
 
    params_inst
    glossary
+   atlases
 
 
 .. grid:: 1 2 3 3
@@ -108,6 +109,13 @@ Contents
 
    .. grid-item-card:: 📖 Glossary
       :link: glossary
+      :link-type: doc
+      :class-card: nav-card
+
+      Definitions for DICOM transfer syntaxes, byte orders, 4dfp session structures, and key terms.
+   
+   .. grid-item-card:: 🧠 Atlases
+      :link: atlases
       :link-type: doc
       :class-card: nav-card
 
