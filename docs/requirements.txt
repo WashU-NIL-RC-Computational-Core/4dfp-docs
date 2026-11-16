@@ -3,4 +3,5 @@ sphinx-rtd-theme
 sphinx-copybutton
 sphinx-design
 sphinxcontrib-lightbox2
+sphinxcontrib-mermaid
 sphinx-sitemap
