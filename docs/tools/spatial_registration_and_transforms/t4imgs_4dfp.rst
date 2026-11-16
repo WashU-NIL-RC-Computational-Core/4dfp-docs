@@ -80,7 +80,7 @@ Usage
    * - ``-R``
      - Suppresses creation of the :ref:`rec_file`.
    * - ``-s``
-     - Enables :term:`Cubic Spline Interpolation` for sharper anatomical resampling (takes precedence over ``-n`` if both are passed).
+     - Enables :term:`Cubic Spline Interpolation` for sharper anatomical resampling.
    * - ``-z``
      - Divides accumulated voxel sums by :math:`\sqrt{N}` rather than total weight :math:`N` (for combining inputs that are **already z-scored**).
    * - ``-O<outspace>``
@@ -91,7 +91,8 @@ Usage
    * - ``-@<endian>``
      - Forces output binary write format to :term:`Big-Endian` (``-@b``) or :term:`Little-Endian` (``-@l``); Defaults to native host CPU endianness.
 
-.. note:: Do not add spaces between an option flag and its argument (for example, use ``-O333>``, not ``-O 333``).
+.. note::    
+  **Flag Syntax**: Pass single-letter flags separately (e.g., ``-n -R``, not ``-nR``). Values for ``-O<outspace>`` and ``-@<endian>`` must immediately follow the flag with no separating space (e.g., ``-O222``, ``-@b``); inserting a space causes the value to be misinterpreted as a positional file argument.
 
 Examples
 --------

@@ -22,7 +22,7 @@ The folder number **``<N>``** comes directly from the scan's **REL Series Number
 You can provide either an absolute or relative directory path. By default, ``dcm_sort`` creates :term:`Symbolic Link` shortcuts to the original files rather than copying them.
 
 .. note::
-   This script only sorts files in the target directory. It does not search subdirectories recursively. For recursive sorting, see :ref:`pseudo_dcm_sort`.
+   **No Sub-directories:** This script only sorts files in the target directory. It does not search sub-directories recursively. For recursive sorting, see :ref:`pseudo_dcm_sort`.
 
 This script uses :ref:`dcm_dump_file` to extract the following DICOM header fields:
 
@@ -61,8 +61,8 @@ Usage
    * - ``-t``
      - Disables the ``-t`` option when calling :ref:`dcm_dump_file`.
 
-.. note::
-   Do not add spaces between an option flag and its argument (for example, use ``-edcm``, not ``-e dcm``).
+.. note::    
+  **Flag Syntax**: Pass single-letter flags separately (e.g., ``-c -d``, not ``-cd``). Values for ``-e<ext>``, ``-p<str>``, and ``-r<str>`` must immediately follow the flag with no separating space (e.g., ``-eIMA``); inserting a space causes the value to be misinterpreted as a positional file argument.
 
 Examples
 --------

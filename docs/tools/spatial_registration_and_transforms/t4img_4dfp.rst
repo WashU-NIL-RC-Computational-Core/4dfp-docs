@@ -14,23 +14,18 @@ Synopsis
 Description
 -----------
 
-Applies an :term:`affine <Affine Transformation>` or :term:`rigid <Rigid Transformation>` spatial transformation matrix (:term:`t4file`) to resample a single :term:`4dfp` file into a target atlas or reference image grid [#wrapper]_. Conceptually, ``t4img_4dfp`` performs **1:1** (one 3D volume :math:`\rightarrow` one 3D volume) or **n:n** (one 4D time series of :math:`n` frames :math:`\rightarrow` one 4D time series of :math:`n` frames) transformations; to combine **n:1** multiple separate files into a single averaged or summed output, use :ref:`t4imgs_4dfp`.
+Applies a spatial transformation matrix (:term:`t4file`) to resample a **single** :ref:`4dfp image<image_data>` into a target space or reference image grid [#wrapper]_. 
 
-.. tip::
-   **Batch Transforming Multiple Separate Files (File-Level n:n)**: Neither ``t4img_4dfp`` nor :ref:`t4imgs_4dfp` outputs multiple separate files from a single command (``t4imgs_4dfp`` always merges inputs into one combined output). To transform :math:`n` separate scan files into :math:`n` individual outputs, run ``t4img_4dfp`` inside a shell loop (see :ref:`t4img_examples`).
+Rather than requiring a multi-image input list, ``t4img_4dfp`` automatically builds a single-entry resampling specification from your command-line inputs—pairing your input image with one spatial transformation matrix (or an identity transform when ``none`` is specified) without combining multiple scans.
 
-By default, ``t4img_4dfp`` resamples voxels using :term:`Trilinear Interpolation` into Washington University :ref:`711-2B <atlas_711-2b>` ``333.0`` atlas space (:math:`48 \times 64 \times 48`, 3 mm isotropic) and writes the output image set (``.4dfp.img``, ``.4dfp.ifh``, ``.4dfp.hdr``, and ``.4dfp.img.rec``) to ``<imgfile>t``. Passing ``none`` for ``<t4file>`` applies an identity transform, allowing grid resampling, orientation conversion, or endianness conversion without spatial rotation or translation.
+* **Resampling Multiple Inputs Into a Single Output (n:1):** If you need to combine multiple separate images into a single output, or require custom per-scan weights, frame/slice selection, or input masks, use :ref:`t4imgs_4dfp<t4imgs_4dfp>`.
+* **Resampling Multiple Inputs Into Multiple Outputs (n:n):** Neither ``t4img_4dfp`` nor :ref:`t4imgs_4dfp<t4imgs_4dfp>` outputs multiple separate files from a single command. To resample multiple images into their own output, run ``t4img_4dfp`` recursively inside a shell loop for each image (see :ref:`t4img_examples`).
+
+By default, ``t4img_4dfp`` resamples voxels using :term:`Trilinear Interpolation` into :ref:`711-2B <atlas_711-2b>` ``333.0`` atlas space (:math:`48 \times 64 \times 48`, 3 mm isotropic) and writes the output image set (``.4dfp.img``, ``.4dfp.ifh``, and ``.4dfp.img.rec``) to ``<imgfile>t`` unless an ``<outfile>`` name is provided. 
+Passing ``none`` for ``<t4file>`` applies an identity transform, allowing grid resampling, orientation conversion, or endianness conversion without spatial rotation or translation.
 
 .. note::
-   * **Optional Extensions**: ``.4dfp.img``, ``.4dfp``, and ``.img`` extensions are stripped automatically from ``<imgfile>`` and ``<outfile>``. Do **not** pass ``.4dfp.ifh`` or ``.4dfp.hdr`` extensions, as they are not stripped.
-   * **Flag Syntax**: Pass single-letter flags separately (e.g., ``-n -R``, not ``-nR``). Values for ``-O<outspace>`` and ``-@<endian>`` must immediately follow the flag with no separating space (e.g., ``-O222``, ``-@b``); inserting a space causes the value to be misinterpreted as a positional file argument.
-
-.. rubric:: Execution & Header Behavior
-
-1. **Temporary List Generation**: Writes a single-line list file (``<outfile>.lst`` containing ``<imgfile>  t4=<t4file>``, or ``t4=`` when ``none`` is specified) and invokes ``t4imgs_4dfp`` with all user-supplied flags.
-2. **Header & Provenance Generation**: Writes ``<outfile>.4dfp.ifh``, generates ``<outfile>.4dfp.hdr`` via ``ifh2hdr``, and wraps the :ref:`rec_file` (``<outfile>.4dfp.img.rec``) with the exact ``t4img_4dfp`` command invocation, start/end timestamps, user account, script RCS version, and full resampling history.
-3. **ROI Region Name Transfer (``-n`` Flag)**: When :term:`Nearest-Neighbor Interpolation` (``-n``) is active, ``t4img_4dfp`` extracts FIDL ROI region names (``grep "region names"``) from ``<imgfile>.4dfp.ifh`` and appends them to ``<outfile>.4dfp.ifh``.
-4. **Cleanup & Error Handling**: Removes temporary files (``<outfile>.lst`` and ``temp$$``) upon successful completion. If ``t4imgs_4dfp`` exits with a non-zero status, execution aborts immediately and ``<outfile>.lst`` is retained on disk for debugging.
+  **File Extensions:** There is no need to pass the 4dfp file extensions like ``.4dfp.ifh`` or ``.4dfp.img``. Extensions are stripped automatically from ``<imgfile>`` and ``<outfile>``.
 
 Usage
 -----
@@ -52,9 +47,9 @@ Usage
    * - ``-R``
      - Suppresses creation of the :ref:`rec_file`.
    * - ``-s``
-     - Enables :term:`Cubic Spline Interpolation` for sharper anatomical resampling (takes precedence over ``-n`` if both are passed).
+     - Enables :term:`Cubic Spline Interpolation` for sharper anatomical resampling.
    * - ``-z``
-     - Normalizes accumulated voxel totals by :math:`\sqrt{n}` rather than :math:`n` (for combining statistical Z-score maps). Has no effect on single-file ``t4img_4dfp`` runs (:math:`n = 1`); see :ref:`t4imgs_4dfp` for multi-image Z-map aggregation.
+     - Divides accumulated voxel sums by :math:`\sqrt{N}` rather than total weight :math:`N` (for combining inputs that are **already z-scored**). Has no effect on single-file ``t4img_4dfp`` runs (:math:`n = 1`); see :ref:`t4imgs_4dfp<t4imgs_4dfp>` for multi-image Z-map aggregation.
    * - ``-O<outspace>``
      - Sets the output space and voxel grid (defaults to ``333.0``; see :ref:`t4img_outspace`):
 
@@ -63,51 +58,32 @@ Usage
    * - ``-@<endian>``
      - Forces output binary write format to :term:`Big-Endian` (``-@b``) or :term:`Little-Endian` (``-@l``); Defaults to native host CPU endianness.
 
-.. note:: Do not add spaces between an option flag and its argument (for example, use ``-O222``, not ``-O 222``).
+.. note::    
+  **Flag Syntax**: Pass single-letter flags separately (e.g., ``-n -R``, not ``-nR``). Values for ``-O<outspace>`` and ``-@<endian>`` must immediately follow the flag with no separating space (e.g., ``-O222``, ``-@b``); inserting a space causes the value to be misinterpreted as a positional file argument.
 
 .. _t4img_outspace:
 
-.. rubric:: Output Spaces & Atlas Grids
+.. rubric:: Output Spaces & Target Grids
 
-While ``<t4file>`` defines the mathematical coordinate mapping from source space to target space, ``-O<outspace>`` defines the **output voxel grid** (matrix dimensions, voxel spacing, volume center, and anatomical orientation) onto which the image is sampled. Always match ``-O<outspace>`` to the coordinate system targeted by ``<t4file>`` (see :ref:`atlases` for a full comparison of coordinate systems).
+While :term:`t4file` defines the mathematical coordinate transformation from source space to target space, ``-O<outspace>`` defines the **target voxel grid** (matrix dimensions, voxel spacing, volume center, and anatomical orientation) onto which the image is resampled. 
+Always match ``-O<outspace>`` to the coordinate system targeted by :term:`t4file`.
 
-.. list-table::
-   :widths: 16 22 26 36
-   :header-rows: 1
+An output space does **not** have to be a stereotactic atlas. It can be any reference :ref:`4dfp image<image_data>`, such as:
 
-   * - Option
-     - Coordinate Space
-     - Voxel Size & Matrix
-     - Typical Use Cases
-   * - ``-O111``
-     - :ref:`WashU 711-2B <atlas_711-2b>` (Transverse)
-     - 1 mm isotropic (:math:`176 \times 208 \times 176`)
-     - High-resolution structural imaging (T1w/MPRAGE, T2w), anatomical segmentation, and cortical surface workflows.
-   * - ``-O222``
-     - :ref:`WashU 711-2B <atlas_711-2b>` (Transverse)
-     - 2 mm isotropic (:math:`128 \times 128 \times 75`)
-     - Intermediate-resolution structural templates, PET imaging, diffusion/tractography targets, and high-resolution fMRI.
-   * - ``-O333[.n]``
-     - :ref:`WashU 711-2B <atlas_711-2b>` (Transverse)
-     - 3 mm isotropic (:math:`48 \times 64 \times 48`)
-     - Standard 4D BOLD fMRI time series (default). Balances spatial detail against memory/disk footprint for multi-frame runs.
-   * - ``-O<image>``
-     - Any (:ref:`MNI152 <atlas_mni>`, Native, Custom)
-     - Copied from ``<image>.4dfp.ifh``
-     - MNI152 atlas alignment, inverse transforms back to a subject's native scan grid, or study-specific templates.
+- **A participants's native scan** (e.g., resampling a BOLD run onto that participant's native T1w grid).
+- **A custom or study-specific template** (e.g., a cohort-averaged anatomical image).
+- **A standard atlas** (see :ref:`atlases`).
 
-.. rubric:: Choosing the Right Grid Option
-
-* **711-2B Presets vs. Reference Images**: The numeric presets (``111``, ``222``, ``333``) hardcode Washington University :ref:`711-2B <atlas_711-2b>` stereotactic bounding boxes, origins, and transverse (``TRA``) orientation. If your :term:`t4file` transforms into :ref:`MNI152 <atlas_mni>` space or back into a subject's **native space**, do not use a numeric preset—pass the target template or native reference image via ``-O<image>`` (e.g., ``-OMNI152_T1_2mm``) so the output grid, origin, and orientation match the transform.
-* **Legacy 711-2A Transforms (``-B`` Flag)**: If an older ``t4`` file was computed against the legacy :ref:`711-2A <atlas_711-2a>` atlas rather than :ref:`711-2B <atlas_711-2b>`, pass ``-B`` alongside ``-O111``, ``-O222``, or ``-O333`` to convert the transform into ``711-2B`` space during resampling.
-* **Y-Axis Center Offset (``-O333.n``)**: The compact :math:`48 \times 64 \times 48` ``333`` grid has limited anterior-posterior padding. Appending a decimal offset (most commonly ``-O333.8``) shifts the Y-axis center upward by ``n`` pixels to prevent frontal or occipital clipping in acquisitions or templates with shifted centers.
+.. note::
+   **Y-Axis Center Offset (``-O333.n``)**: When using the ``333`` preset, appending a decimal offset shifts the anterior-posterior (Y-axis) grid center upward by ``n`` voxels to prevent frontal or occipital clipping in acquisitions or templates with shifted centers.
 
 .. _t4img_interpolation:
 
 Interpolation Methods
 ---------------------
 
-When resampling an image into a new grid, output voxel centers rarely land squarely on original input voxel centers—instead, they fall at fractional coordinates :math:`(x, y, z)` between neighbors. Both ``t4img_4dfp`` and :ref:`t4imgs_4dfp` support three 3D interpolation kernels that trade off neighborhood size, edge sharpness, and intensity preservation.
+When resampling an image into a new grid, output voxel centers rarely land exactly on original input voxel points; instead, they often fall at fractional coordinates :math:`(x, y, z)` between neighbors. 
+Both ``t4img_4dfp`` and :ref:`t4imgs_4dfp<t4imgs_4dfp>` support three 3D interpolation methods that trade off neighborhood size, edge sharpness, and intensity preservation.
 
 .. rubric:: Choosing an Interpolation Method
 
@@ -120,40 +96,16 @@ When resampling an image into a new grid, output voxel centers rarely land squar
        classDef teal fill:#eef6f7,stroke:#007D8A,stroke-width:1.5px,color:#212529
        classDef crimson fill:#fbebee,stroke:#BA0C2F,stroke-width:1.5px,color:#212529
 
-       START["<b>Input 4dfp Volume</b>"]:::neutral --> Q1{"Discrete integer<br/>labels or masks?"}:::neutral
-       Q1 -->|"Yes (ROIs, segmentations)"| OUT_N["<b>Nearest-Neighbor (<code>-n</code>)</b><br/>Preserves exact integer values"]:::green
-       Q1 -->|"No (continuous intensities)"| Q2{"High-res structural<br/>or smooth functional?"}:::neutral
-       Q2 -->|"BOLD fMRI / Z-maps"| OUT_DEF["<b>Trilinear (Default)</b><br/>Balanced smoothing, no overshoot"]:::teal
-       Q2 -->|"T1w / MPRAGE / T2w"| OUT_S["<b>Cubic Spline (<code>-s</code>)</b><br/>Crisp cortical & tissue borders"]:::crimson
+       START["<b>Input 4dfp Volume</b>"]:::neutral --> Q1{"Is the image a<br/>mask or ROI map?"}:::neutral
+       Q1 -->|"Yes (binary masks, labeled regions)"| OUT_N["<b>Nearest-Neighbor (<code>-n</code>)</b><br/>Keeps exact label numbers without blending"]:::green
+       Q1 -->|"No (brain scan or statistical map)"| Q2{"What type of scan<br/>are you resampling?"}:::neutral
+       Q2 -->|"Functional / Statistical (BOLD, Z-maps)"| OUT_DEF["<b>Trilinear (Default)</b><br/>Gentle smoothing, no overshoot"]:::teal
+       Q2 -->|"High-Res Structural (T1w, MPRAGE, T2w)"| OUT_S["<b>Cubic Spline (<code>-s</code>)</b><br/>Preserves sharp tissue boundaries"]:::crimson
 
 .. rubric:: How Each Method Samples the Input Grid
 
-.. mermaid::
-   :align: center
-
-   flowchart TB
-       classDef neutral fill:#f8f9fa,stroke:#ced4da,stroke-width:1.25px,color:#212529
-       classDef green fill:#e8f0eb,stroke:#215732,stroke-width:1.5px,color:#212529
-       classDef teal fill:#eef6f7,stroke:#007D8A,stroke-width:1.5px,color:#212529
-       classDef crimson fill:#fbebee,stroke:#BA0C2F,stroke-width:1.5px,color:#212529
-
-       subgraph NN["Nearest-Neighbor (-n)"]
-           direction LR
-           NN1["Fractional<br/>(x, y, z)"]:::neutral --> NN2["<b>1 Voxel (1×1×1)</b><br/>Snaps to closest center"]:::green --> NN3["<b>Blocky / Stair-Stepped</b><br/>Zero blending; no new values invented"]:::green
-       end
-
-       subgraph TL["Trilinear (Default)"]
-           direction LR
-           TL1["Fractional<br/>(x, y, z)"]:::neutral --> TL2["<b>8 Voxels (2×2×2)</b><br/>Distance-weighted average"]:::teal --> TL3["<b>Mildly Smoothed</b><br/>Softens edges; bounded by min/max"]:::teal
-       end
-
-       subgraph CS["Cubic Spline (-s)"]
-           direction LR
-           CS1["Fractional<br/>(x, y, z)"]:::neutral --> CS2["<b>64 Voxels (4x4x4)</b><br/>Fits 3D piecewise cubic curve"]:::crimson --> CS3["<b>Sharp & Continuous</b><br/>Preserves fine folds; slight edge overshoot"]:::crimson
-       end
-
 .. list-table::
-   :widths: 22 18 60
+   :widths: 20 18 62
    :header-rows: 1
 
    * - Method
@@ -161,17 +113,24 @@ When resampling an image into a new grid, output voxel centers rarely land squar
      - Practical Trade-Offs & Pipeline Guidance
    * - **Trilinear** *(Default)*
      - :math:`2 \times 2 \times 2` (8 voxels)
-     - Computes a linear weighted average of the 8 surrounding voxel corners. Never introduces intensities outside the local input range, making it ideal for BOLD time series and statistical maps where mild spatial smoothing is acceptable.
+     - * **Behavior:** Computes a distance-weighted average of the 8 surrounding voxels.
+       * **Best for:** BOLD fMRI time series and statistical maps where mild spatial smoothing is acceptable.
+       * **Trade-off:** Softens sharp edges slightly, but strictly stays within the local input range (no overshoot).
    * - **Cubic Spline** (``-s``)
      - :math:`4 \times 4 \times 4` (64 voxels)
-     - Uses a wider 64-voxel neighborhood to estimate local intensity gradients and fit smooth third-degree polynomials. Best for high-resolution anatomical scans (T1w/MPRAGE) where preserving sharp gray/white matter boundaries matters. Can produce minor ringing (slight overshoot/undershoot, including small negative values) at steep brain/background edges.
+     - * **Behavior:** Uses a wider 64-voxel neighborhood to estimate local intensity gradients and fit a smooth 3D curve.
+       * **Best for:** High-resolution structural scans (T1w/MPRAGE, T2w) where crisp gray/white matter borders matter.
+       * **Trade-off:** Can introduce minor ringing (slight overshoot or undershoot, including small negative values) along sharp brain/background edges.
    * - **Nearest-Neighbor** (``-n``)
      - :math:`1 \times 1 \times 1` (1 voxel)
-     - Copies the value of the single nearest input voxel without blending. **Required for integer ROI masks, parcellations, and binary masks** so boundary labels are never averaged into invalid intermediate integers. Also ignores any multiplicative intensity scale stored in ``<t4file>``.
+     - * **Behavior:** Copies the value of the single closest input voxel without blending.
+       * **Best for:** Binary masks, ROI labels, and parcellations where boundary values must stay exact integers.
+       * **Note:** Ignores any multiplicative intensity scale stored in ``<t4file>``.
 
 .. note::
-   If both ``-s`` and ``-n`` are passed on the same command line, ``-s`` (cubic spline) takes precedence.
-   
+   * **ROI Region Names (``-n``)**: Trilinear and cubic spline interpolation blend integer labels into fractional values, so ROI region names are dropped from the new ``.4dfp.ifh`` header. Passing ``-n`` copies those names to the output header so anatomical labels stay intact for tools like FIDL.
+   * **Flag Precedence**: If both ``-s`` and ``-n`` are passed together, ``-s`` takes precedence for interpolation.
+
 .. _t4img_examples:
 
 Examples

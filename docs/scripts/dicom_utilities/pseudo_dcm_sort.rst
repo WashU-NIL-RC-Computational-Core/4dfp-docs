@@ -53,7 +53,8 @@ Usage
    * - ``-t``
      - Disables the ``-t`` option when calling :ref:`dcm_dump_file`.
 
-.. note:: Do not add spaces between an option flag and its argument (for example, use ``-eIMA``, not ``-e IMA``).
+.. note::    
+  **Flag Syntax**: Pass single-letter flags separately (e.g., ``-c -d``, not ``-cd``). Values for ``-e<ext>``, ``-p<str>``, and ``-r<str>`` must immediately follow the flag with no separating space (e.g., ``-eIMA``); inserting a space causes the value to be misinterpreted as a positional file argument.
 
 Examples
 --------

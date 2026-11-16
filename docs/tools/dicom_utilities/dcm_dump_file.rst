@@ -58,7 +58,7 @@ Usage
      - Performs automated format conversion and data verification on header attributes.
 
 .. note:: 
-   If a file fails to open initially, ``dcm_dump_file`` automatically retries parsing with the ``-t`` flag enabled.
+   **Retry With -t Flag:** If a file fails to open initially, ``dcm_dump_file`` automatically retries parsing with the ``-t`` flag enabled.
 
 Examples
 --------
