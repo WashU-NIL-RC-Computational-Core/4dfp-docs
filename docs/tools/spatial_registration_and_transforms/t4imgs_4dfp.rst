@@ -26,15 +26,15 @@ If you would like to resample each image into its own ``<outfile>``, please use 
 .. rubric:: Key Capabilities (Why Use ``t4imgs_4dfp`` Over ``t4img_4dfp``)
 
 * **Group Templates & Multi-Scan Averaging**: Build study-specific anatomical templates across subjects or average repeated acquisitions from the same session (such as multiple T1w/MPRAGE scans) directly into target space—avoiding intermediate files and the blurring caused by multi-step resampling.
-* **No Darkened Borders on Partial-FOV Scans**: Averaging separate :ref:`t4img_4dfp<t4img_4dfp>` outputs darkens edges whenever scans have slightly shifted or clipped fields of view. ``t4imgs_4dfp`` prevents this automatically by normalizing each voxel only by the scans that actually cover it.
-* **Artifact-Free Masking & End-Slice Trimming**: Exclude non-brain tissue (``mask=``), or corrupted end-slices (``slices=``) *before* interpolation so bad signal does not bleed into neighboring voxels (unavailable in :ref:`t4img_4dfp<t4img_4dfp>`).
-* **Z-Score Map Aggregation (``-z``)**: Combine multiple statistical Z-maps across runs or participants via :math:`\sum w_i Z_i / \sqrt{\sum w_i}` so the combined output retains valid unit-variance Z-scores rather than being diluted by a standard average.
+* **Weighted & Coverage-Aware Averaging**: Combine scans using custom per-image weights (``weight=``) while normalizing each output voxel only by the valid scans that overlap it. Out-of-bounds or masked voxels are excluded from the weight sum, preventing artificial signal drop-off at the edges of shifted or partial fields of view.
+* **Artifact-Free Masking & End-Slice Trimming**: Exclude non-brain tissue (``mask=``), or corrupted end-slices (``slices=``) *before* interpolation so bad signal does not bleed into neighboring voxels (currently unavailable in :ref:`t4img_4dfp<t4img_4dfp>`).
+* **Z-Score Map Aggregation (``-z``)**: Combine multiple statistical Z-maps across runs or participants via :math:`\sum w_i Z_i / \sqrt{\sum w_i}` so the combined output retains valid unit-variance Z-scores.
 
 .. _t4imgs_inlist:
 
 .. rubric:: Input List Format (``<inlist>``)
 
-``<inlist>`` is a plain-text file with one input scan per line. Each line starts with an image root name followed by optional space-separated ``key=value`` tokens (blank lines and ``#`` comments are ignored):
+``<inlist>`` is a plain-text file with one input scan per line. Each line starts with an image root name followed by optional space-separated ``var=value`` tokens (blank lines and ``#`` comments are ignored):
 
 .. code-block:: text
 
@@ -45,7 +45,7 @@ If you would like to resample each image into its own ``<outfile>``, please use 
    sub01_run2_zmap  t4=run2_to_711-2B_t4  mask=run2_mask  weight=1.0  slices=2to34
 
 ``<imgfile>`` *(or ``img=<imgfile>``)*
-   Input :term:`4dfp` image root name (extensions optional).
+   Input :ref:`4dfp image<image_data>` root name (extensions optional).
 
 ``t4=<t4file>``
    :term:`t4file` to be applied to this image. Defaults to an identity transform matrix if omitted.
@@ -54,10 +54,10 @@ If you would like to resample each image into its own ``<outfile>``, please use 
    Native-space mask matching ``<imgfile>``'s grid. Voxels where ``mask <= 0`` are excluded *before* interpolation.
 
 ``scale=<float>``
-   Multiplies all voxel intensities in this image by a constant factor (defaults to ``1.0``; combined with any scale factor stored inside ``<t4file>``, unless ``-n`` is used).
+   Multiplies all voxel intensities in this image by a constant factor (defaults to ``1.0``; ignored if ``-n`` is enabled).
 
 ``weight=<float>``
-   Relative weight of this image when averaging across scans (defaults to ``1.0``)—useful for weighting functional runs by frame count or duration.
+   Relative weight of this image when averaging across scans (defaults to ``1.0``).
 
 ``slices=<lo>to<hi>``
    Keeps only slices ``<lo>`` through ``<hi>`` (1-based indexing, e.g., ``slices=3to28``), excluding outer end-slices *before* interpolation.
@@ -80,7 +80,7 @@ Usage
    * - ``-R``
      - Suppresses creation of the :ref:`rec_file`.
    * - ``-s``
-     - Enables :term:`Cubic Spline Interpolation` for sharper anatomical resampling.
+     - Enables :term:`Cubic Spline Interpolation`.
    * - ``-z``
      - Divides accumulated voxel sums by :math:`\sqrt{N}` rather than total weight :math:`N` (for combining inputs that are **already z-scored**).
    * - ``-O<outspace>``
@@ -94,6 +94,8 @@ Usage
 .. note::    
   **Flag Syntax**: Pass single-letter flags separately (e.g., ``-n -R``, not ``-nR``). Values for ``-O<outspace>`` and ``-@<endian>`` must immediately follow the flag with no separating space (e.g., ``-O222``, ``-@b``); inserting a space causes the value to be misinterpreted as a positional file argument.
 
+.. _t4imgs_examples:
+
 Examples
 --------
 
@@ -102,140 +104,221 @@ Examples
 
 ..    .. tab-set::
 
-..       .. tab-item:: 📁 Case 1: Dump Header Info
+..       .. tab-item:: 🧠 Case 1: Multi-Scan Anatomical Average
 
-..          Use ``dcm_dump_file`` when you need to inspect raw DICOM metadata, verify scanner settings (such as sequence names or TE/TR times), or troubleshoot files before running 4dfp conversion scripts.
+..          Use ``t4imgs_4dfp`` with cubic spline interpolation (``-s``) to resample and average multiple structural acquisitions (such as repeated T1w MPRAGE scans) directly into target space in a single step.
 
 ..          .. note::
-..             In all commands below, replace ``IM_0013.dcm`` with your actual file path or directory name (for example, ``/data/scan1.dcm`` or ``/data/DICOM``).
+..             In the commands below, replace ``mpr_scans.lst`` and the file prefixes inside it with your own list and scan names.
 
 ..          .. card:: 📥 Input Data
 ..             :class-card: sd-bg-light sd-border-1 mb-3
 
 ..             .. div:: card-help-top-right
 
-..               :card-help:`You can inspect a single DICOM file or an entire directory. When given a directory, the tool recursively scans all subdirectories.`
+..                :card-help:`Every image listed in your .lst file must have both its .4dfp.img and .4dfp.ifh files in the specified path.`
 
-..             DICOM files usually have a file extension of ``.dcm`` (or :term:`Siemens .IMA` when using Siemens scanners).
+..             A plain-text list file (``mpr_scans.lst``) pairing each T1w scan with its corresponding :term:`t4file`:
 
-..             .. image:: /_static/tools/dicom_utilities/dcm_dump_file/case1/ddf_c1_source_data.png
-..                :alt: Source directory with nested sub-folders
+..             .. code-block:: text
+
+..                # mpr_scans.lst
+..                sub01_mpr1 t4=sub01_mpr1_to_711-2B_t4
+..                sub01_mpr2 t4=sub01_mpr2_to_711-2B_t4
+
+..             .. image:: /_static/tools/registration/t4imgs_4dfp/case1/t4imgs_c1_input_files.png
+..                :alt: Directory listing showing mpr_scans.lst, MPRAGE 4dfp pairs, and t4 files
 ..                :align: center
 ..                :width: 80%
 
 ..          .. tab-set::
 
-..             .. tab-item:: ⚡ Command 1: Standard Display
+..             .. tab-item:: ⚡ Command 1: Average into 711-2B (111)
 
-..                Run the tool without flags to print all DICOM header tags directly to your terminal screen.
-
-..                **1. Execute Command:**
-
-..                .. code-block:: bash
-
-..                   dcm_dump_file IM_0013.dcm
-
-..                **2. Terminal Output:**
-
-..                .. image:: /_static/tools/dicom_utilities/dcm_dump_file/case1/cmd1/normal_dump_file.png
-..                   :alt: Standard dcm_dump_file output
-..                   :align: center
-..                   :width: 70%
-
-..             .. tab-item:: ⚡ Command 2: Formatted Display
-
-..                Use the ``-f`` flag to format the output into clean, aligned text columns. This makes reading tag group numbers, descriptions, and values much easier.
+..                Run ``t4imgs_4dfp`` with ``-s`` and ``-O111`` to resample both scans onto the 1 mm WashU :ref:`711-2B <atlas_711-2b>` grid and average them without creating intermediate files:
 
 ..                **1. Execute Command:**
 
 ..                .. code-block:: bash
 
-..                   dcm_dump_file -f IM_0013.dcm
+..                   t4imgs_4dfp -s -O111 mpr_scans.lst sub01_mpr_avg_111
 
 ..                **2. Terminal Output:**
 
-..                .. image:: /_static/tools/dicom_utilities/dcm_dump_file/case1/cmd2/f_option.png
-..                   :alt: Formatted dcm_dump_file output
+..                ``t4imgs_4dfp`` reads each image and transform sequentially, accumulates weighted voxel intensities, and writes the normalized average volume:
+
+..                .. image:: /_static/tools/registration/t4imgs_4dfp/case1/cmd1/t4imgs_c1_terminal.png
+..                   :alt: Terminal output showing t4imgs_4dfp reading two MPRAGE stacks and writing normalized output
 ..                   :align: center
-..                   :width: 70%
+..                   :width: 75%
+
+..                **3. Visual Comparison:**
+
+..                .. image:: /_static/tools/registration/t4imgs_4dfp/case1/cmd1/t4imgs_c1_result.png
+..                   :alt: Comparison of single T1w scan versus two-scan average in 711-2B 111 space
+..                   :align: center
+..                   :width: 80%
+
+..             .. tab-item:: ⚡ Command 2: Partial-FOV Scans (No Edge Darkening)
+
+..                When combining scans with slightly shifted fields of view, ``t4imgs_4dfp`` normalizes each voxel only by the scans that cover it. This avoids the darkened overlap borders produced when averaging separate :ref:`t4img_4dfp <t4img_4dfp>` outputs.
+
+..                **1. Execute Command:**
+
+..                .. code-block:: bash
+
+..                   t4imgs_4dfp -s -O111 partial_fov_scans.lst cohort_avg_111
+
+..                **2. Visual Comparison:**
+
+..                .. image:: /_static/tools/registration/t4imgs_4dfp/case1/cmd2/t4imgs_c1_fov_comparison.png
+..                   :alt: Comparison showing clean per-voxel normalization in t4imgs_4dfp versus darkened edges from naive averaging
+..                   :align: center
+..                   :width: 80%
+
+..       .. tab-item:: 📊 Case 2: Combining Functional Z-Maps
+
+..          Use ``-z`` together with per-scan ``mask=``, ``weight=``, and ``slices=`` tokens in ``<inlist>`` to combine statistical Z-maps across runs while excluding outer end-slice artifacts before interpolation.
+
+..          .. card:: 📥 Input Data
+..             :class-card: sd-bg-light sd-border-1 mb-3
+
+..             .. div:: card-help-top-right
+
+..                :card-help:`Masks and slice ranges in the .lst file are applied in each scan's native space before resampling.`
+
+..             A list file (``run_zmaps.lst``) combining three functional runs with native brain masks, run-duration weights, and end-slice trimming (keeping slices 2 through 34):
+
+..             .. code-block:: text
+
+..                # run_zmaps.lst
+..                run1_zmap t4=run1_to_711-2B_t4 mask=run1_mask weight=1.0 slices=2to34
+..                run2_zmap t4=run2_to_711-2B_t4 mask=run2_mask weight=1.0 slices=2to34
+..                run3_zmap t4=run3_to_711-2B_t4 mask=run3_mask weight=0.8 slices=2to34
+
+..             .. image:: /_static/tools/registration/t4imgs_4dfp/case2/t4imgs_c2_input_list.png
+..                :alt: List file and native Z-map and mask inputs
+..                :align: center
+..                :width: 80%
+
+..          **1. Execute Command:**
+
+..          Pass ``-z`` so voxel sums are divided by :math:`\sqrt{\sum w_i}` instead of :math:`\sum w_i`, preserving unit-variance Z-score scaling:
+
+..          .. code-block:: bash
+
+..             t4imgs_4dfp -z -O333.8 run_zmaps.lst sub01_combined_zmap_333
+
+..          **2. Terminal Output & Visual Result:**
+
+..          .. image:: /_static/tools/registration/t4imgs_4dfp/case2/t4imgs_c2_result.png
+..             :alt: Combined Z-map output in 333.8 space with edge slices excluded
+..             :align: center
+..             :width: 80%
+
+..       .. tab-item:: 🧩 Case 3: Cohort Coverage Mask (-n and -N)
+
+..          Use ``-n`` (nearest-neighbor) and ``-N`` (assign ``NaN`` to uncovered voxels) to resample and combine binary subject masks into a group coverage map without interpolating mask boundaries.
+
+..          **1. Input List (``subject_masks.lst``):**
+
+..          .. code-block:: text
+
+..             # subject_masks.lst
+..             sub01_brainmask t4=sub01_to_711-2B_t4
+..             sub02_brainmask t4=sub02_to_711-2B_t4
+..             sub03_brainmask t4=sub03_to_711-2B_t4
+
+..          **2. Execute Command:**
+
+..          .. code-block:: bash
+
+..             t4imgs_4dfp -n -N -O333.8 subject_masks.lst group_coverage_333
+
+..          **3. Visual Result:**
+
+..          Voxels covered by all subjects equal ``1.0``, partially covered edge voxels reflect the exact fraction of overlapping masks, and voxels outside every subject's mask are set to ``NaN`` instead of ``0.0``:
+
+..          .. image:: /_static/tools/registration/t4imgs_4dfp/case3/t4imgs_c3_coverage.png
+..             :alt: Cohort coverage map showing NaN background and fractional overlap along edges
+..             :align: center
+..             :width: 75%
 
 ..       .. tab-item:: ⚠️ Common Errors
 ..          :class-label: tab-error
 
 ..          .. tab-set::
 
-..             .. tab-item:: ❌ Not a DICOM File
+..             .. tab-item:: ❌ Mask Dimension Mismatch
 ..                :class-label: tab-error
 
-..                This error occurs if you try to inspect a file that is not in DICOM format (such as a text log file, PDF report, or non-DICOM image).
-
-..                **1. Execute Command:**
-
-..                .. code-block:: bash
-
-..                   dcm_dump_file not_a_DICOM.txt
+..                **Cause:** Specifying a ``mask=<mskfile>`` in ``<inlist>`` whose matrix dimensions, voxel sizes, or anatomical orientation do not match the corresponding input ``<imgfile>`` (for example, passing an atlas-space mask instead of a native-space mask).
 
 ..                **Error Output:**
 
-..                The tool attempts to read the standard 128-byte preamble header. When it cannot find valid DICOM tags, it fails to open the file:
+..                ``t4imgs_4dfp`` validates each mask's header against its paired input image before resampling and exits immediately on any mismatch:
 
 ..                .. code-block:: text
 
-..                   80092 DCM Illegal Stream Length (x) (Not enough data to define a full element) in readPreamble
-..                   20092 DCM failed to open file: [file].[ext] in DCM_OpenFile
-
-..                .. image:: /_static/tools/dicom_utilities/dcm_dump_file/errors/not_a_dicom.png
-..                   :alt: Error output when trying to parse non-DICOM file
-..                   :align: center
-
-..             .. tab-item:: ❌ Path Does Not Exist
-..                :class-label: tab-error
-
-..                **Cause:** Providing a file or directory path that does not exist or contains a typo.
-
-..                **Command Attempt:**
-
-..                .. code-block:: bash
-
-..                   dcm_dump_file raw_scan_folder
-
-..                **Error Output:**
-
-..                The tool attempts to locate the specified path. When it cannot find the directory, it outputs a failure message to the terminal screen and stops execution.
-
-..                .. index:: DCM_OpenFile, failed to open file
-
-..                .. code-block:: text
-
-..                   20092 DCM failed to open file: raw_scan_folder in DCM_OpenFile
+..                   t4imgs_4dfp: atlas_mask.4dfp.img run1_zmap.4dfp.img dimension mismatch
 
 ..                .. admonition:: Resolution
 ..                   :class: warning
 
-..                   Check your file path for typos and confirm the directory exists before re-running the command. You can use ``ls`` to list folder contents in your current directory.
+..                   Ensure every ``mask=`` file in ``<inlist>`` is in the **same native space and grid** as the ``<imgfile>`` on that line.
 
-..             .. tab-item:: ❌ Flags Placed After Directory Arguments
+..             .. tab-item:: ❌ Missing File or Spaces Around ``=`` in List
 ..                :class-label: tab-error
 
-..                **Cause:** Placing option flags (such as ``-f`` or ``-v``) after file or directory arguments instead of before them.
+..                **Cause:** A misspelled image, transform, or mask path in ``<inlist>``, or inserting spaces around ``=`` in ``key=value`` tokens (such as ``t4 = run1_t4`` instead of ``t4=run1_t4``).
+
+..                **Error Output:**
+
+..                Because ``t4imgs_4dfp`` splits list lines on whitespace, spaces around ``=`` prevent the token from being recognized, and any unreadable file triggers an immediate read error:
+
+..                .. code-block:: text
+
+..                   t4imgs_4dfp: run1_zmap.4dfp.img read error
+
+..                .. admonition:: Resolution
+..                   :class: warning
+
+..                   Verify that all referenced ``.4dfp.img``, ``.4dfp.ifh``, and ``_t4`` files exist, and write ``key=value`` tokens without spaces around ``=``.
+
+..             .. tab-item:: ❌ Missing Reference Grid Header (-O)
+..                :class-label: tab-error
+
+..                **Cause:** Passing a custom or :ref:`MNI152 <atlas_mni>` reference volume to ``-O<image>`` whose ``.4dfp.ifh`` header does not exist or cannot be opened.
 
 ..                **Command Attempt:**
 
 ..                .. code-block:: bash
 
-..                   dcm_dump_file DICOM -f
+..                   t4imgs_4dfp -s -OMNI152_T1_2mm mpr_scans.lst sub01_mpr_MNI
+
+..                **Error Output:**
+
+..                ``t4imgs_4dfp`` reads ``<image>.4dfp.ifh`` to configure the output matrix before scanning the input list and terminates if the header is missing:
+
+..                .. code-block:: text
+
+..                   Getifh: MNI152_T1_2mm.4dfp.ifh read error
+
+..                .. admonition:: Resolution
+..                   :class: warning
+
+..                   Confirm that ``<image>.4dfp.ifh`` exists in your working directory (or provide the full path to the reference template).
+
+..             .. tab-item:: ❌ Diluted Z-Scores (Omitting ``-z``)
+..                :class-label: tab-error
+
+..                **Cause:** Combining statistical Z-maps without passing the ``-z`` flag.
 
 ..                **Observed Behavior:**
 
-..                The tool processes options from left to right. Any flag placed after a directory path is ignored as a flag and treated as an invalid file name. The script tries to open a file literally named ``-f`` and throws an open failure error.
-
-..                .. code-block:: text
-
-..                   20092 DCM failed to open file: -f in DCM_OpenFile
+..                The command completes without a terminal error, but ``t4imgs_4dfp`` divides voxel sums by the total weight :math:`\sum w_i` (computing a standard mean) rather than :math:`\sqrt{\sum w_i}`. Across :math:`N` equal-weight runs, peak Z-scores shrink by a factor of :math:`\sqrt{N}`.
 
 ..                .. admonition:: Resolution
 ..                   :class: warning
 
-..                   Always place option flags **before** any file or directory paths (use ``dcm_dump_file -f DICOM``).
-
-
+..                   Always include ``-z`` when aggregating Z-score maps so the combined volume maintains valid unit-variance Z-score scaling.

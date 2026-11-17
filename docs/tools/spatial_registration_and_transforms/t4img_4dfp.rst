@@ -141,141 +141,228 @@ Examples
 
 ..    .. tab-set::
 
-..       .. tab-item:: 📁 Case 1: Dump Header Info
+..       .. tab-item:: 🧠 Case 1: Structural Scan to 711-2B
 
-..          Use ``dcm_dump_file`` when you need to inspect raw DICOM metadata, verify scanner settings (such as sequence names or TE/TR times), or troubleshoot files before running 4dfp conversion scripts.
+..          Use ``t4img_4dfp`` with cubic spline interpolation (``-s``) and ``-O111`` when resampling a high-resolution anatomical scan (such as a T1w MPRAGE) into standard 1 mm WashU :ref:`711-2B <atlas_711-2b>` atlas space.
 
 ..          .. note::
-..             In all commands below, replace ``IM_0013.dcm`` with your actual file path or directory name (for example, ``/data/scan1.dcm`` or ``/data/DICOM``).
+..             In the commands below, replace ``sub01_mpr`` and ``sub01_mpr_to_711-2B_t4`` with your own file prefixes and transform paths.
 
 ..          .. card:: 📥 Input Data
 ..             :class-card: sd-bg-light sd-border-1 mb-3
 
 ..             .. div:: card-help-top-right
 
-..               :card-help:`You can inspect a single DICOM file or an entire directory. When given a directory, the tool recursively scans all subdirectories.`
+..                :card-help:`Every 4dfp volume requires both its binary .4dfp.img file and its ASCII .4dfp.ifh header in the same directory.`
 
-..             DICOM files usually have a file extension of ``.dcm`` (or :term:`Siemens .IMA` when using Siemens scanners).
+..             You need two inputs: the source :term:`4dfp` image and the :term:`t4file` mapping that image into ``711-2B`` space.
 
-..             .. image:: /_static/tools/dicom_utilities/dcm_dump_file/case1/ddf_c1_source_data.png
-..                :alt: Source directory with nested sub-folders
+..             .. image:: /_static/tools/registration/t4img_4dfp/case1/t4img_c1_input_files.png
+..                :alt: Directory listing showing sub01_mpr.4dfp.img, sub01_mpr.4dfp.ifh, and t4 file
 ..                :align: center
 ..                :width: 80%
 
 ..          .. tab-set::
 
-..             .. tab-item:: ⚡ Command 1: Standard Display
+..             .. tab-item:: ⚡ Command 1: Resample to 111 Space
 
-..                Run the tool without flags to print all DICOM header tags directly to your terminal screen.
-
-..                **1. Execute Command:**
-
-..                .. code-block:: bash
-
-..                   dcm_dump_file IM_0013.dcm
-
-..                **2. Terminal Output:**
-
-..                .. image:: /_static/tools/dicom_utilities/dcm_dump_file/case1/cmd1/normal_dump_file.png
-..                   :alt: Standard dcm_dump_file output
-..                   :align: center
-..                   :width: 70%
-
-..             .. tab-item:: ⚡ Command 2: Formatted Display
-
-..                Use the ``-f`` flag to format the output into clean, aligned text columns. This makes reading tag group numbers, descriptions, and values much easier.
+..                Run ``t4img_4dfp`` with ``-s`` for crisp tissue boundaries and ``-O111`` for the 1 mm isotropic ``711-2B`` grid.
 
 ..                **1. Execute Command:**
 
 ..                .. code-block:: bash
 
-..                   dcm_dump_file -f IM_0013.dcm
+..                   t4img_4dfp -s -O111 sub01_mpr_to_711-2B_t4 sub01_mpr sub01_mpr_111
 
 ..                **2. Terminal Output:**
 
-..                .. image:: /_static/tools/dicom_utilities/dcm_dump_file/case1/cmd2/f_option.png
-..                   :alt: Formatted dcm_dump_file output
+..                Notice that ``t4img_4dfp`` builds a temporary single-line list and calls :ref:`t4imgs_4dfp <t4imgs_4dfp>` to perform the resampling and update the header range:
+
+..                .. image:: /_static/tools/registration/t4img_4dfp/case1/cmd1/t4img_c1_terminal.png
+..                   :alt: Terminal output showing t4imgs_4dfp reading the input image and t4 file and writing 111 output
 ..                   :align: center
-..                   :width: 70%
+..                   :width: 75%
+
+..                **3. Visual Comparison:**
+
+..                .. image:: /_static/tools/registration/t4img_4dfp/case1/cmd1/t4img_c1_result.png
+..                   :alt: Side-by-side comparison of native T1w scan and resampled 711-2B 111 volume
+..                   :align: center
+..                   :width: 80%
+
+..             .. tab-item:: ⚡ Command 2: Resample to MNI152 Space
+
+..                When transforming into :ref:`MNI152 <atlas_mni>` space (or back into a subject's native space), pass the reference template image to ``-O`` instead of a ``711-2B`` numeric shortcut.
+
+..                **1. Execute Command:**
+
+..                .. code-block:: bash
+
+..                   t4img_4dfp -s -OMNI152_T1_1mm sub01_mpr_to_MNI152_t4 sub01_mpr sub01_mpr_MNI
+
+..                **2. Terminal Output:**
+
+..                ``t4imgs_4dfp`` copies the matrix dimensions, voxel spacing, and volume center directly from ``MNI152_T1_1mm.4dfp.ifh``:
+
+..                .. image:: /_static/tools/registration/t4img_4dfp/case1/cmd2/t4img_c1_mni_terminal.png
+..                   :alt: Terminal output showing output dimensions copied from MNI152_T1_1mm
+..                   :align: center
+..                   :width: 75%
+
+..       .. tab-item:: 🎯 Case 2: ROI Mask & Region Labels
+
+..          Use nearest-neighbor interpolation (``-n``) when resampling binary masks, parcellations, or labeled ROI volumes so integer region IDs are not blended and ``region names`` are preserved in the output ``.4dfp.ifh`` header.
+
+..          .. card:: 📥 Input Data
+..             :class-card: sd-bg-light sd-border-1 mb-3
+
+..             .. div:: card-help-top-right
+
+..                :card-help:`Check your input .4dfp.ifh file for "region names :=" entries if you rely on anatomical labels in downstream tools like FIDL.`
+
+..             An integer ROI volume (``sub01_rois.4dfp.img``) whose ``.4dfp.ifh`` header maps voxel integers to anatomical region names.
+
+..             .. image:: /_static/tools/registration/t4img_4dfp/case2/t4img_c2_input_ifh.png
+..                :alt: Input .4dfp.ifh header showing region names entries
+..                :align: center
+..                :width: 80%
+
+..          **1. Execute Command:**
+
+..          Here, ``-n`` preserves discrete integer labels and ``-O333.8`` resamples onto a 3 mm ``711-2B`` functional grid shifted upward by 8 voxels along the Y-axis:
+
+..          .. code-block:: bash
+
+..             t4img_4dfp -n -O333.8 sub01_rois_to_711-2B_t4 sub01_rois sub01_rois_333
+
+..          **2. Output Comparison (``-n`` vs. Default Trilinear):**
+
+..          With ``-n``, region boundaries remain crisp integers and ``region names`` carry over into ``sub01_rois_333.4dfp.ifh``. Without ``-n``, boundary voxels are averaged into fractional values and region labels are dropped:
+
+..          .. image:: /_static/tools/registration/t4img_4dfp/case2/t4img_c2_comparison.png
+..             :alt: Comparison of ROI mask resampled with -n versus default trilinear interpolation
+..             :align: center
+..             :width: 80%
+
+..       .. tab-item:: 📚 Case 3: Single Image vs. Multi-Image Stacking
+
+..          ``t4img_4dfp`` is a single-image wrapper around :ref:`t4imgs_4dfp <t4imgs_4dfp>`. If you need to resample and average multiple runs (or apply per-image weights, intensity scaling, or slice cropping) in one step, call ``t4imgs_4dfp`` directly with a ``.lst`` file.
+
+..          .. tab-set::
+
+..             .. tab-item:: ⚡ Single Image (t4img_4dfp)
+
+..                Pass one transform, one input image, and one output name directly on the command line:
+
+..                .. code-block:: bash
+
+..                   t4img_4dfp -O333.8 bold_run1_to_711-2B_t4 bold_run1 bold_run1_333
+
+..             .. tab-item:: ⚡ Multiple Images (t4imgs_4dfp)
+
+..                Create a plain-text list file (``bold_runs.lst``) pairing each image with its transform, then pass that list to ``t4imgs_4dfp`` to resample and average all runs into a single output volume:
+
+..                .. code-block:: text
+
+..                   # bold_runs.lst
+..                   bold_run1 t4=bold_run1_to_711-2B_t4
+..                   bold_run2 t4=bold_run2_to_711-2B_t4
+..                   bold_run3 t4=bold_run3_to_711-2B_t4
+
+..                .. code-block:: bash
+
+..                   t4imgs_4dfp -O333.8 bold_runs.lst bold_mean_333
+
+..                .. image:: /_static/tools/registration/t4img_4dfp/case3/t4imgs_stack_terminal.png
+..                   :alt: Terminal output of t4imgs_4dfp processing a multi-line list file
+..                   :align: center
+..                   :width: 75%
 
 ..       .. tab-item:: ⚠️ Common Errors
 ..          :class-label: tab-error
 
 ..          .. tab-set::
 
-..             .. tab-item:: ❌ Not a DICOM File
+..             .. tab-item:: ❌ Swapped Argument Order
 ..                :class-label: tab-error
 
-..                This error occurs if you try to inspect a file that is not in DICOM format (such as a text log file, PDF report, or non-DICOM image).
-
-..                **1. Execute Command:**
-
-..                .. code-block:: bash
-
-..                   dcm_dump_file not_a_DICOM.txt
-
-..                **Error Output:**
-
-..                The tool attempts to read the standard 128-byte preamble header. When it cannot find valid DICOM tags, it fails to open the file:
-
-..                .. code-block:: text
-
-..                   80092 DCM Illegal Stream Length (x) (Not enough data to define a full element) in readPreamble
-..                   20092 DCM failed to open file: [file].[ext] in DCM_OpenFile
-
-..                .. image:: /_static/tools/dicom_utilities/dcm_dump_file/errors/not_a_dicom.png
-..                   :alt: Error output when trying to parse non-DICOM file
-..                   :align: center
-
-..             .. tab-item:: ❌ Path Does Not Exist
-..                :class-label: tab-error
-
-..                **Cause:** Providing a file or directory path that does not exist or contains a typo.
+..                **Cause:** Passing ``<infile>`` before ``<t4file>`` on the command line. Unlike ``t4imgs_4dfp``, ``t4img_4dfp`` expects the transform file **first**.
 
 ..                **Command Attempt:**
 
 ..                .. code-block:: bash
 
-..                   dcm_dump_file raw_scan_folder
+..                   t4img_4dfp -O111 sub01_mpr sub01_mpr_to_711-2B_t4 sub01_mpr_111
 
 ..                **Error Output:**
 
-..                The tool attempts to locate the specified path. When it cannot find the directory, it outputs a failure message to the terminal screen and stops execution.
-
-..                .. index:: DCM_OpenFile, failed to open file
+..                The wrapper writes the first positional argument into the ``img=`` field of its temporary list, causing ``t4imgs_4dfp`` to look for a non-existent ``.4dfp.img`` file named after your transform:
 
 ..                .. code-block:: text
 
-..                   20092 DCM failed to open file: raw_scan_folder in DCM_OpenFile
+..                   t4imgs_4dfp: sub01_mpr_to_711-2B_t4.4dfp.img read error
 
 ..                .. admonition:: Resolution
 ..                   :class: warning
 
-..                   Check your file path for typos and confirm the directory exists before re-running the command. You can use ``ls`` to list folder contents in your current directory.
+..                   Always pass positional arguments in the order ``<t4file> <infile> <outfile>`` (for example, ``t4img_4dfp -O111 sub01_mpr_to_711-2B_t4 sub01_mpr sub01_mpr_111``).
 
-..             .. tab-item:: ❌ Flags Placed After Directory Arguments
+..             .. tab-item:: ❌ Missing Input File or Reference Grid
 ..                :class-label: tab-error
 
-..                **Cause:** Placing option flags (such as ``-f`` or ``-v``) after file or directory arguments instead of before them.
+..                **Cause:** Providing a misspelled path, omitting a paired ``.4dfp.ifh`` header, passing a NIfTI (``.nii``) file directly, or specifying a reference image with ``-O<image>`` that does not exist.
 
 ..                **Command Attempt:**
 
 ..                .. code-block:: bash
 
-..                   dcm_dump_file DICOM -f
+..                   t4img_4dfp -O111 sub01_mpr_to_711-2B_t4 missing_scan out_111
+
+..                **Error Output:**
+
+..                ``t4imgs_4dfp`` checks readability of the input image, ``t4`` file, and target ``-O`` header before resampling and exits immediately if any file cannot be read:
+
+..                .. code-block:: text
+
+..                   t4imgs_4dfp: missing_scan.4dfp.img read error
+
+..                .. admonition:: Resolution
+..                   :class: warning
+
+..                   Verify that your input files are in :term:`4dfp` format (both ``.4dfp.img`` and ``.4dfp.ifh`` exist) and check file paths with ``ls`` before re-running.
+
+..             .. tab-item:: ❌ Clipped or Empty Output Volume
+..                :class-label: tab-error
+
+..                **Cause:** Using a ``711-2B`` numeric shortcut (``-O111``, ``-O222``, or ``-O333``) with a transform targeting :ref:`MNI152 <atlas_mni>` or native scanner space, or forgetting a Y-axis shift (``-O333.8``) on an elongated brain.
 
 ..                **Observed Behavior:**
 
-..                The tool processes options from left to right. Any flag placed after a directory path is ignored as a flag and treated as an invalid file name. The script tries to open a file literally named ``-f`` and throws an open failure error.
+..                The command finishes without a terminal error, but the output image appears severely shifted, cut off at the front/back, or completely blank because the target grid's bounding box and origin do not match the transformed coordinates.
 
-..                .. code-block:: text
-
-..                   20092 DCM failed to open file: -f in DCM_OpenFile
+..                .. image:: /_static/tools/registration/t4img_4dfp/errors/clipped_output.png
+..                   :alt: Clipped brain output caused by mismatched output grid space
+..                   :align: center
+..                   :width: 75%
 
 ..                .. admonition:: Resolution
 ..                   :class: warning
 
-..                   Always place option flags **before** any file or directory paths (use ``dcm_dump_file -f DICOM``).
+..                   Match ``-O<outspace>`` to your transform's target space: pass the target template or native image via ``-O<image>`` for MNI152 or native transforms, and use ``-O333.8`` when ``333`` clips frontal or occipital cortex.
+
+..             .. tab-item:: ❌ Blurred ROI Labels & Lost Region Names
+..                :class-label: tab-error
+
+..                **Cause:** Resampling an integer ROI mask or parcellation without passing the ``-n`` flag.
+
+..                **Observed Behavior:**
+
+..                Default trilinear interpolation averages neighboring labels along region borders into decimal values (such as ``1.5`` or ``2.3``), and all ``region names`` entries are omitted from the output ``.4dfp.ifh`` header.
+
+..                .. admonition:: Resolution
+..                   :class: warning
+
+..                   Re-run the command with ``-n`` (for example, ``t4img_4dfp -n -O333.8 ...``) to preserve exact integer values and copy ``region names`` to the output header.
 
 
 .. rubric:: Footnotes
