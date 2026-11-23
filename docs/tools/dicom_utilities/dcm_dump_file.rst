@@ -30,31 +30,31 @@ Usage
    :widths: 15 60
    :header-rows: 1
 
-   * - Flag
+   - - Flag
      - Description
-   * - ``-b``
+   - - ``-b``
      - Reads data using :term:`Big-Endian` byte order (used in older imaging systems).
-   * - ``-e``
+   - - ``-e``
      - Exits immediately on file open failure, skipping remaining files.
-   * - ``-E``
+   - - ``-E``
      - Processes files using :term:`DICOM Part 10` format with eFilm workstation compatibility.
-   * - ``-f``
+   - - ``-f``
      - Formats stdout into clean, aligned text columns for easier reading.
-   * - ``-g``
+   - - ``-g``
      - Ignores group length attributes (useful for files with corrupted size markers).
-   * - ``-l``
+   - - ``-l``
      - Uses retired length-to-end attributes to calculate overall file size.
-   * - ``-L``
+   - - ``-L``
      - Reads data using :term:`Explicit Little-Endian` byte order (standard PC format).
-   * - ``-m <mult>``
+   - - ``-m <mult>``
      - Limits displayed items for repeated data fields (e.g., ``-m 5`` displays first 5 entries).
-   * - ``-t``
+   - - ``-t``
      - Parses files using :term:`DICOM Part 10` standards while ignoring minor type mismatches.
-   * - ``-v``
+   - - ``-v``
      - Enables verbose logging to display detailed technical updates during processing.
-   * - ``-w <flag>``
+   - - ``-w <flag>``
      - Enables advanced file opening options (e.g., ``-w REPEAT`` permits duplicate tags).
-   * - ``-z``
+   - - ``-z``
      - Performs automated format conversion and data verification on header attributes.
 
 .. note:: 

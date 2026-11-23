@@ -64,52 +64,52 @@ Usage
    :widths: 15 35 70
    :header-rows: 1
 
-   * - Bit
+   - - Bit
      - Name
      - Description
-   * - :bdg-primary:`1`
+   - - :bdg-primary:`1`
      - Enable Alignment
      - **ENABLED:** Computes spatial updates and modifies the :term:`t4file` matrix.
 
        **DISABLED:** Evaluates the :term:`objective function <eta Alignment Score>` η without updating the :term:`t4file`.
-   * - :bdg-info:`2`
+   - - :bdg-info:`2`
      - 3D Rigid-Body 6-DOF Alignment
      - **ENABLED:** 3D registration (X, Y, Z translation + :term:`Nod`,  :term:`Roll`,  :term:`Squirm`).
 
        **DISABLED:** 2D in-plane registration (X, Y translation + :term:`Squirm`).
-   * - :bdg-info:`4`
+   - - :bdg-info:`4`
      - Affine Shearing & Stretch
      - **ENABLED:** Allows stretching and shearing to align overall image shape and angles.
-   * - :bdg-info:`8`
+   - - :bdg-info:`8`
      - Axis-Aligned Stretch & Shrink
      - **ENABLED:** Allows scaling along the main axes to correct voxel size differences **without shearing**.
-   * - :bdg-warning:`16`
+   - - :bdg-warning:`16`
      - Lock X-Axis Scaling
      - **ENABLED:** Blocks scaling adjustments along the X axis.
-   * - :bdg-warning:`32`
+   - - :bdg-warning:`32`
      - Lock Y-Axis Scaling
      - **ENABLED:** Blocks scaling adjustments along the Y axis.
-   * - :bdg-warning:`64`
+   - - :bdg-warning:`64`
      - Lock Z-Axis Scaling
      - **ENABLED:** Blocks scaling adjustments along the Z axis.
-   * - :bdg-success:`256`
+   - - :bdg-success:`256`
      - Pearson Intensity Correlation
      - **ENABLED:** Uses :term:`Pearson Intensity Correlation` for same-contrast scans.
 
        **DISABLED:** Uses :term:`Vector Gradient Alignment` for cross-contrast scans. [1]_
-   * - :bdg-danger:`512`
+   - - :bdg-danger:`512`
      - Superfine Precision Step
      - **ENABLED:** Dense 2.5 mm voxel sampling grid with a tight (0.5x) parameter search step.
-   * - :bdg-danger:`1024`
+   - - :bdg-danger:`1024`
      - Fast Coarse Step
      - **ENABLED:** Coarse 12.0 mm voxel sampling grid with a wide (1.2x) parameter search step.
-   * - :bdg-danger:`2048`
+   - - :bdg-danger:`2048`
      - Standard Fine Step
      - **ENABLED:** Locks voxel sampling to a fixed 5.0 mm grid without altering the parameter search step.
-   * - :bdg-dark:`4096`
+   - - :bdg-dark:`4096`
      - Grid Search Translation
      - **ENABLED:** Global 7.5mm translation grid search for initial positioning.
-   * - :bdg-secondary:`8192`
+   - - :bdg-secondary:`8192`
      - Hessian Newton-Raphson Optimization
      - **ENABLED:** :term:`Hessian Matrix` inversion (:term:`Newton-Raphson Optimization`).
 

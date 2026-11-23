@@ -44,21 +44,21 @@ Usage
    :widths: 15 85
    :header-rows: 1
 
-   * - Flag
+   - - Flag
      - Description
-   * - ``-c``
+   - - ``-c``
      - Copies DICOM files to ``$CWD/[study #]`` instead of creating symbolic links.
-   * - ``-d``
+   - - ``-d``
      - Enables verbose debug mode to display detailed log information.
-   * - ``-e<ext>``
+   - - ``-e<ext>``
      - Filters DICOM files by extension before sorting. Do not include a period. Defaults to ``dcm``.
-   * - ``-i``
+   - - ``-i``
      - Sorts DICOM files with integer file names.
-   * - ``-p<str>``
+   - - ``-p<str>``
      - Filters DICOM files by patient name in the ``PAT Patient Name`` field before sorting.
-   * - ``-r<str>``
+   - - ``-r<str>``
      - Filters DICOM files by matching the beginning of the filename. For example, ``-rtest`` matches files starting with "test".
-   * - ``-t``
+   - - ``-t``
      - Disables the ``-t`` option when calling :ref:`dcm_dump_file`.
 
 .. note::    

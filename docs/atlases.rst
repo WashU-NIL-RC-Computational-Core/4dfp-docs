@@ -10,24 +10,24 @@ The 4dfp suite operates across several standard stereotactic coordinate systems 
 Talairach Space (1988)
 ----------------------
 
-Defined by Jean Talairach and Pierre Tournoux in their 1988 stereotactic print atlas, this coordinate system establishes the anatomical conventions underlying 4dfp's native atlas space. Talairach space orients the brain along the horizontal **anterior commissure-posterior commissure (AC-PC)** line, placing the coordinate origin :math:`(0, 0, 0)` at the anterior commissure.
+Defined by Jean Talairach and Pierre Tournoux in their 1988 stereotactic print atlas [1]_, this coordinate system establishes the anatomical conventions underlying 4dfp's native atlas space. Talairach space orients the brain along the horizontal **anterior commissure-posterior commissure (AC-PC)** line, placing the coordinate origin :math:`(0, 0, 0)` at the anterior commissure [1]_.
 
-Because the 1988 atlas was constructed from a single post-mortem hemisphere (a 60-year-old French female), its overall bounding-box dimensions are notably compact compared to modern population MRI averages. Rather than requiring manual AC-PC landmarking on every individual scan, 4dfp relies on volumetric MRI templates that were linearly aligned and scaled to match 1988 Talairach brain proportions. As a result, coordinates reported in 4dfp's native atlas space correspond directly to 1988 Talairach coordinates [1]_ [2]_.
+Because the 1988 atlas was constructed from a single post-mortem hemisphere (a 60-year-old French female) [1]_, its overall bounding-box dimensions are notably compact compared to modern population MRI averages. Rather than requiring manual AC-PC landmarking on every individual scan, 4dfp relies on volumetric MRI templates that were linearly aligned and scaled to match 1988 Talairach brain proportions. As a result, coordinates reported in 4dfp's native atlas space correspond directly to 1988 Talairach coordinates [1]_ [2]_ [3]_.
 
 .. _atlas_711-2b:
 
 711-2B
 ------
 
-**711-2B** is the primary atlas space used throughout the 4dfp software suite [1]_ [2]_. Developed at Washington University in St. Louis in the mid-1990s, ``711-2B`` provides a high-contrast T1-weighted reference target for automated 3D intensity-based registration into 1988 Talairach coordinate space.
+**711-2B** is the primary atlas space used throughout the 4dfp software suite [2]_ [3]_. Developed at Washington University in St. Louis in the mid-1990s, ``711-2B`` provides a high-contrast T1-weighted reference target for automated 3D intensity-based registration into 1988 Talairach coordinate space.
 
-To construct the target, high-resolution T1-weighted MPRAGE scans from **12 healthy young adults** were mutually coregistered using 12-parameter affine transformations [1]_. The resulting group-average brain was then aligned to the 1988 Talairach & Tournoux atlas using the **9-parameter Spatial Normalization (SN)** method of Lancaster and Fox [3]_, which applies 3 translations, 3 rotations, and **3 independent linear scaling factors along the X, Y, and Z axes** to fit the average brain into the compact bounding-box dimensions of the 1988 Talairach atlas. ``711-2B`` is a slightly refined revision of an earlier iteration (:ref:`711-2A<atlas_711-2a>`) and serves as the enduring WashU reference standard.
+To construct the target, high-resolution T1-weighted MPRAGE scans from **12 healthy young adults** were mutually coregistered using 12-parameter affine transformations [2]_. The resulting group-average brain was then aligned to the 1988 Talairach & Tournoux atlas using the **9-parameter Spatial Normalization (SN)** method of Lancaster and Fox [4]_, which applies 3 translations, 3 rotations, and **3 independent linear scaling factors along the X, Y, and Z axes** to fit the average brain into the compact bounding-box dimensions of the 1988 Talairach atlas. ``711-2B`` is a slightly refined revision of an earlier iteration (:ref:`711-2A<atlas_711-2a>`) and serves as the enduring Washington University reference standard.
 
 Because ``711-2B`` serves as 4dfp's native coordinate system, the suite defines three canonical isotropic sampling grids tailored to its bounding box and AC-PC origin:
 
 - **111** (1 mm isotropic, :math:`176 \times 208 \times 176` voxels): Standard high-resolution lattice for structural imaging (T1w/MPRAGE, T2w), anatomical segmentation, and cortical surface projection.
 - **222** (2 mm isotropic, :math:`128 \times 128 \times 75` voxels): Intermediate lattice commonly used for group anatomical averages, PET imaging, diffusion workflows, and higher-resolution fMRI.
-- **333[.n]** (3 mm isotropic, :math:`48 \times 64 \times 48` voxels): Default lattice for 4D BOLD fMRI time series. An optional decimal offset (such as ``333.8``) shifts the anterior-posterior (Y-axis) grid center upward by *n* voxels to prevent frontal or occipital clipping in subjects with elongated brains.
+- **333** (3 mm isotropic, :math:`48 \times 64 \times 48` voxels): Default lattice for 4D BOLD fMRI time series.
 
 .. _atlas_711-2a:
 
@@ -43,21 +43,25 @@ Although ``711-2A`` is no longer used for new acquisitions, archival studies and
 MNI305 and MNI152 Space
 -----------------------
 
-Developed at the Montreal Neurological Institute by the International Consortium for Brain Mapping (ICBM) [4]_, **MNI305** and its successor **MNI152** are the standard template spaces across many workflows. MNI305 was constructed by averaging 305 young adult MRI scans linearly aligned to a manually landmarked target, and MNI152 was subsequently generated by registering 152 higher-resolution T1-weighted scans onto MNI305.
+Developed at the Montreal Neurological Institute by the International Consortium for Brain Mapping (ICBM) [5]_ [6]_, **MNI305** and its successor **MNI152** are the standard template spaces across many neuroimaging workflows. ``MNI305`` was constructed in two stages: first, manual anatomical landmarks (AC, PC, and cortical extents) were used to linearly align young-adult MRI scans into Talairach AC-PC orientation to form a first-pass mean image; second, all 305 T1-weighted volumes were automatically aligned to that initial average via 9-parameter linear 3D cross-correlation and intensity-averaged to eliminate manual landmarking variability [5]_. ``MNI152`` was subsequently generated by registering 152 higher-resolution T1-weighted scans onto ``MNI305`` [6]_.
 
-* **Structural Differences from 711-2B**: Because ``711-2B`` was linearly scaled to fit the compact bounding box of the post-mortem 1988 Talairach print atlas, it is approximately **5% smaller in linear dimensions** than MNI152 (which preserved the larger average brain volume of its living young-adult cohort) and is tilted roughly **2-3° nose-down** (anteriorly rotated around the left-right axis) with a shifted coordinate origin [5]_ [6]_.
-* **Role in 4dfp**: While ``711-2B`` remains 4dfp's native atlas space, 4dfp supports MNI152 (and MNI305) as an interoperable output space for studies and pipelines. Transformations into MNI space can either be estimated directly against an MNI template or composed from ``711-2B`` space using calibrated affine mappings between ``711-2B`` and MNI152/MNI305. Because MNI space has a larger bounding box and different origin than ``711-2B``, MNI-aligned volumes must always use an MNI template grid (such as 1 mm or 2 mm isotropic MNI152) rather than ``711-2B``'s ``111``, ``222``, or ``333`` grid definitions.
+- **Structural Differences from 711-2B**: Because ``711-2B`` was linearly scaled to fit the compact bounding box of the post-mortem 1988 Talairach print atlas [1]_, whereas linear group averaging in ``MNI305`` and ``MNI152`` preserved the larger average brain volume of a living young-adult cohort [5]_ [6]_, ``711-2B`` is approximately **5% smaller in linear dimensions** than ``MNI152`` and is tilted roughly **2–3° nose-down** (anteriorly rotated around the left-right axis) with a shifted coordinate origin [7]_ [8]_.
+- **Role in 4dfp**: While ``711-2B`` remains 4dfp's native atlas space, 4dfp supports ``MNI152`` (and ``MNI305``) as an interoperable output space for studies and pipelines. Transformations into MNI space can either be estimated directly against an MNI template or composed from ``711-2B`` space using calibrated affine mappings between ``711-2B`` and ``MNI152``/``MNI305``. Because MNI space has a larger bounding box and different origin than ``711-2B``, MNI-aligned volumes must always use an MNI template grid (such as 1 mm or 2 mm isotropic ``MNI152``) rather than ``711-2B``'s ``111``, ``222``, or ``333`` grid definitions.
 
 .. rubric:: References
 
-.. [1] Ojemann, J. G., Akbudak, E., Snyder, A. Z., McKinstry, R. C., Raichle, M. E., & Conturo, T. E. (1997). `Anatomic Localization and Quantitative Analysis of Gradient Refocused Echo-Planar fMRI Susceptibility Artifacts <https://doi.org/10.1006/nimg.1997.0289>`_. *NeuroImage*, 6(3), 156-167.
+.. [1] Talairach, J., & Tournoux, P. (1988). *Co-Planar Stereotaxic Atlas of the Human Brain: 3-Dimensional Proportional System: An Approach to Cerebral Imaging*. Thieme Medical Publishers.
 
-.. [2] Buckner, R. L., Head, D., Parker, J., Fotenos, A. F., Marcus, D., Morris, J. C., & Snyder, A. Z. (2004). `A unified approach for morphometric and functional data analysis in young, old, and demented adults using automated atlas-based head size normalization: reliability and validation against manual measurement of total intracranial volume <https://doi.org/10.1016/j.neuroimage.2004.06.018>`_. *NeuroImage*, 23(2), 724–738.
+.. [2] Ojemann, J. G., Akbudak, E., Snyder, A. Z., McKinstry, R. C., Raichle, M. E., & Conturo, T. E. (1997). `Anatomic Localization and Quantitative Analysis of Gradient-Refocused Echo-Planar fMRI Susceptibility Artifacts <https://doi.org/10.1006/nimg.1997.0289>`_. *NeuroImage*, 6(3), 156–167.
 
-.. [3] Lancaster, J. L., Glass, T. G., Lankipalli, B. R., Downs, H., Mayberg, H., & Fox, P. T. (1995). `A modality-independent approach to spatial normalization of tomographic images of the human brain <https://doi.org/10.1002/hbm.460030305>`_. *Human Brain Mapping*, 3(3), 209-223.
+.. [3] Buckner, R. L., Head, D., Parker, J., Fotenos, A. F., Marcus, D., Morris, J. C., & Snyder, A. Z. (2004). `A unified approach for morphometric and functional data analysis in young, old, and demented adults using automated atlas-based head size normalization: reliability and validation against manual measurement of total intracranial volume <https://doi.org/10.1016/j.neuroimage.2004.06.018>`_. *NeuroImage*, 23(2), 724–738.
 
-.. [4] Mazziotta, J., Toga, A., Evans, A., Fox, P., Lancaster, J., et al. (2001). `A probabilistic atlas and reference system for the human brain: International Consortium for Brain Mapping (ICBM) <https://doi.org/10.1098/rstb.2001.0915>`_. *Philosophical Transactions of the Royal Society of London. Series B: Biological Sciences*, 356(1412), 1293-1322.
+.. [4] Lancaster, J. L., Glass, T. G., Lankipalli, B. R., Downs, H., Mayberg, H., & Fox, P. T. (1995). `A modality-independent approach to spatial normalization of tomographic images of the human brain <https://doi.org/10.1002/hbm.460030305>`_. *Human Brain Mapping*, 3(3), 209–223.
 
-.. [5] Newbold, D. J., Laumann, T. O., Hoyt, C. R., Hampton, J. M., Montez, D. F., Raut, R. V., et al. (2020). `Plasticity and Spontaneous Activity Pulses in Disused Human Brain Circuits <https://doi.org/10.1016/j.neuron.2020.05.007>`_. *Neuron*, 107(3), 580-589.e6.
+.. [5] Evans, A. C., Collins, D. L., Mills, S. R., Brown, E. D., Kelly, R. L., & Peters, T. M. (1993). `3D Statistical Neuroanatomical Models from 305 MRI Volumes <https://doi.org/10.1109/NSSMIC.1993.373602>`_. *1993 IEEE Conference Record Nuclear Science Symposium and Medical Imaging Conference*, 1813–1817.
 
-.. [6] Montez, D. F., Van, A. N., Miller, R. L., Seider, N. A., Marek, S., Zheng, A., et al. (2023). `Using synthetic MR images for distortion correction <https://doi.org/10.1016/j.dcn.2023.101234>`_. *Developmental Cognitive Neuroscience*, 60, 101234.
+.. [6] Mazziotta, J., Toga, A., Evans, A., Fox, P., Lancaster, J., et al. (2001). `A probabilistic atlas and reference system for the human brain: International Consortium for Brain Mapping (ICBM) <https://doi.org/10.1098/rstb.2001.0915>`_. *Philosophical Transactions of the Royal Society of London. Series B: Biological Sciences*, 356(1412), 1293–1322.
+
+.. [7] Newbold, D. J., Laumann, T. O., Hoyt, C. R., Hampton, J. M., Montez, D. F., Raut, R. V., et al. (2020). `Plasticity and Spontaneous Activity Pulses in Disused Human Brain Circuits <https://doi.org/10.1016/j.neuron.2020.05.007>`_. *Neuron*, 107(3), 580–589.e6.
+
+.. [8] Montez, D. F., Van, A. N., Miller, R. L., Seider, N. A., Marek, S., Zheng, A., et al. (2023). `Using synthetic MR images for distortion correction <https://doi.org/10.1016/j.dcn.2023.101234>`_. *Developmental Cognitive Neuroscience*, 60, 101234.

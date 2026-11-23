@@ -38,19 +38,19 @@ Usage
    :widths: 15 85
    :header-rows: 1
 
-   * - Flag
+   - - Flag
      - Description
-   * - ``-d``
+   - - ``-d``
      - Enables verbose debug mode to display detailed log information.
-   * - ``-e<ext>``
+   - - ``-e<ext>``
      - Filters DICOM files by extension before sorting. Do not include a period. Defaults to ``dcm``.
-   * - ``-i``
+   - - ``-i``
      - Sorts DICOM files with integer file names.
-   * - ``-r<str>``
+   - - ``-r<str>``
      - Filters DICOM files by matching the beginning of the filename. For example, ``-rtest`` matches files starting with "test". Defaults to matching files starting with ``MR*``.
-   * - ``-s``
+   - - ``-s``
      - Searches one level deeper below the numeric directory. Looks for a folder named ``DICOM`` first. If ``DICOM`` does not exist, it searches the single subfolder present regardless of its name.
-   * - ``-t``
+   - - ``-t``
      - Disables the ``-t`` option when calling :ref:`dcm_dump_file`.
 
 .. note::    
