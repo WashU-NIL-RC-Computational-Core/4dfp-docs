@@ -108,10 +108,10 @@ Glossary
       Fits smooth, continuous third-order (cubic) curves across a wider neighborhood of surrounding source voxels. Compared to :term:`Trilinear Interpolation`, it preserves sharper spatial detail and peak signal contrast, at the cost of higher computational overhead and potential minor intensity overshoot (ringing) along sharp, high-contrast edges.
 
    Little-Endian
-      A byte-ordering convention that stores the least significant byte first in memory. It is the native byte order on modern x86/x64 systems and the standard binary format for current :term:`4dfp` image files (``.4dfp.img``). Contrast with :term:`Big-Endian`.
+      A byte-ordering convention that stores the least significant byte first in memory. It is the native byte order on modern x86/x64 systems and the standard binary format for current :ref:`4dfp image<image_data>`. Contrast with :term:`Big-Endian`.
 
    Nearest-Neighbor Interpolation
       Maps each target voxel back to the source grid and copies the exact value of the single closest source voxel center, with no blending or rounding of intensities. Preserves discrete integer ROI labels and binary masks, though resampled edges appear blocky.
    
    Trilinear Interpolation
-      Maps each target voxel back to the source grid and calculates a distance-weighted average of the **8 surrounding source voxel centers** (a :math:`2 \times 2 \times 2` neighborhood), giving higher weight to closer voxels. It is fast and strictly bounded (never creates artificial intensity spikes or dips).
+      Maps each target voxel back to the source grid and calculates a distance-weighted average of the **8 surrounding source voxel centers** (a 2 × 2 × 2 neighborhood), giving higher weight to closer voxels. It is fast and strictly bounded (never creates artificial intensity spikes or dips).
