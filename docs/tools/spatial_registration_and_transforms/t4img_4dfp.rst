@@ -14,16 +14,16 @@ Synopsis
 Description
 -----------
 
-Applies a spatial transformation matrix (:term:`t4file`) to resample a **single** :ref:`4dfp image<image_data>` into a target space or reference image grid [#wrapper]_. 
+Applies a spatial transformation matrix (:term:`t4file`) to resample a 3D or 4D :ref:`4dfp image<image_data>` into a target space or reference image grid [#wrapper]_. For 4D timeseries, the same transform is applied to every frame.
 
 * **Resampling Multiple Inputs Into a Single Output (n:1):** If you need to combine multiple separate images into a single output, or require custom per-scan weights, frame/slice selection, or input masks, use :ref:`t4imgs_4dfp<t4imgs_4dfp>`.
 * **Resampling Multiple Inputs Into Multiple Outputs (n:n):** Neither ``t4img_4dfp`` nor :ref:`t4imgs_4dfp<t4imgs_4dfp>` outputs multiple separate files from a single command. To resample multiple images into their own output, run ``t4img_4dfp`` iteratively (see :ref:`t4img_examples`).
 
-By default, ``t4img_4dfp`` writes the output image set (``.4dfp.img``, ``.4dfp.ifh``, and ``.4dfp.img.rec``) to ``<imgfile>t`` unless an ``<outfile>`` name is provided. 
-Passing ``none`` for ``<t4file>`` applies an identity transform, allowing grid resampling, or orientation conversion without spatial rotation or translation.
+By default, ``t4img_4dfp`` defaults the output image name as ``<imgfile>t`` unless an ``<outfile>`` is provided. 
+Passing ``none`` for :term:`t4file` applies an identity transform, allowing grid resampling or orientation conversion without spatial rotation or translation.
 
 .. note::
-  **File Extensions:** There is no need to pass the 4dfp file extensions for the image ``.4dfp.img``. Extensions are stripped automatically from ``<imgfile>`` and ``<outfile>``.
+  **File Extensions:** There is no need to pass the 4dfp file extensions for :ref:`4dfp image<image_data>`. Extensions are stripped automatically from ``<imgfile>`` and ``<outfile>``.
 
 Usage
 -----
@@ -41,9 +41,9 @@ Usage
    - - ``-N``
      - Assigns ``NaN`` instead of ``0.0`` to output voxels with no valid input (out-of-FOV or masked).
    - - ``-n``
-     - Uses :term:`Nearest-Neighbor Interpolation` (ignores intensity scaling within the t4file).
+     - Uses :term:`Nearest-Neighbor Interpolation` (ignores intensity scaling within the :term:`t4file`).
    - - ``-R``
-     - Suppresses runtime provenance in the :ref:`rec_file`.
+     - Disables creation of the output :ref:`rec_file` provenance file.
    - - ``-s``
      - Enables :term:`Cubic Spline Interpolation`.
    - - ``-z``
@@ -63,25 +63,51 @@ Usage
 
 .. rubric:: Output Spaces & Target Grids
 
-While :term:`t4file` defines the mathematical coordinate transformation from source space to target space, ``-O<outspace>`` defines the **target voxel grid** (matrix dimensions, voxel spacing, volume center, and anatomical orientation) onto which the image is resampled. 
-Always match ``-O<outspace>`` to the coordinate system targeted by :term:`t4file`.
+While :term:`t4file` defines the mathematical coordinate transformation from source space to target space, ``-O<outspace>`` defines the **target voxel grid** (matrix dimensions, voxel spacing, volume center, and anatomical orientation) onto which the image is sampled. 
+Always match ``-O<outspace>`` to the target space of your :term:`t4file`.
 
-An output space can be any reference :ref:`4dfp image<image_data>`, such as:
+**1. Built-In 711-2B Atlas Presets**
+
+The numeric shortcuts hardcode axial (``orientation = 2``) grids specifically for :ref:`711-2B <atlas_711-2b>` space:
+
+.. list-table::
+   :widths: 15 18 22
+   :header-rows: 1
+
+   - - Preset
+     - Voxel Size
+     - Matrix Dimensions
+   - - ``-O111``
+     - :math:`1 \times 1 \times 1\text{ mm}`
+     - :math:`176 \times 208 \times 176`
+   - - ``-O222``
+     - :math:`2 \times 2 \times 2\text{ mm}`
+     - :math:`128 \times 128 \times 75`
+   - - ``-O333`` *(Default)*
+     - :math:`3 \times 3 \times 3\text{ mm}`
+     - :math:`48 \times 64 \times 48` 
+
+.. note::
+   **Y-Axis Center Offset (``-O333.n``):** Appending an integer offset ``.n`` shifts the output grid along the anterior-posterior (Y) axis by ``n`` voxels.
+
+   - **Positive ``.n``**: Shifts the field of view posteriorly to prevent **occipital** clipping.
+   - **Negative ``.n``**: Shifts the field of view anteriorly to prevent **frontal** clipping.
+
+**2. Reference Image Grids (``-O<outspace>``)**
+
+Passing the root name of any existing :ref:`4dfp image<image_data>` copies its exact matrix dimensions, voxel size, center, and orientation from the :ref:`interfile_header` header. Choose ``-O<outspace>`` when resampling into:
 
 - **A participant's native scan** (e.g., resampling a BOLD run onto that participant's native T1w grid).
 - **A custom or study-specific template** (e.g., a cohort-averaged anatomical image).
 - **A standard atlas** (see :ref:`atlases`).
-
-.. note::
-   **Y-Axis Center Offset (``-O333.n``)**: When using the ``333`` preset, appending an offset shifts the anterior-posterior (Y-axis) grid center upward by ``n`` voxels to prevent frontal or occipital clipping in acquisitions or templates with shifted centers. ``n`` must be a whole number.
 
 .. _t4img_interpolation:
 
 Interpolation Methods
 ---------------------
 
-When resampling an image into a new grid, output voxel centers rarely land exactly on original input voxel points; instead, they often fall at fractional coordinates :math:`(x, y, z)` between neighbors. 
-Both ``t4img_4dfp`` and :ref:`t4imgs_4dfp<t4imgs_4dfp>` support three 3D interpolation methods that trade off neighborhood size, edge sharpness, and intensity preservation.
+When resampling onto a new grid, output voxel centers almost always land between input voxel coordinates :math:`(x, y, z)` rather than lining up directly.
+Both ``t4img_4dfp`` and :ref:`t4imgs_4dfp<t4imgs_4dfp>` can use 3 interpolation methods to estimate the intensities of the output voxels based on the neighboring input voxels.
 
 .. list-table::
    :widths: 20 18 62
@@ -89,257 +115,256 @@ Both ``t4img_4dfp`` and :ref:`t4imgs_4dfp<t4imgs_4dfp>` support three 3D interpo
 
    * - Method
      - Neighborhood
-     - Practical Trade-Offs & Pipeline Guidance
+     - Behaviors & Trade Offs
    * - **Trilinear** *(Default)*
      - :math:`2 \times 2 \times 2`
      - * **Behavior:** Computes a distance-weighted average of the 8 surrounding voxels.
        * **Trade-off:** Softens sharp edges slightly, but strictly stays within the local input range (no overshoot).
    * - **Cubic Spline** (``-s``)
-     - :math:`4 \times 4 \times 4`
-     - * **Behavior:** Uses a wider 64-voxel neighborhood to estimate local intensity gradients and fit a smooth 3D curve.
+     - Global 1D + :math:`2 \times 2 \times 2`
+     - * **Behavior:** Fits smooth curves across the voxel grid rather than straight-line averages, preserving sharper contrast and fine detail.
        * **Trade-off:** Can introduce minor ringing (slight overshoot or undershoot, including small negative values) along sharp brain/background edges.
    * - **Nearest-Neighbor** (``-n``)
      - :math:`1 \times 1 \times 1`
      - * **Behavior:** Copies the value of the single closest input voxel without blending.
-       * **Note:** Ignores any multiplicative intensity scale stored in ``<t4file>``.
+       * **Note:** Ignores any multiplicative intensity scale stored in :term:`t4file`.
 
 .. note::
    * **ROI Region Names (``-n``)**: Trilinear and cubic spline interpolation drop ROI region names from the output :ref:`interfile_header`. Nearest-Neighbor copies those names to the output :ref:`interfile_header` so anatomical labels stay intact.
-   * **Flag Precedence**: If both ``-s`` and ``-n`` are passed together, ``-s`` takes precedence for interpolation.
+   * **Flag Precedence**: ``-s`` and ``-n`` are not intended to be used together. Using them both together can lead to inaccurate results. It is best to avoid combining them.
 
 .. _t4img_examples:
 
 Examples
 --------
 
-.. .. dropdown:: 💡 Click to show/hide usage examples
-..    :animate: fade-in
+.. dropdown:: 💡 Click to show/hide usage examples
+   :animate: fade-in
 
-..    .. tab-set::
+   .. tab-set::
 
-..       .. tab-item:: 🧠 Case 1: Structural Scan to 711-2B
+      .. tab-item:: 🧠 Case 1: Structural Scan to 711-2B
 
-..          Use ``t4img_4dfp`` with cubic spline interpolation (``-s``) and ``-O111`` when resampling a high-resolution anatomical scan (such as a T1w MPRAGE) into standard 1 mm WashU :ref:`711-2B <atlas_711-2b>` atlas space.
+         Use ``t4img_4dfp`` with cubic spline interpolation (``-s``) and ``-O111`` when resampling a high-resolution anatomical scan (such as a T1w MPRAGE) into standard 1 mm WashU :ref:`711-2B <atlas_711-2b>` atlas space.
 
-..          .. note::
-..             In the commands below, replace ``sub01_mpr`` and ``sub01_mpr_to_711-2B_t4`` with your own file prefixes and transform paths.
+         .. note::
+            In the commands below, replace ``sub01_mpr`` and ``sub01_mpr_to_711-2B_t4`` with your own file prefixes and transform paths.
 
-..          .. card:: 📥 Input Data
-..             :class-card: sd-bg-light sd-border-1 mb-3
+         .. card:: 📥 Input Data
+            :class-card: sd-bg-light sd-border-1 mb-3
 
-..             .. div:: card-help-top-right
+            .. div:: card-help-top-right
 
-..                :card-help:`Every 4dfp volume requires both its binary .4dfp.img file and its ASCII .4dfp.ifh header in the same directory.`
+               :card-help:`Every 4dfp volume requires both its binary .4dfp.img file and its ASCII .4dfp.ifh header in the same directory.`
 
-..             You need two inputs: the source :term:`4dfp` image and the :term:`t4file` mapping that image into ``711-2B`` space.
+            You need two inputs: the source :term:`4dfp` image and the :term:`t4file` mapping that image into ``711-2B`` space.
 
-..             .. image:: /_static/tools/registration/t4img_4dfp/case1/t4img_c1_input_files.png
-..                :alt: Directory listing showing sub01_mpr.4dfp.img, sub01_mpr.4dfp.ifh, and t4 file
-..                :align: center
-..                :width: 80%
+            .. image:: /_static/tools/registration/t4img_4dfp/case1/t4img_c1_input_files.png
+               :alt: Directory listing showing sub01_mpr.4dfp.img, sub01_mpr.4dfp.ifh, and t4 file
+               :align: center
+               :width: 80%
 
-..          .. tab-set::
+         .. tab-set::
 
-..             .. tab-item:: ⚡ Command 1: Resample to 111 Space
+            .. tab-item:: ⚡ Command 1: Resample to 111 Space
 
-..                Run ``t4img_4dfp`` with ``-s`` for crisp tissue boundaries and ``-O111`` for the 1 mm isotropic ``711-2B`` grid.
+               Run ``t4img_4dfp`` with ``-s`` for crisp tissue boundaries and ``-O111`` for the 1 mm isotropic ``711-2B`` grid.
 
-..                **1. Execute Command:**
+               **1. Execute Command:**
 
-..                .. code-block:: bash
+               .. code-block:: bash
 
-..                   t4img_4dfp -s -O111 sub01_mpr_to_711-2B_t4 sub01_mpr sub01_mpr_111
+                  t4img_4dfp -s -O111 sub01_mpr_to_711-2B_t4 sub01_mpr sub01_mpr_111
 
-..                **2. Terminal Output:**
+               **2. Terminal Output:**
 
-..                Notice that ``t4img_4dfp`` builds a temporary single-line list and calls :ref:`t4imgs_4dfp <t4imgs_4dfp>` to perform the resampling and update the header range:
+               Notice that ``t4img_4dfp`` builds a temporary single-line list and calls :ref:`t4imgs_4dfp <t4imgs_4dfp>` to perform the resampling and update the header range:
 
-..                .. image:: /_static/tools/registration/t4img_4dfp/case1/cmd1/t4img_c1_terminal.png
-..                   :alt: Terminal output showing t4imgs_4dfp reading the input image and t4 file and writing 111 output
-..                   :align: center
-..                   :width: 75%
+               .. image:: /_static/tools/registration/t4img_4dfp/case1/cmd1/t4img_c1_terminal.png
+                  :alt: Terminal output showing t4imgs_4dfp reading the input image and t4 file and writing 111 output
+                  :align: center
+                  :width: 75%
 
-..                **3. Visual Comparison:**
+               **3. Visual Comparison:**
 
-..                .. image:: /_static/tools/registration/t4img_4dfp/case1/cmd1/t4img_c1_result.png
-..                   :alt: Side-by-side comparison of native T1w scan and resampled 711-2B 111 volume
-..                   :align: center
-..                   :width: 80%
+               .. image:: /_static/tools/registration/t4img_4dfp/case1/cmd1/t4img_c1_result.png
+                  :alt: Side-by-side comparison of native T1w scan and resampled 711-2B 111 volume
+                  :align: center
+                  :width: 80%
 
-..             .. tab-item:: ⚡ Command 2: Resample to MNI152 Space
+            .. tab-item:: ⚡ Command 2: Resample to MNI152 Space
 
-..                When transforming into :ref:`MNI152 <atlas_mni>` space (or back into a subject's native space), pass the reference template image to ``-O`` instead of a ``711-2B`` numeric shortcut.
+               When transforming into :ref:`MNI152 <atlas_mni>` space (or back into a subject's native space), pass the reference template image to ``-O`` instead of a ``711-2B`` numeric shortcut.
 
-..                **1. Execute Command:**
+               **1. Execute Command:**
 
-..                .. code-block:: bash
+               .. code-block:: bash
 
-..                   t4img_4dfp -s -OMNI152_T1_1mm sub01_mpr_to_MNI152_t4 sub01_mpr sub01_mpr_MNI
+                  t4img_4dfp -s -OMNI152_T1_1mm sub01_mpr_to_MNI152_t4 sub01_mpr sub01_mpr_MNI
 
-..                **2. Terminal Output:**
+               **2. Terminal Output:**
 
-..                ``t4imgs_4dfp`` copies the matrix dimensions, voxel spacing, and volume center directly from ``MNI152_T1_1mm.4dfp.ifh``:
+               ``t4imgs_4dfp`` copies the matrix dimensions, voxel spacing, and volume center directly from ``MNI152_T1_1mm.4dfp.ifh``:
 
-..                .. image:: /_static/tools/registration/t4img_4dfp/case1/cmd2/t4img_c1_mni_terminal.png
-..                   :alt: Terminal output showing output dimensions copied from MNI152_T1_1mm
-..                   :align: center
-..                   :width: 75%
+               .. image:: /_static/tools/registration/t4img_4dfp/case1/cmd2/t4img_c1_mni_terminal.png
+                  :alt: Terminal output showing output dimensions copied from MNI152_T1_1mm
+                  :align: center
+                  :width: 75%
 
-..       .. tab-item:: 🎯 Case 2: ROI Mask & Region Labels
+      .. tab-item:: 🎯 Case 2: ROI Mask & Region Labels
 
-..          Use nearest-neighbor interpolation (``-n``) when resampling binary masks, parcellations, or labeled ROI volumes so integer region IDs are not blended and ``region names`` are preserved in the output ``.4dfp.ifh`` header.
+         Use nearest-neighbor interpolation (``-n``) when resampling binary masks, parcellations, or labeled ROI volumes so integer region IDs are not blended and ``region names`` are preserved in the output ``.4dfp.ifh`` header.
 
-..          .. card:: 📥 Input Data
-..             :class-card: sd-bg-light sd-border-1 mb-3
+         .. card:: 📥 Input Data
+            :class-card: sd-bg-light sd-border-1 mb-3
 
-..             .. div:: card-help-top-right
+            .. div:: card-help-top-right
 
-..                :card-help:`Check your input .4dfp.ifh file for "region names :=" entries if you rely on anatomical labels in downstream tools like FIDL.`
+               :card-help:`Check your input .4dfp.ifh file for "region names :=" entries if you rely on anatomical labels in downstream tools like FIDL.`
 
-..             An integer ROI volume (``sub01_rois.4dfp.img``) whose ``.4dfp.ifh`` header maps voxel integers to anatomical region names.
+            An integer ROI volume (``sub01_rois.4dfp.img``) whose ``.4dfp.ifh`` header maps voxel integers to anatomical region names.
 
-..             .. image:: /_static/tools/registration/t4img_4dfp/case2/t4img_c2_input_ifh.png
-..                :alt: Input .4dfp.ifh header showing region names entries
-..                :align: center
-..                :width: 80%
+            .. image:: /_static/tools/registration/t4img_4dfp/case2/t4img_c2_input_ifh.png
+               :alt: Input .4dfp.ifh header showing region names entries
+               :align: center
+               :width: 80%
 
-..          **1. Execute Command:**
+         **1. Execute Command:**
 
-..          Here, ``-n`` preserves discrete integer labels and ``-O333.8`` resamples onto a 3 mm ``711-2B`` functional grid shifted upward by 8 voxels along the Y-axis:
+         Here, ``-n`` preserves discrete integer labels and ``-O333.8`` resamples onto a 3 mm ``711-2B`` functional grid shifted upward by 8 voxels along the Y-axis:
 
-..          .. code-block:: bash
+         .. code-block:: bash
 
-..             t4img_4dfp -n -O333.8 sub01_rois_to_711-2B_t4 sub01_rois sub01_rois_333
+            t4img_4dfp -n -O333.8 sub01_rois_to_711-2B_t4 sub01_rois sub01_rois_333
 
-..          **2. Output Comparison (``-n`` vs. Default Trilinear):**
+         **2. Output Comparison (``-n`` vs. Default Trilinear):**
 
-..          With ``-n``, region boundaries remain crisp integers and ``region names`` carry over into ``sub01_rois_333.4dfp.ifh``. Without ``-n``, boundary voxels are averaged into fractional values and region labels are dropped:
+         With ``-n``, region boundaries remain crisp integers and ``region names`` carry over into ``sub01_rois_333.4dfp.ifh``. Without ``-n``, boundary voxels are averaged into fractional values and region labels are dropped:
 
-..          .. image:: /_static/tools/registration/t4img_4dfp/case2/t4img_c2_comparison.png
-..             :alt: Comparison of ROI mask resampled with -n versus default trilinear interpolation
-..             :align: center
-..             :width: 80%
+         .. image:: /_static/tools/registration/t4img_4dfp/case2/t4img_c2_comparison.png
+            :alt: Comparison of ROI mask resampled with -n versus default trilinear interpolation
+            :align: center
+            :width: 80%
 
-..       .. tab-item:: 📚 Case 3: Single Image vs. Multi-Image Stacking
+      .. tab-item:: 📚 Case 3: Single Image vs. Multi-Image Stacking
 
-..          ``t4img_4dfp`` is a single-image wrapper around :ref:`t4imgs_4dfp <t4imgs_4dfp>`. If you need to resample and average multiple runs (or apply per-image weights, intensity scaling, or slice cropping) in one step, call ``t4imgs_4dfp`` directly with a ``.lst`` file.
+         ``t4img_4dfp`` is a single-image wrapper around :ref:`t4imgs_4dfp <t4imgs_4dfp>`. If you need to resample and average multiple runs (or apply per-image weights, intensity scaling, or slice cropping) in one step, call ``t4imgs_4dfp`` directly with a ``.lst`` file.
 
-..          .. tab-set::
+         .. tab-set::
 
-..             .. tab-item:: ⚡ Single Image (t4img_4dfp)
+            .. tab-item:: ⚡ Single Image (t4img_4dfp)
 
-..                Pass one transform, one input image, and one output name directly on the command line:
+               Pass one transform, one input image, and one output name directly on the command line:
 
-..                .. code-block:: bash
+               .. code-block:: bash
 
-..                   t4img_4dfp -O333.8 bold_run1_to_711-2B_t4 bold_run1 bold_run1_333
+                  t4img_4dfp -O333.8 bold_run1_to_711-2B_t4 bold_run1 bold_run1_333
 
-..             .. tab-item:: ⚡ Multiple Images (t4imgs_4dfp)
+            .. tab-item:: ⚡ Multiple Images (t4imgs_4dfp)
 
-..                Create a plain-text list file (``bold_runs.lst``) pairing each image with its transform, then pass that list to ``t4imgs_4dfp`` to resample and average all runs into a single output volume:
+               Create a plain-text list file (``bold_runs.lst``) pairing each image with its transform, then pass that list to ``t4imgs_4dfp`` to resample and average all runs into a single output volume:
 
-..                .. code-block:: text
+               .. code-block:: text
 
-..                   # bold_runs.lst
-..                   bold_run1 t4=bold_run1_to_711-2B_t4
-..                   bold_run2 t4=bold_run2_to_711-2B_t4
-..                   bold_run3 t4=bold_run3_to_711-2B_t4
+                  # bold_runs.lst
+                  bold_run1 t4=bold_run1_to_711-2B_t4
+                  bold_run2 t4=bold_run2_to_711-2B_t4
+                  bold_run3 t4=bold_run3_to_711-2B_t4
 
-..                .. code-block:: bash
+               .. code-block:: bash
 
-..                   t4imgs_4dfp -O333.8 bold_runs.lst bold_mean_333
+                  t4imgs_4dfp -O333.8 bold_runs.lst bold_mean_333
 
-..                .. image:: /_static/tools/registration/t4img_4dfp/case3/t4imgs_stack_terminal.png
-..                   :alt: Terminal output of t4imgs_4dfp processing a multi-line list file
-..                   :align: center
-..                   :width: 75%
+               .. image:: /_static/tools/registration/t4img_4dfp/case3/t4imgs_stack_terminal.png
+                  :alt: Terminal output of t4imgs_4dfp processing a multi-line list file
+                  :align: center
+                  :width: 75%
 
-..       .. tab-item:: ⚠️ Common Errors
-..          :class-label: tab-error
+      .. tab-item:: ⚠️ Common Errors
+         :class-label: tab-error
 
-..          .. tab-set::
+         .. tab-set::
 
-..             .. tab-item:: ❌ Swapped Argument Order
-..                :class-label: tab-error
+            .. tab-item:: ❌ Swapped Argument Order
+               :class-label: tab-error
 
-..                **Cause:** Passing ``<infile>`` before ``<t4file>`` on the command line. Unlike ``t4imgs_4dfp``, ``t4img_4dfp`` expects the transform file **first**.
+               **Cause:** Passing ``<infile>`` before ``<t4file>`` on the command line. Unlike ``t4imgs_4dfp``, ``t4img_4dfp`` expects the transform file **first**.
 
-..                **Command Attempt:**
+               **Command Attempt:**
 
-..                .. code-block:: bash
+               .. code-block:: bash
 
-..                   t4img_4dfp -O111 sub01_mpr sub01_mpr_to_711-2B_t4 sub01_mpr_111
+                  t4img_4dfp -O111 sub01_mpr sub01_mpr_to_711-2B_t4 sub01_mpr_111
 
-..                **Error Output:**
+               **Error Output:**
 
-..                The wrapper writes the first positional argument into the ``img=`` field of its temporary list, causing ``t4imgs_4dfp`` to look for a non-existent ``.4dfp.img`` file named after your transform:
+               The wrapper writes the first positional argument into the ``img=`` field of its temporary list, causing ``t4imgs_4dfp`` to look for a non-existent ``.4dfp.img`` file named after your transform:
 
-..                .. code-block:: text
+               .. code-block:: text
 
-..                   t4imgs_4dfp: sub01_mpr_to_711-2B_t4.4dfp.img read error
+                  t4imgs_4dfp: sub01_mpr_to_711-2B_t4.4dfp.img read error
 
-..                .. admonition:: Resolution
-..                   :class: warning
+               .. admonition:: Resolution
+                  :class: warning
 
-..                   Always pass positional arguments in the order ``<t4file> <infile> <outfile>`` (for example, ``t4img_4dfp -O111 sub01_mpr_to_711-2B_t4 sub01_mpr sub01_mpr_111``).
+                  Always pass positional arguments in the order ``<t4file> <infile> <outfile>`` (for example, ``t4img_4dfp -O111 sub01_mpr_to_711-2B_t4 sub01_mpr sub01_mpr_111``).
 
-..             .. tab-item:: ❌ Missing Input File or Reference Grid
-..                :class-label: tab-error
+            .. tab-item:: ❌ Missing Input File or Reference Grid
+               :class-label: tab-error
 
-..                **Cause:** Providing a misspelled path, omitting a paired ``.4dfp.ifh`` header, passing a NIfTI (``.nii``) file directly, or specifying a reference image with ``-O<image>`` that does not exist.
+               **Cause:** Providing a misspelled path, omitting a paired ``.4dfp.ifh`` header, passing a NIfTI (``.nii``) file directly, or specifying a reference image with ``-O<outspace>`` that does not exist.
 
-..                **Command Attempt:**
+               **Command Attempt:**
 
-..                .. code-block:: bash
+               .. code-block:: bash
 
-..                   t4img_4dfp -O111 sub01_mpr_to_711-2B_t4 missing_scan out_111
+                  t4img_4dfp -O111 sub01_mpr_to_711-2B_t4 missing_scan out_111
 
-..                **Error Output:**
+               **Error Output:**
 
-..                ``t4imgs_4dfp`` checks readability of the input image, ``t4`` file, and target ``-O`` header before resampling and exits immediately if any file cannot be read:
+               ``t4imgs_4dfp`` checks readability of the input image, ``t4`` file, and target ``-O`` header before resampling and exits immediately if any file cannot be read:
 
-..                .. code-block:: text
+               .. code-block:: text
 
-..                   t4imgs_4dfp: missing_scan.4dfp.img read error
+                  t4imgs_4dfp: missing_scan.4dfp.img read error
 
-..                .. admonition:: Resolution
-..                   :class: warning
+               .. admonition:: Resolution
+                  :class: warning
 
-..                   Verify that your input files are in :term:`4dfp` format (both ``.4dfp.img`` and ``.4dfp.ifh`` exist) and check file paths with ``ls`` before re-running.
+                  Verify that your input files are in :term:`4dfp` format (both ``.4dfp.img`` and ``.4dfp.ifh`` exist) and check file paths with ``ls`` before re-running.
 
-..             .. tab-item:: ❌ Clipped or Empty Output Volume
-..                :class-label: tab-error
+            .. tab-item:: ❌ Clipped or Empty Output Volume
+               :class-label: tab-error
 
-..                **Cause:** Using a ``711-2B`` numeric shortcut (``-O111``, ``-O222``, or ``-O333``) with a transform targeting :ref:`MNI152 <atlas_mni>` or native scanner space, or forgetting a Y-axis shift (``-O333.8``) on an elongated brain.
+               **Cause:** Using a ``711-2B`` numeric shortcut (``-O111``, ``-O222``, or ``-O333``) with a transform targeting :ref:`MNI152 <atlas_mni>` or native scanner space, or forgetting a Y-axis shift (``-O333.8``) on an elongated brain.
 
-..                **Observed Behavior:**
+               **Observed Behavior:**
 
-..                The command finishes without a terminal error, but the output image appears severely shifted, cut off at the front/back, or completely blank because the target grid's bounding box and origin do not match the transformed coordinates.
+               The command finishes without a terminal error, but the output image appears severely shifted, cut off at the front/back, or completely blank because the target grid's bounding box and origin do not match the transformed coordinates.
 
-..                .. image:: /_static/tools/registration/t4img_4dfp/errors/clipped_output.png
-..                   :alt: Clipped brain output caused by mismatched output grid space
-..                   :align: center
-..                   :width: 75%
+               .. image:: /_static/tools/registration/t4img_4dfp/errors/clipped_output.png
+                  :alt: Clipped brain output caused by mismatched output grid space
+                  :align: center
+                  :width: 75%
 
-..                .. admonition:: Resolution
-..                   :class: warning
+               .. admonition:: Resolution
+                  :class: warning
 
-..                   Match ``-O<outspace>`` to your transform's target space: pass the target template or native image via ``-O<image>`` for MNI152 or native transforms, and use ``-O333.8`` when ``333`` clips frontal or occipital cortex.
+                  Match ``-O<outspace>`` to your transform's target space: pass the target template or native image via ``-O<outspace>`` for MNI152 or native transforms, and use ``-O333.8`` when ``333`` clips frontal or occipital cortex.
 
-..             .. tab-item:: ❌ Blurred ROI Labels & Lost Region Names
-..                :class-label: tab-error
+            .. tab-item:: ❌ Blurred ROI Labels & Lost Region Names
+               :class-label: tab-error
 
-..                **Cause:** Resampling an integer ROI mask or parcellation without passing the ``-n`` flag.
+               **Cause:** Resampling an integer ROI mask or parcellation without passing the ``-n`` flag.
 
-..                **Observed Behavior:**
+               **Observed Behavior:**
 
-..                Default trilinear interpolation averages neighboring labels along region borders into decimal values (such as ``1.5`` or ``2.3``), and all ``region names`` entries are omitted from the output ``.4dfp.ifh`` header.
+               Default trilinear interpolation averages neighboring labels along region borders into decimal values (such as ``1.5`` or ``2.3``), and all ``region names`` entries are omitted from the output ``.4dfp.ifh`` header.
 
-..                .. admonition:: Resolution
-..                   :class: warning
+               .. admonition:: Resolution
+                  :class: warning
 
-..                   Re-run the command with ``-n`` (for example, ``t4img_4dfp -n -O333.8 ...``) to preserve exact integer values and copy ``region names`` to the output header.
-
+                  Re-run the command with ``-n`` (for example, ``t4img_4dfp -n -O333.8 ...``) to preserve exact integer values and copy ``region names`` to the output header.
 
 .. rubric:: Footnotes
 
