@@ -14,7 +14,7 @@ Synopsis
 Description
 -----------
 
-Applies a spatial transformation matrix (:term:`t4file`) to resample a 3D or 4D :ref:`4dfp image<image_data>` into a target space or reference image grid [#wrapper]_. For 4D timeseries, the same transform is applied to every frame.
+Applies a spatial transformation matrix (:term:`t4file`) to resample a 3D or 4D :ref:`4dfp image<image_data>` into a target space or reference image grid [#wrapper]_. For timeseries, the same transform is applied to every frame.
 
 * **Resampling Multiple Inputs Into a Single Output (n:1):** If you need to combine multiple separate images into a single output, or require custom per-scan weights, frame/slice selection, or input masks, use :ref:`t4imgs_4dfp<t4imgs_4dfp>`.
 * **Resampling Multiple Inputs Into Multiple Outputs (n:n):** Neither ``t4img_4dfp`` nor :ref:`t4imgs_4dfp<t4imgs_4dfp>` outputs multiple separate files from a single command. To resample multiple images into their own output, run ``t4img_4dfp`` iteratively (see :ref:`t4img_examples`).

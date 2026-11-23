@@ -14,7 +14,7 @@ Synopsis
 Description
 -----------
 
-Resamples and combines multiple 3D or 4D images listed in a plain-text list file (``<inlist>``) into a single output image (``<outfile>``) by applying their respective :term:`t4file`.
+Resamples and combines multiple 3D or 4D images listed in a plain-text list file (``<inlist>``) into a single output :ref:`4dfp image<image_data>` (``<outfile>``) by applying their respective :term:`t4file`.
 
 ``t4imgs_4dfp`` processes the input list sequentially and pairs each image with its own :term:`t4file` to process each image independently onto the shared target grid (frame-by-frame for 4D inputs). 
 As each image is interpolated, its values are then multiplied by its corresponding weight (and any intensity scaling factor), summed into a per-voxel accumulated intensity, and then normalized into the output image.
