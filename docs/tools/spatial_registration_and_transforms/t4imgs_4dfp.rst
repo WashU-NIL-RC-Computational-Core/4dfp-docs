@@ -96,226 +96,163 @@ Usage
 Examples
 --------
 
-.. .. dropdown:: 💡 Click to show/hide usage examples
-..    :animate: fade-in
+.. dropdown:: 💡 Click to show/hide usage examples
+   :animate: fade-in
 
-..    .. tab-set::
+   .. tab-set::
 
-..       .. tab-item:: 🧠 Case 1: Multi-Scan Anatomical Average
+      .. tab-item:: 🧠 Case 1: Multi-Scan Anatomical Average
 
-..          Use ``t4imgs_4dfp`` with cubic spline interpolation (``-s``) to resample and average multiple structural acquisitions (such as repeated T1w MPRAGE scans) directly into target space in a single step.
+          When resampling multiple high-resolution images (such as a T1w MPRAGE) into atlas space, we can use the :term:`Trilinear Interpolation` to resample and average multiple structural acquisitions directly into target space in a single pass.
 
-..          .. note::
-..             In the commands below, replace ``mpr_scans.lst`` and the file prefixes inside it with your own list and scan names.
+         .. card:: 📥 Input Data
+            :class-card: sd-bg-light sd-border-1 mb-3
 
-..          .. card:: 📥 Input Data
-..             :class-card: sd-bg-light sd-border-1 mb-3
+            .. div:: card-help-top-right
 
-..             .. div:: card-help-top-right
+               :card-help:`Every image listed in your inlist file must have both its .4dfp.img and .4dfp.ifh files in the specified path.`
 
-..                :card-help:`Every image listed in your .lst file must have both its .4dfp.img and .4dfp.ifh files in the specified path.`
+            ``mpr_inlist`` to relate our images with their corresponding :term:`t4file`
 
-..             A plain-text list file (``mpr_scans.lst``) pairing each T1w scan with its corresponding :term:`t4file`:
+            .. code-block:: text
 
-..             .. code-block:: text
+               # mpr_inlist
+               sub01_mpr1 t4=sub01_mpr1_to_711-2B_t4
+               sub01_mpr2 t4=sub01_mpr2_to_711-2B_t4
 
-..                # mpr_scans.lst
-..                sub01_mpr1 t4=sub01_mpr1_to_711-2B_t4
-..                sub01_mpr2 t4=sub01_mpr2_to_711-2B_t4
+            .. image:: /_static/tools/registration/t4imgs_4dfp/case1/t4imgs_c1_input_files.png
+               :alt: Directory listing showing mpr_inlist, MPRAGE 4dfp pairs, and t4 files
+               :align: center
+               :width: 80%
 
-..             .. image:: /_static/tools/registration/t4imgs_4dfp/case1/t4imgs_c1_input_files.png
-..                :alt: Directory listing showing mpr_scans.lst, MPRAGE 4dfp pairs, and t4 files
-..                :align: center
-..                :width: 80%
+         **1. Execute Command:**
 
-..          .. tab-set::
+         .. code-block:: bash
 
-..             .. tab-item:: ⚡ Command 1: Average into 711-2B (111)
+            t4imgs_4dfp -O111 inlist sub01_mpr_avg_111
 
-..                Run ``t4imgs_4dfp`` with ``-s`` and ``-O111`` to resample both scans onto the 1 mm WashU :ref:`711-2B <atlas_711-2b>` grid and average them without creating intermediate files:
+         **2. Terminal Output:**
 
-..                **1. Execute Command:**
+         .. image:: /_static/tools/registration/t4imgs_4dfp/case1/cmd1/t4imgs_c1_terminal.png
+            :alt: Terminal output
+            :align: center
+            :width: 75%
 
-..                .. code-block:: bash
+         **3. Visual Comparison:**
 
-..                   t4imgs_4dfp -s -O111 mpr_scans.lst sub01_mpr_avg_111
+         .. image:: /_static/tools/registration/t4imgs_4dfp/case1/cmd1/t4imgs_c1_result.png
+            :alt: Comparison
+            :align: center
+            :width: 80%
 
-..                **2. Terminal Output:**
+      .. tab-item:: 📈 Case 2: Weighted Functional Average (-s)
 
-..                ``t4imgs_4dfp`` reads each image and transform sequentially, accumulates weighted voxel intensities, and writes the normalized average volume:
+        The native Midnight Scan Club BOLD runs we are working with were captured at :math:`4\text{ mm}` across multiple sessions with slightly different global signal baselines and usable frame counts. For this example, we want to transform, intensity-normalize, and compute a weighted average of those runs onto a :math:`2\text{ mm}` :ref:`711-2B <atlas_711-2b>` grid (``-O222``) in a single pass. We enable 3D cubic spline interpolation (``-s``) to preserve sub-voxel contrast during upsampling and pass ``-N`` so out-of-FOV voxels are excluded as ``NaN`` rather than zero-padded.
 
-..                .. image:: /_static/tools/registration/t4imgs_4dfp/case1/cmd1/t4imgs_c1_terminal.png
-..                   :alt: Terminal output showing t4imgs_4dfp reading two MPRAGE stacks and writing normalized output
-..                   :align: center
-..                   :width: 75%
+         .. card:: 📥 Input Data
+            :class-card: sd-bg-light sd-border-1 mb-3
 
-..                **3. Visual Comparison:**
+            .. div:: card-help-top-right
 
-..                .. image:: /_static/tools/registration/t4imgs_4dfp/case1/cmd1/t4imgs_c1_result.png
-..                   :alt: Comparison of single T1w scan versus two-scan average in 711-2B 111 space
-..                   :align: center
-..                   :width: 80%
+               :card-help:`weight= scales both the sum and normalization denominator; scale= adjusts intensity amplitude only.`
 
-..             .. tab-item:: ⚡ Command 2: Partial-FOV Scans (No Edge Darkening)
+            First, define the input runs, transforms, and per-run ``weight`` and ``scale`` factors in a plain-text list file (``msc01_bold_runs_list``):
 
-..                When combining scans with slightly shifted fields of view, ``t4imgs_4dfp`` normalizes each voxel only by the scans that cover it. This avoids the darkened overlap borders produced when averaging separate :ref:`t4img_4dfp <t4img_4dfp>` outputs.
+            .. code-block:: text
 
-..                **1. Execute Command:**
+               sub-MSC01_ses-01_bold_4mm t4=sub-MSC01_ses-01_bold_to_711-2b_t4 weight=1.00 scale=0.98 mask=sub-MSC01_ses-01_bold_4mm_mask
+               sub-MSC01_ses-02_bold_4mm t4=sub-MSC01_ses-02_bold_to_711-2b_t4 weight=0.85 scale=1.03 mask=sub-MSC01_ses-02_bold_4mm_mask
+               sub-MSC01_ses-03_bold_4mm t4=sub-MSC01_ses-03_bold_to_711-2b_t4 weight=1.15 scale=0.99 mask=sub-MSC01_ses-03_bold_4mm_mask
 
-..                .. code-block:: bash
+            .. image:: /_static/tools/registration/t4imgs_4dfp/case2/t4imgs_c2_input_list.png
+               :alt: List file
+               :align: center
+               :width: 80%
 
-..                   t4imgs_4dfp -s -O111 partial_fov_scans.lst cohort_avg_111
+         **1. Execute Command:**
 
-..                **2. Visual Comparison:**
+         .. code-block:: bash
 
-..                .. image:: /_static/tools/registration/t4imgs_4dfp/case1/cmd2/t4imgs_c1_fov_comparison.png
-..                   :alt: Comparison showing clean per-voxel normalization in t4imgs_4dfp versus darkened edges from naive averaging
-..                   :align: center
-..                   :width: 80%
+            t4imgs_4dfp msc01_bold_runs_list sub-MSC01_bold_weighted_222 -O222 -s -N
 
-..       .. tab-item:: 📊 Case 2: Combining Functional Z-Maps
+         **2. Terminal Output & Visual Result:**
 
-..          Use ``-z`` together with per-scan ``mask=``, ``weight=``, and ``slices=`` tokens in ``<inlist>`` to combine statistical Z-maps across runs while excluding outer end-slice artifacts before interpolation.
+         .. image:: /_static/tools/registration/t4imgs_4dfp/case2/t4imgs_c2_result.png
+            :alt: Terminal log of scale and weight parameters and visual comparison of cubic spline vs linear resampling
+            :align: center
+            :width: 80%
 
-..          .. card:: 📥 Input Data
-..             :class-card: sd-bg-light sd-border-1 mb-3
+      .. tab-item:: 📊 Case 3: Combining Functional Z-Maps (-z)
 
-..             .. div:: card-help-top-right
+         Use ``-z`` together with per-scan ``mask=`` and ``slices=`` tokens in ``<inlist>`` to combine statistical Z-maps across runs while excluding outer end-slice artifacts in native space before resampling.
 
-..                :card-help:`Masks and slice ranges in the .lst file are applied in each scan's native space before resampling.`
+         .. card:: 📥 Input Data
+            :class-card: sd-bg-light sd-border-1 mb-3
 
-..             A list file (``run_zmaps.lst``) combining three functional runs with native brain masks, run-duration weights, and end-slice trimming (keeping slices 2 through 34):
+            .. div:: card-help-top-right
 
-..             .. code-block:: text
+               :card-help:`Use slices=<lo>to<hi> for a slice range or slices=<n> to project a single native slice.`
 
-..                # run_zmaps.lst
-..                run1_zmap t4=run1_to_711-2B_t4 mask=run1_mask weight=1.0 slices=2to34
-..                run2_zmap t4=run2_to_711-2B_t4 mask=run2_mask weight=1.0 slices=2to34
-..                run3_zmap t4=run3_to_711-2B_t4 mask=run3_mask weight=0.8 slices=2to34
+            .. code-block:: text
 
-..             .. image:: /_static/tools/registration/t4imgs_4dfp/case2/t4imgs_c2_input_list.png
-..                :alt: List file and native Z-map and mask inputs
-..                :align: center
-..                :width: 80%
+               # run_zmaps_list
+               run1_zmap t4=run1_to_711-2B_t4 mask=run1_mask weight=1.0 slices=2to34
+               run2_zmap t4=run2_to_711-2B_t4 mask=run2_mask weight=1.0 slices=2to34
+               run3_zmap t4=run3_to_711-2B_t4 mask=run3_mask weight=1.0 slices=2to34
 
-..          **1. Execute Command:**
+            .. image:: /_static/tools/registration/t4imgs_4dfp/case3/t4imgs_c3_input_list.png
+               :alt: List file and native Z-map and mask inputs with slice trimming
+               :align: center
+               :width: 80%
 
-..          Pass ``-z`` so voxel sums are divided by :math:`\sqrt{\sum w_i}` instead of :math:`\sum w_i`, preserving unit-variance Z-score scaling:
+         **1. Execute Command:**
 
-..          .. code-block:: bash
+         Pass ``-z`` so voxel sums are divided by :math:`\sqrt{\sum w_i}` instead of :math:`\sum w_i`:
 
-..             t4imgs_4dfp -z -O333.8 run_zmaps.lst sub01_combined_zmap_333
+         .. code-block:: bash
 
-..          **2. Terminal Output & Visual Result:**
+            t4imgs_4dfp -z -O333.8 run_zmaps_list sub01_combined_zmap_333
 
-..          .. image:: /_static/tools/registration/t4imgs_4dfp/case2/t4imgs_c2_result.png
-..             :alt: Combined Z-map output in 333.8 space with edge slices excluded
-..             :align: center
-..             :width: 80%
+         **2. Visual Comparison:**
 
-..       .. tab-item:: 🧩 Case 3: Cohort Coverage Mask (-n and -N)
+         .. image:: /_static/tools/registration/t4imgs_4dfp/case3/t4imgs_c3_result.png
+            :alt: Combined Z-map output
+            :align: center
+            :width: 80%
 
-..          Use ``-n`` (nearest-neighbor) and ``-N`` (assign ``NaN`` to uncovered voxels) to resample and combine binary subject masks into a group coverage map without interpolating mask boundaries.
+      .. tab-item:: ⚠️ Common Errors
+         :class-label: tab-error
 
-..          **1. Input List (``subject_masks.lst``):**
+         .. tab-set::
 
-..          .. code-block:: text
+            .. tab-item:: ❌ Mask Dimension Mismatch
+               :class-label: tab-error
 
-..             # subject_masks.lst
-..             sub01_brainmask t4=sub01_to_711-2B_t4
-..             sub02_brainmask t4=sub02_to_711-2B_t4
-..             sub03_brainmask t4=sub03_to_711-2B_t4
+               **Cause:** Specifying a ``mask=<mskfile>`` in ``<inlist>`` whose matrix dimensions, voxel sizes, or anatomical orientation do not match the corresponding input ``<imgfile>``.
 
-..          **2. Execute Command:**
+               **Error Output:**
 
-..          .. code-block:: bash
+               Note error here..
 
-..             t4imgs_4dfp -n -N -O333.8 subject_masks.lst group_coverage_333
+               .. code-block:: text
 
-..          **3. Visual Result:**
+                  Exact error in terminal
 
-..          Voxels covered by all subjects equal ``1.0``, partially covered edge voxels reflect the exact fraction of overlapping masks, and voxels outside every subject's mask are set to ``NaN`` instead of ``0.0``:
+               .. admonition:: Resolution
+                  :class: warning
 
-..          .. image:: /_static/tools/registration/t4imgs_4dfp/case3/t4imgs_c3_coverage.png
-..             :alt: Cohort coverage map showing NaN background and fractional overlap along edges
-..             :align: center
-..             :width: 75%
+                  Ensure every ``mask=`` file in ``<inlist>`` is in the **same native space and grid** as its respective ``<imgfile>``.
 
-..       .. tab-item:: ⚠️ Common Errors
-..          :class-label: tab-error
+            .. tab-item:: ❌ Spaces Around ``=`` in List (Silent Failure)
+               :class-label: tab-error
 
-..          .. tab-set::
+               **Cause:** Inserting spaces around ``=`` in ``<inlist>`` options.
 
-..             .. tab-item:: ❌ Mask Dimension Mismatch
-..                :class-label: tab-error
+               **Observed Behavior:**
 
-..                **Cause:** Specifying a ``mask=<mskfile>`` in ``<inlist>`` whose matrix dimensions, voxel sizes, or anatomical orientation do not match the corresponding input ``<imgfile>`` (for example, passing an atlas-space mask instead of a native-space mask).
+               Add observed behavior
 
-..                **Error Output:**
+               .. admonition:: Resolution
+                  :class: warning
 
-..                ``t4imgs_4dfp`` validates each mask's header against its paired input image before resampling and exits immediately on any mismatch:
-
-..                .. code-block:: text
-
-..                   t4imgs_4dfp: atlas_mask.4dfp.img run1_zmap.4dfp.img dimension mismatch
-
-..                .. admonition:: Resolution
-..                   :class: warning
-
-..                   Ensure every ``mask=`` file in ``<inlist>`` is in the **same native space and grid** as the ``<imgfile>`` on that line.
-
-..             .. tab-item:: ❌ Missing File or Spaces Around ``=`` in List
-..                :class-label: tab-error
-
-..                **Cause:** A misspelled image, transform, or mask path in ``<inlist>``, or inserting spaces around ``=`` in ``key=value`` tokens (such as ``t4 = run1_t4`` instead of ``t4=run1_t4``).
-
-..                **Error Output:**
-
-..                Because ``t4imgs_4dfp`` splits list lines on whitespace, spaces around ``=`` prevent the token from being recognized, and any unreadable file triggers an immediate read error:
-
-..                .. code-block:: text
-
-..                   t4imgs_4dfp: run1_zmap.4dfp.img read error
-
-..                .. admonition:: Resolution
-..                   :class: warning
-
-..                   Verify that all referenced ``.4dfp.img``, ``.4dfp.ifh``, and ``_t4`` files exist, and write ``key=value`` tokens without spaces around ``=``.
-
-..             .. tab-item:: ❌ Missing Reference Grid Header (-O)
-..                :class-label: tab-error
-
-..                **Cause:** Passing a custom or :ref:`MNI152 <atlas_mni>` reference volume to ``-O<image>`` whose ``.4dfp.ifh`` header does not exist or cannot be opened.
-
-..                **Command Attempt:**
-
-..                .. code-block:: bash
-
-..                   t4imgs_4dfp -s -OMNI152_T1_2mm mpr_scans.lst sub01_mpr_MNI
-
-..                **Error Output:**
-
-..                ``t4imgs_4dfp`` reads ``<image>.4dfp.ifh`` to configure the output matrix before scanning the input list and terminates if the header is missing:
-
-..                .. code-block:: text
-
-..                   Getifh: MNI152_T1_2mm.4dfp.ifh read error
-
-..                .. admonition:: Resolution
-..                   :class: warning
-
-..                   Confirm that ``<image>.4dfp.ifh`` exists in your working directory (or provide the full path to the reference template).
-
-..             .. tab-item:: ❌ Diluted Z-Scores (Omitting ``-z``)
-..                :class-label: tab-error
-
-..                **Cause:** Combining statistical Z-maps without passing the ``-z`` flag.
-
-..                **Observed Behavior:**
-
-..                The command completes without a terminal error, but ``t4imgs_4dfp`` divides voxel sums by the total weight :math:`\sum w_i` (computing a standard mean) rather than :math:`\sqrt{\sum w_i}`. Across :math:`N` equal-weight runs, peak Z-scores shrink by a factor of :math:`\sqrt{N}`.
-
-..                .. admonition:: Resolution
-..                   :class: warning
-
-..                   Always include ``-z`` when aggregating Z-score maps so the combined volume maintains valid unit-variance Z-score scaling.
+                  Always write ``key=value`` tokens without spaces around ``=``, and confirm in the terminal log that each expected ``t4file=`` and ``maskfile=`` prints correctly.

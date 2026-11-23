@@ -105,7 +105,7 @@ Glossary
       A shortcut file that points directly to another file or folder on your computer without copying the original data.
 
    Cubic Spline Interpolation
-      Maps each target voxel back to the source grid and fits smooth third-order curves across a larger neighborhood of **64 surrounding source voxel centers** (a :math:`4 \times 4 \times 4` block). Evaluating 64 neighbors instead of 8 preserves sharper anatomical tissue boundaries than :term:`Trilinear Interpolation`, at the cost of slower compute time and potential minor intensity overshoot (ringing) near high-contrast edges.
+      Fits smooth, continuous third-order (cubic) curves across a wider neighborhood of surrounding source voxels. Compared to :term:`Trilinear Interpolation`, it preserves sharper spatial detail and peak signal contrast, at the cost of higher computational overhead and potential minor intensity overshoot (ringing) along sharp, high-contrast edges.
 
    Little-Endian
       A byte-ordering convention that stores the least significant byte first in memory. It is the native byte order on modern x86/x64 systems and the standard binary format for current :term:`4dfp` image files (``.4dfp.img``). Contrast with :term:`Big-Endian`.
